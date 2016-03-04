@@ -1,0 +1,19 @@
+{
+  "name": "tinkerchat-service",
+  "version": "0.0.1",
+  "description": "Socket.IO based chat server for tinkerchat.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/automattic/tinkerchat-service.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/automattic/tinkerchat-service/issues"
+  },
+  "homepage": "https://github.com/automattic/tinkerchat-service#readme"
+}
