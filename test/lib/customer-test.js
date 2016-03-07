@@ -1,18 +1,12 @@
 import customer from '../../lib/customer'
+import mockIO from '../mock-io'
 import { ok, equal, deepEqual } from 'assert'
-import { EventEmitter } from 'events'
 
-describe( 'customer service', () => {
+describe( 'Customer Service', () => {
 	let server, socket, client
 
 	beforeEach( () => {
-		server = new EventEmitter()
-		socket = new EventEmitter()
-		client = new EventEmitter()
-		let emitClient = client.emit.bind( client )
-		let emitSocket = socket.emit.bind( socket )
-		socket.emit = emitClient
-		client.emit = emitSocket
+		( { server, socket, client } = mockIO() )
 	} )
 
 	describe( 'with authorized user', () => {
