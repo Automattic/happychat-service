@@ -10,7 +10,7 @@ describe( 'Customer Service', () => {
 	} )
 
 	describe( 'with authorized user', () => {
-		const mockUser = { id: 'abdefgh', displayName: 'Ridley', avatarURL: 'http://example.com/image' }
+		const mockUser = { id: 'abdefgh', username: 'ridley', displayName: 'Ridley', avatarURL: 'http://example.com/image' }
 		beforeEach( ( next ) => {
 			client.on( 'init', () => next() )
 			customer( server, ( token, callback ) => callback( null, mockUser ) )
@@ -57,7 +57,7 @@ describe( 'Customer Service', () => {
 			equal( typeof( callback ), 'function' )
 			equal( token, 'valid' )
 			client.once( 'init', () => done() )
-			callback( null, { id: 'user1' } )
+			callback( null, { id: 'user1', username: 'user1' } )
 		} )
 
 		server.emit( 'connection', socket )
