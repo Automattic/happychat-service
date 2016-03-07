@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "`npm bin`/mocha --compilers js:babel-register --recursive",
-		"start": "`npm bin`/babel-node index.js"
+    "start": "`npm bin`/babel-node index.js"
   },
   "repository": {
     "type": "git",
@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "babel-cli": "^6.6.4",
-    "socket.io": "^1.4.5"
+    "socket.io": "^1.4.5",
+    "uuid": "^2.0.1"
   }
 }

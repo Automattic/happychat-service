@@ -1,5 +1,5 @@
 import customer from '../../lib/customer'
-import { ok, equal } from 'assert'
+import { ok, equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
 
 describe( 'customer service', () => {
@@ -16,16 +16,25 @@ describe( 'customer service', () => {
 	} )
 
 	describe( 'with authorized user', () => {
+		const mockUser = { id: 'abdefgh', displayName: 'Ridley', avatarURL: 'http://example.com/image' }
 		beforeEach( ( next ) => {
 			client.on( 'init', () => next() )
-			customer( server, ( token, callback ) => callback( null, { id: 'abdefgh' } ) )
+			customer( server, ( token, callback ) => callback( null, mockUser ) )
 			server.emit( 'connection', socket )
 			client.emit( 'token', 'hello' )
 		} )
 
 		it( 'should receive message and broadcast it', ( done ) => {
-			client.once( 'message', ( message ) => {
-				equal( message, 'hello world' )
+			client.once( 'message', ( { id, text, timestamp, user, meta } ) => {
+				ok( id )
+				ok( timestamp )
+				ok( meta )
+				equal( text, 'hello world' )
+				deepEqual( user, {
+					id:          mockUser.id,
+					displayName: mockUser.displayName,
+					avatarURL:   mockUser.avatarURL
+				} )
 				done()
 			} )
 			client.emit( 'message', 'hello world' )
