@@ -6,7 +6,7 @@
   "scripts": {
     "test": "`npm bin`/mocha --compilers js:babel-register --recursive",
     "start": "`npm bin`/babel-node index.js",
-    "postinstall": "`npm bin`/babel -d js ./lib/"
+    "build": "`npm bin`/babel -d js ./lib/"
   },
   "repository": {
     "type": "git",
