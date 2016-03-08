@@ -1,6 +1,8 @@
 import customer from '../../lib/customer'
 import mockIO from '../mock-io'
-import { ok, equal, deepEqual } from 'assert'
+import { contains, ok, equal, deepEqual } from '../assert'
+
+const debug = require( 'debug' )( 'tinkerchat:test:customer' )
 
 describe( 'Customer Service', () => {
 	let server, socket, client
@@ -19,7 +21,7 @@ describe( 'Customer Service', () => {
 		} )
 
 		it( 'should receive message and broadcast it', ( done ) => {
-			client.once( 'message', ( { id, text, timestamp, user, meta } ) => {
+			server.once( `${mockUser.id}.message`, ( { id, text, timestamp, user, meta } ) => {
 				ok( id )
 				ok( timestamp )
 				ok( meta )
@@ -56,7 +58,11 @@ describe( 'Customer Service', () => {
 		customer( server, ( token, callback ) => {
 			equal( typeof( callback ), 'function' )
 			equal( token, 'valid' )
-			client.once( 'init', () => done() )
+			client.once( 'init', () => {
+				debug( 'socket rooms', socket.rooms )
+				contains( socket.rooms, 'user1' )
+				done()
+			} )
 			callback( null, { id: 'user1', username: 'user1' } )
 		} )
 
