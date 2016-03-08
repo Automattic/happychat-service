@@ -3,8 +3,9 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-var authenticate = function authenticate(_ref) {
-	var authenticator = _ref.authenticator;
+var debug = require('debug')('tinkerchat:agent');
+
+var authenticate = function authenticate(authenticator) {
 	return new Promise(function (resolve, reject) {
 		authenticator(function (error, agent) {
 			if (error) return reject(error);
@@ -14,11 +15,11 @@ var authenticate = function authenticate(_ref) {
 };
 
 // change a lib/customer message to what an agent client expects
-var formatCustomerMessage = function formatCustomerMessage(_ref2) {
-	var id = _ref2.id;
-	var timestamp = _ref2.timestamp;
-	var text = _ref2.text;
-	var user = _ref2.user;
+var formatCustomerMessage = function formatCustomerMessage(_ref) {
+	var id = _ref.id;
+	var timestamp = _ref.timestamp;
+	var text = _ref.text;
+	var user = _ref.user;
 	return {
 		id: id, timestamp: timestamp, text: text,
 		context: user.id,
@@ -27,9 +28,9 @@ var formatCustomerMessage = function formatCustomerMessage(_ref2) {
 	};
 };
 
-var onAuthorized = function onAuthorized(_ref3) {
-	var socket = _ref3.socket;
-	var customers = _ref3.customers;
+var onAuthorized = function onAuthorized(_ref2) {
+	var socket = _ref2.socket;
+	var customers = _ref2.customers;
 	return function (agent) {
 		// any message sent from a customer needs to be forwarded to the agent socket
 		/**
@@ -49,11 +50,11 @@ var onAuthorized = function onAuthorized(_ref3) {
 	};
 };
 
-var onConnection = function onConnection(_ref4) {
-	var authenticator = _ref4.authenticator;
-	var customers = _ref4.customers;
+var onConnection = function onConnection(_ref3) {
+	var authenticator = _ref3.authenticator;
+	var customers = _ref3.customers;
 	return function (socket) {
-		authenticate({ authenticator: authenticator }).then(onAuthorized({ socket: socket, customers: customers })).catch(function () {
+		authenticate(authenticator).then(onAuthorized({ socket: socket, customers: customers })).catch(function (e) {
 			debug('unauthorized agent', e);
 			socket.emit('unauthorized');
 			socket.close();
@@ -61,8 +62,8 @@ var onConnection = function onConnection(_ref4) {
 	};
 };
 
-exports.default = function (io, _ref5) {
-	var customers = _ref5.customers;
-	var authenticator = _ref5.authenticator;
+exports.default = function (io, _ref4) {
+	var customers = _ref4.customers;
+	var authenticator = _ref4.authenticator;
 	return io.on('connection', onConnection({ authenticator: authenticator, customers: customers }));
 };

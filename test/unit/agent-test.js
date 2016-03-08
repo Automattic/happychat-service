@@ -3,6 +3,7 @@ import { EventEmitter } from 'events'
 import mockIO from '../mock-io'
 import agent from '../../lib/agent'
 
+const debug = require( 'debug' )( 'tinkerchat:test:agent' )
 const mockAuth = ( auth ) => auth( null, {} )
 const mockCustomers = new EventEmitter()
 
@@ -60,7 +61,10 @@ describe( 'Agent Service', () => {
 	} )
 
 	it( 'should emit unauthenticated when failing authentication', ( done ) => {
-		agent( server, ( auth ) => auth( new Error( 'nope' ) ) )
+		agent( server, { authenticator: ( auth ) => {
+			debug( 'authenticating service' )
+			auth( new Error( 'nope' ) )
+		} } )
 		client.on( 'unauthorized', () => done() )
 		server.emit( 'connection', socket )
 	} )
