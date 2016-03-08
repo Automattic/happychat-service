@@ -72,6 +72,7 @@
 		"valid-jsdoc": [ 1, { "requireReturn": false } ],
 		// Common top-of-file requires, expressions between external, interal
 		"vars-on-top": 1,
-		"yoda": 0
+		"yoda": 0,
+		"no-undef": 1
 	}
 }
