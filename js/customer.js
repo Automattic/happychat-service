@@ -63,7 +63,8 @@ var onToken = function onToken(_ref3) {
 		debug('authenticating user');
 		authenticate(authenticator, token).then(function (user) {
 			return join({ user: user, socket: socket, events: events });
-		}).catch(function () {
+		}).catch(function (e) {
+			debug('unauthorized customer', e);
 			socket.emit('unauthorized');
 			socket.close();
 		});

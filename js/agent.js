@@ -54,6 +54,7 @@ var onConnection = function onConnection(_ref4) {
 	var customers = _ref4.customers;
 	return function (socket) {
 		authenticate({ authenticator: authenticator }).then(onAuthorized({ socket: socket, customers: customers })).catch(function () {
+			debug('unauthorized agent', e);
 			socket.emit('unauthorized');
 			socket.close();
 		});
