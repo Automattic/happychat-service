@@ -35,7 +35,11 @@ describe( 'Service', () => {
 			agent.on( 'unauthorized', () => fail( 'failed to authorize agent' ) )
 			agent.on( 'init', () => {
 				// TODO: check for existing clients?
-				done()
+				agent.on( 'message', ( msg ) => {
+					debug( 'message', msg )
+					done()
+				} )
+				client.emit( 'message', 'hello' )
 			} )
 		}
 
