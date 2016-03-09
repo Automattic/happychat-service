@@ -4,20 +4,28 @@ import { contains, ok, equal, deepEqual } from '../assert'
 
 const debug = require( 'debug' )( 'tinkerchat:test:customer' )
 
+const authorizeAndInit = ( { client, server, socket, user} ) => ( next = () => {} ) => {
+	client.on( 'init', () => next() )
+	let events = customer( server, ( token, callback ) => callback( null, user ) )
+	process.nextTick( () => {
+		server.emit( 'connection', socket )
+		client.emit( 'token', 'hello' )
+	} )
+	return events
+}
+
 describe( 'Customer Service', () => {
 	let server, socket, client, customerEvents
-
+	const mockUser = { id: 'abdefgh', username: 'ridley', displayName: 'Ridley', avatarURL: 'http://example.com/image' }
+	let auth
 	beforeEach( () => {
 		( { server, socket, client } = mockIO() )
+		auth = authorizeAndInit( { client, server, socket, user: mockUser } )
 	} )
 
 	describe( 'with authorized user', () => {
-		const mockUser = { id: 'abdefgh', username: 'ridley', displayName: 'Ridley', avatarURL: 'http://example.com/image' }
 		beforeEach( ( next ) => {
-			client.on( 'init', () => next() )
-			customerEvents = customer( server, ( token, callback ) => callback( null, mockUser ) )
-			server.emit( 'connection', socket )
-			client.emit( 'token', 'hello' )
+			customerEvents = auth( next )
 		} )
 
 		it( 'should receive message and broadcast it', ( done ) => {
@@ -75,6 +83,16 @@ describe( 'Customer Service', () => {
 
 		server.emit( 'connection', socket )
 		client.emit( 'token', 'valid' )
+	} )
+
+	it( 'should notify user connected', ( done ) => {
+		socket.id = 'socket-id'
+		let events = auth()
+		events.on( 'join', ( { id, socket_id } ) => {
+			equal( id, mockUser.id )
+			equal( socket_id, 'socket-id' )
+			done()
+		} )
 	} )
 
 	it( 'should fail to authenticate with invalid token', ( done ) => {

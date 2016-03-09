@@ -75,6 +75,7 @@ describe( 'Agent Service', () => {
 
 	it( 'should initilize service', ( done ) => {
 		agent( server, { authenticator: mockAuth, customers: mockCustomers } )
+
 		client.on( 'init', () => done() )
 		server.emit( 'connection', socket )
 	} )
