@@ -14,23 +14,9 @@ var authenticate = function authenticate(authenticator) {
 	});
 };
 
-// change a lib/customer message to what an agent client expects
-var formatCustomerMessage = function formatCustomerMessage(_ref) {
-	var id = _ref.id;
-	var timestamp = _ref.timestamp;
-	var text = _ref.text;
-	var user = _ref.user;
-	return {
-		id: id, timestamp: timestamp, text: text,
-		context: user.id,
-		author_id: user.id,
-		author_type: 'customer'
-	};
-};
-
-var onAuthorized = function onAuthorized(_ref2) {
-	var socket = _ref2.socket;
-	var customers = _ref2.customers;
+var onAuthorized = function onAuthorized(_ref) {
+	var socket = _ref.socket;
+	var customers = _ref.customers;
 	return function (agent) {
 		// any message sent from a customer needs to be forwarded to the agent socket
 		/**
@@ -43,16 +29,20 @@ var onAuthorized = function onAuthorized(_ref2) {
    - `author_id`: the id of the author of the message
    - `author_type`: One of `customer`, `support`, `agent`
    */
-		customers.on('message', function (message) {
-			return socket.emit('message', formatCustomerMessage(message));
+		customers.on('receive', function (message) {
+			return socket.emit('message', message);
+		});
+		socket.on('message', function (message) {
+			// TODO: validate message
+			customers.emit('send', message);
 		});
 		socket.emit('init', { agent: agent });
 	};
 };
 
-var onConnection = function onConnection(_ref3) {
-	var authenticator = _ref3.authenticator;
-	var customers = _ref3.customers;
+var onConnection = function onConnection(_ref2) {
+	var authenticator = _ref2.authenticator;
+	var customers = _ref2.customers;
 	return function (socket) {
 		authenticate(authenticator).then(onAuthorized({ socket: socket, customers: customers })).catch(function (e) {
 			debug('unauthorized agent', e);
@@ -62,8 +52,8 @@ var onConnection = function onConnection(_ref3) {
 	};
 };
 
-exports.default = function (io, _ref4) {
-	var customers = _ref4.customers;
-	var authenticator = _ref4.authenticator;
+exports.default = function (io, _ref3) {
+	var customers = _ref3.customers;
+	var authenticator = _ref3.authenticator;
 	return io.on('connection', onConnection({ authenticator: authenticator, customers: customers }));
 };

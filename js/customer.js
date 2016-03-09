@@ -8,10 +8,23 @@ var _events = require('events');
 
 var debug = require('debug')('tinkerchat:customer');
 
-var identityForUser = function identityForUser(_ref) {
+// change a lib/customer message to what an agent client expects
+var formatAgentMessage = function formatAgentMessage(author_type, author_id, context, _ref) {
 	var id = _ref.id;
-	var displayName = _ref.displayName;
-	var avatarURL = _ref.avatarURL;
+	var timestamp = _ref.timestamp;
+	var text = _ref.text;
+	return {
+		id: id, timestamp: timestamp, text: text,
+		context: context,
+		author_id: author_id,
+		author_type: author_type
+	};
+};
+
+var identityForUser = function identityForUser(_ref2) {
+	var id = _ref2.id;
+	var displayName = _ref2.displayName;
+	var avatarURL = _ref2.avatarURL;
 	return { id: id, displayName: displayName, avatarURL: avatarURL };
 };
 
@@ -28,16 +41,16 @@ var authenticate = function authenticate(authenticator, token) {
 	});
 };
 
-var init = function init(_ref2) {
-	var user = _ref2.user;
-	var socket = _ref2.socket;
-	var events = _ref2.events;
-	var io = _ref2.io;
+var init = function init(_ref3) {
+	var user = _ref3.user;
+	var socket = _ref3.socket;
+	var events = _ref3.events;
+	var io = _ref3.io;
 	return function () {
 		debug('user joined room', user.id);
-		socket.on('message', function (_ref3) {
-			var text = _ref3.text;
-			var id = _ref3.id;
+		socket.on('message', function (_ref4) {
+			var text = _ref4.text;
+			var id = _ref4.id;
 
 			var meta = {};
 			var userIdentity = identityForUser(user);
@@ -45,7 +58,7 @@ var init = function init(_ref2) {
 			// all customer connections for this user receive the message
 			debug('broadcasting message', user.id, id, text);
 			io.to(user.id).emit('message', message);
-			events.emit('message', message);
+			events.emit('receive', formatAgentMessage('customer', user.id, user.id, message));
 		});
 
 		socket.emit('init', user);
@@ -60,11 +73,11 @@ var init = function init(_ref2) {
     - `avatarURL`: (**required**) URL to image to display as user's avatar
     - `tags`: Array of strings to identify the user (example: `['premium', 'expired']`)
  */
-var join = function join(_ref4) {
-	var user = _ref4.user;
-	var socket = _ref4.socket;
-	var events = _ref4.events;
-	var io = _ref4.io;
+var join = function join(_ref5) {
+	var user = _ref5.user;
+	var socket = _ref5.socket;
+	var events = _ref5.events;
+	var io = _ref5.io;
 
 	debug('user joined', user.username, user.id);
 
@@ -72,11 +85,11 @@ var join = function join(_ref4) {
 	socket.join(user.id, init({ user: user, socket: socket, events: events, io: io }));
 };
 
-var onToken = function onToken(_ref5) {
-	var authenticator = _ref5.authenticator;
-	var socket = _ref5.socket;
-	var events = _ref5.events;
-	var io = _ref5.io;
+var onToken = function onToken(_ref6) {
+	var authenticator = _ref6.authenticator;
+	var socket = _ref6.socket;
+	var events = _ref6.events;
+	var io = _ref6.io;
 	return function (token) {
 		debug('authenticating user');
 		authenticate(authenticator, token).then(function (user) {
@@ -89,10 +102,10 @@ var onToken = function onToken(_ref5) {
 	};
 };
 
-var onConnection = function onConnection(_ref6) {
-	var authenticator = _ref6.authenticator;
-	var events = _ref6.events;
-	var io = _ref6.io;
+var onConnection = function onConnection(_ref7) {
+	var authenticator = _ref7.authenticator;
+	var events = _ref7.events;
+	var io = _ref7.io;
 	return function (socket) {
 		socket.on('token', onToken({ authenticator: authenticator, socket: socket, events: events, io: io }));
 		// ask connection for token
@@ -102,6 +115,14 @@ var onConnection = function onConnection(_ref6) {
 
 exports.default = function (io, authenticator) {
 	var events = new _events.EventEmitter();
+	events.on('send', function (message) {
+		var context = message.context;
+		var user = message.user;
+
+		io.to(context).emit('message', message);
+		debug('send from', user);
+		events.emit('receive', formatAgentMessage('agent', user.id, context, message));
+	});
 	io.on('connection', onConnection({ authenticator: authenticator, events: events, io: io }));
 	return events;
 };

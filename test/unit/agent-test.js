@@ -5,13 +5,13 @@ import agent from '../../lib/agent'
 
 const debug = require( 'debug' )( 'tinkerchat:test:agent' )
 const mockAuth = ( auth ) => auth( null, {} )
-const mockCustomers = new EventEmitter()
 
 describe( 'Agent Service', () => {
-	let server, socket, client
+	let server, socket, client, mockCustomers
 
 	beforeEach( () => {
 		( { server, socket, client } = mockIO() )
+		mockCustomers = new EventEmitter()
 	} )
 
 	describe( 'when authenticated', () => {
@@ -35,21 +35,40 @@ describe( 'Agent Service', () => {
 				equal( id, 'fake-message-id' )
 				ok( timestamp )
 				equal( text, 'hello' )
-				equal( context, 'fake-user-id' )
+				equal( context, 'fake-context' )
 				equal( author_id, 'fake-user-id' )
 				equal( author_type, 'customer' )
 				done()
 			} )
-			mockCustomers.emit( 'message', {
-				id:        'fake-message-id',
+			mockCustomers.emit( 'receive', {
+				id: 'fake-message-id',
 				timestamp: ( new Date() ).getTime(),
-				text:      'hello',
-				user:      {
-					id:          'fake-user-id',
-					displayName: 'Furiousa',
-					avatarURL:   'http://example.com/image',
-				},
-				meta: {}
+				text: 'hello',
+				context: 'fake-context',
+				author_id: 'fake-user-id',
+				author_type: 'customer'
+			} )
+		} )
+
+		it( 'should send messsage to customer', ( done ) => {
+			mockCustomers.once( 'send', ( { id, text, context, timestamp } ) => {
+				equal( id, 'fake-agent-message-id' )
+				equal( text, 'hello' )
+				equal( context, 'mock-user-context-id' )
+				ok( timestamp )
+				done()
+			} )
+			client.emit( 'message', {
+				id: 'fake-agent-message-id',
+				timestamp: ( new Date() ).getTime(),
+				text: 'hello',
+				context: 'mock-user-context-id',
+				user: {
+					id: 'agent-user-id',
+					displayName: 'HAL-4000',
+					avatarURL: 'http://example.com/image',
+					username: 'agent-username'
+				}
 			} )
 		} )
 	} )

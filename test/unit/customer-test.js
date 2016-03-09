@@ -5,7 +5,7 @@ import { contains, ok, equal, deepEqual } from '../assert'
 const debug = require( 'debug' )( 'tinkerchat:test:customer' )
 
 describe( 'Customer Service', () => {
-	let server, socket, client
+	let server, socket, client, customerEvents
 
 	beforeEach( () => {
 		( { server, socket, client } = mockIO() )
@@ -15,7 +15,7 @@ describe( 'Customer Service', () => {
 		const mockUser = { id: 'abdefgh', username: 'ridley', displayName: 'Ridley', avatarURL: 'http://example.com/image' }
 		beforeEach( ( next ) => {
 			client.on( 'init', () => next() )
-			customer( server, ( token, callback ) => callback( null, mockUser ) )
+			customerEvents = customer( server, ( token, callback ) => callback( null, mockUser ) )
 			server.emit( 'connection', socket )
 			client.emit( 'token', 'hello' )
 		} )
@@ -27,13 +27,20 @@ describe( 'Customer Service', () => {
 				ok( meta )
 				equal( text, 'hello world' )
 				deepEqual( user, {
-					id:          mockUser.id,
+					id: mockUser.id,
 					displayName: mockUser.displayName,
-					avatarURL:   mockUser.avatarURL
+					avatarURL: mockUser.avatarURL
 				} )
 				done()
 			} )
 			client.emit( 'message', { id: 'message-id', text: 'hello world' } )
+		} )
+
+		it( 'should receive message via event', ( done ) => {
+			server.once( 'fake-user.message', () => {
+				done()
+			} )
+			customerEvents.emit( 'send', { context: 'fake-user', text: 'hello', user: { id: 'fake-user-id' } } )
 		} )
 	} )
 
