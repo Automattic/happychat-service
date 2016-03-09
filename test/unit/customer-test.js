@@ -22,7 +22,7 @@ describe( 'Customer Service', () => {
 
 		it( 'should receive message and broadcast it', ( done ) => {
 			server.once( `${mockUser.id}.message`, ( { id, text, timestamp, user, meta } ) => {
-				ok( id )
+				equal( id, 'message-id' )
 				ok( timestamp )
 				ok( meta )
 				equal( text, 'hello world' )
@@ -33,7 +33,7 @@ describe( 'Customer Service', () => {
 				} )
 				done()
 			} )
-			client.emit( 'message', 'hello world' )
+			client.emit( 'message', { id: 'message-id', text: 'hello world' } )
 		} )
 	} )
 

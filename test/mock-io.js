@@ -24,6 +24,7 @@ export default () => {
 		socket.rooms = socket.rooms.concat( room )
 		process.nextTick( complete )
 	}
+	socket.close = () => {}
 
 	return { server, socket, client }
 }

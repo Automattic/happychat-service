@@ -4,8 +4,6 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-var _uuid = require('uuid');
-
 var _events = require('events');
 
 var debug = require('debug')('tinkerchat:customer');
@@ -30,6 +28,30 @@ var authenticate = function authenticate(authenticator, token) {
 	});
 };
 
+var init = function init(_ref2) {
+	var user = _ref2.user;
+	var socket = _ref2.socket;
+	var events = _ref2.events;
+	var io = _ref2.io;
+	return function () {
+		debug('user joined room', user.id);
+		socket.on('message', function (_ref3) {
+			var text = _ref3.text;
+			var id = _ref3.id;
+
+			var meta = {};
+			var userIdentity = identityForUser(user);
+			var message = { id: id, text: text, timestamp: timestamp(), user: userIdentity, meta: meta };
+			// all customer connections for this user receive the message
+			debug('broadcasting message', user.id, id, text);
+			io.to(user.id).emit('message', message);
+			events.emit('message', message);
+		});
+
+		socket.emit('init', user);
+	};
+};
+
 /**
   - `user`: (**required**) a JSON key/value object containing:
     - `id`: (**required**) the unique identifier for this user in the *Support Provider*'s system
@@ -38,31 +60,27 @@ var authenticate = function authenticate(authenticator, token) {
     - `avatarURL`: (**required**) URL to image to display as user's avatar
     - `tags`: Array of strings to identify the user (example: `['premium', 'expired']`)
  */
-var join = function join(_ref2) {
-	var user = _ref2.user;
-	var socket = _ref2.socket;
-	var events = _ref2.events;
+var join = function join(_ref4) {
+	var user = _ref4.user;
+	var socket = _ref4.socket;
+	var events = _ref4.events;
+	var io = _ref4.io;
 
 	debug('user joined', user.username, user.id);
-	var userIdentity = identityForUser(user);
-	socket.on('message', function (text) {
-		var meta = {};
-		var message = { id: (0, _uuid.v4)(), text: text, timestamp: timestamp(), user: userIdentity, meta: meta };
-		socket.emit('message', message);
-		events.emit('message', message);
-	});
 
-	socket.emit('init', user);
+	// user joins room based on their identifier
+	socket.join(user.id, init({ user: user, socket: socket, events: events, io: io }));
 };
 
-var onToken = function onToken(_ref3) {
-	var authenticator = _ref3.authenticator;
-	var socket = _ref3.socket;
-	var events = _ref3.events;
+var onToken = function onToken(_ref5) {
+	var authenticator = _ref5.authenticator;
+	var socket = _ref5.socket;
+	var events = _ref5.events;
+	var io = _ref5.io;
 	return function (token) {
 		debug('authenticating user');
 		authenticate(authenticator, token).then(function (user) {
-			return join({ user: user, socket: socket, events: events });
+			return join({ user: user, socket: socket, events: events, io: io });
 		}).catch(function (e) {
 			debug('unauthorized customer', e);
 			socket.emit('unauthorized');
@@ -71,11 +89,12 @@ var onToken = function onToken(_ref3) {
 	};
 };
 
-var onConnection = function onConnection(_ref4) {
-	var authenticator = _ref4.authenticator;
-	var events = _ref4.events;
+var onConnection = function onConnection(_ref6) {
+	var authenticator = _ref6.authenticator;
+	var events = _ref6.events;
+	var io = _ref6.io;
 	return function (socket) {
-		socket.on('token', onToken({ authenticator: authenticator, socket: socket, events: events }));
+		socket.on('token', onToken({ authenticator: authenticator, socket: socket, events: events, io: io }));
 		// ask connection for token
 		socket.emit('token');
 	};
@@ -83,6 +102,6 @@ var onConnection = function onConnection(_ref4) {
 
 exports.default = function (io, authenticator) {
 	var events = new _events.EventEmitter();
-	io.on('connection', onConnection({ authenticator: authenticator, events: events }));
+	io.on('connection', onConnection({ authenticator: authenticator, events: events, io: io }));
 	return events;
 };
