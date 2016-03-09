@@ -85,13 +85,19 @@ describe( 'Customer Service', () => {
 		client.emit( 'token', 'valid' )
 	} )
 
-	it( 'should notify user connected', ( done ) => {
+	it( 'should notify user join and leave', ( done ) => {
 		socket.id = 'socket-id'
 		let events = auth()
 		events.on( 'join', ( { id, socket_id } ) => {
 			equal( id, mockUser.id )
 			equal( socket_id, 'socket-id' )
-			done()
+
+			events.on( 'leave', ( { id: left_id, socket_id: left_socket_id } ) => {
+				equal( left_id, mockUser.id )
+				equal( left_socket_id, 'socket-id' )
+				done()
+			} )
+			client.emit( 'disconnect' )
 		} )
 	} )
 
