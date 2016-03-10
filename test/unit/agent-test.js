@@ -1,23 +1,21 @@
 import { ok, equal } from 'assert'
-import { EventEmitter } from 'events'
 import mockIO from '../mock-io'
 import agent from '../../lib/agent'
 
 const debug = require( 'debug' )( 'tinkerchat:test:agent' )
-const mockAuth = ( auth ) => auth( null, {} )
 
 describe( 'Agent Service', () => {
 	let server, socket, client, mockCustomers
 
 	beforeEach( () => {
 		( { server, socket, client } = mockIO() )
-		mockCustomers = new EventEmitter()
 	} )
 
 	describe( 'when authenticated', () => {
-		beforeEach( ( done ) => {
-			agent( server, { customers: mockCustomers, authenticator: mockAuth } )
-			client.on( 'init', () => done() )
+		let service
+		beforeEach( ( next ) => {
+			service = agent( server ).once( 'connection', ( _, auth ) => auth() )
+			client.on( 'init', () => next() )
 			server.emit( 'connection', socket )
 		} )
 
@@ -40,7 +38,7 @@ describe( 'Agent Service', () => {
 				equal( author_type, 'customer' )
 				done()
 			} )
-			mockCustomers.emit( 'receive', {
+			service.emit( 'receive', {
 				id: 'fake-message-id',
 				timestamp: ( new Date() ).getTime(),
 				text: 'hello',
@@ -51,7 +49,7 @@ describe( 'Agent Service', () => {
 		} )
 
 		it( 'should send messsage to customer', ( done ) => {
-			mockCustomers.once( 'send', ( { id, text, context, timestamp } ) => {
+			service.once( 'send', ( { id, text, context, timestamp } ) => {
 				equal( id, 'fake-agent-message-id' )
 				equal( text, 'hello' )
 				equal( context, 'mock-user-context-id' )
@@ -74,17 +72,14 @@ describe( 'Agent Service', () => {
 	} )
 
 	it( 'should initilize service', ( done ) => {
-		agent( server, { authenticator: mockAuth, customers: mockCustomers } )
+		agent( server ).once( 'connection', ( _socket, auth ) => auth() )
 
 		client.on( 'init', () => done() )
 		server.emit( 'connection', socket )
 	} )
 
 	it( 'should emit unauthenticated when failing authentication', ( done ) => {
-		agent( server, { authenticator: ( auth ) => {
-			debug( 'authenticating service' )
-			auth( new Error( 'nope' ) )
-		} } )
+		agent( server ).once( 'connection', ( _socket, auth ) => auth( new Error( 'nope' ) ) )
 		client.on( 'unauthorized', () => done() )
 		server.emit( 'connection', socket )
 	} )

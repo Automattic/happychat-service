@@ -1,5 +1,5 @@
 import { createServer } from 'http'
-import { fail } from 'assert'
+import { fail, equal } from 'assert'
 import service from '../../lib/service'
 import IO from 'socket.io-client'
 
@@ -8,45 +8,54 @@ const debug = require( 'debug' )( 'tinkerchat:test:integration' )
 describe( 'Service', () => {
 	let server = createServer()
 	let mockUser = {
-		id:          'fake-user-id',
+		id: 'fake-user-id',
 		displayName: 'Nasuicaä',
-		username:    'nausicaa',
-		avatarURL:   'http://example.com/nausicaa'
+		username: 'nausicaa',
+		avatarURL: 'http://example.com/nausicaa'
 	}
-	let customerAuthenticator = ( token, callback ) => {
-		debug( 'authorize client', token )
-		if ( token !== 'abcdefg' ) callback( new Error( 'invalid token' ) )
+	let botUser = {
+		id: 'imperator',
+		dispayName: 'Furiosa',
+		username: 'furiosa',
+		avatarURL: 'http://example.com/furiousa'
+	}
+	let customerAuthenticator = ( socket, callback ) => {
+		debug( 'authorize client' )
 		callback( null, mockUser )
 	}
-	let agentAuthenticator = ( callback ) => {
+	let agentAuthenticator = ( socket, callback ) => {
 		debug( 'authenticating agent' )
 		callback( null, {} )
 	}
 	service( server, { customerAuthenticator, agentAuthenticator } )
 
 	before( ( done ) => {
+		debug( 'listening' )
 		server.listen( 61616, () => done() )
 	} )
 
-	it( 'should connect a user', ( done ) => {
+	it( 'should allow agent to communicate with user', ( done ) => {
 		const client = new IO( 'http://localhost:61616/customer' )
 		const startAgent = () => {
 			const agent = new IO( 'http://localhost:61616/agent' )
-			agent.on( 'unauthorized', () => fail( 'failed to authorize agent' ) )
-			agent.on( 'init', () => {
-				// TODO: check for existing clients?
-				agent.on( 'message', ( msg ) => {
-					debug( 'message', msg )
-					done()
+			agent.once( 'unauthorized', () => fail( 'failed to authorize agent' ) )
+			agent.once( 'init', () => {
+				agent.once( 'message', ( { context, text, id } ) => {
+					equal( id, '12345' )
+					agent.emit( 'message', { id: '123456', context, text: `re: ${text}`, user: botUser } )
 				} )
-				client.emit( 'message', 'hello' )
+				client.once( 'message', ( { id } ) => {
+					equal( id, '12345' )
+					client.once( 'message', ( { id: next_id, text } ) => {
+						equal( next_id, '123456' )
+						equal( text, 're: hello' )
+						done()
+					} )
+				} )
+				client.emit( 'message', { text: 'hello', id: '12345' } )
 			} )
 		}
 
-		client.on( 'token', () => {
-			debug( 'token requested' )
-			client.emit( 'token', 'abcdefg' )
-		} )
 		client.on( 'init', () => startAgent() )
 		client.on( 'unauthorized', () => fail( 'failed to authorize client' ) )
 	} )

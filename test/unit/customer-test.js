@@ -4,15 +4,15 @@ import { contains, ok, equal, deepEqual } from '../assert'
 
 const debug = require( 'debug' )( 'tinkerchat:test:customer' )
 
-const authorizeAndInit = ( { client, server, socket, user} ) => ( next = () => {} ) => {
-	client.on( 'init', () => next() )
-	let events = customer( server, ( token, callback ) => callback( null, user ) )
-	process.nextTick( () => {
-		server.emit( 'connection', socket )
-		client.emit( 'token', 'hello' )
-	} )
-	return events
-}
+// const authorizeAndInit = ( { client, server, socket, user} ) => ( next = () => {} ) => {
+// 	client.on( 'init', () => next() )
+// 	let events = customer( server, ( token, callback ) => callback( null, user ) )
+// 	process.nextTick( () => {
+// 		server.emit( 'connection', socket )
+// 		client.emit( 'token', 'hello' )
+// 	} )
+// 	return events
+// }
 
 describe( 'Customer Service', () => {
 	let server, socket, client, customerEvents
@@ -20,7 +20,14 @@ describe( 'Customer Service', () => {
 	let auth
 	beforeEach( () => {
 		( { server, socket, client } = mockIO() )
-		auth = authorizeAndInit( { client, server, socket, user: mockUser } )
+		auth = ( next = () => {} ) => {
+			let events = customer( server ).on( 'connection', ( _socket, authUser ) => {
+				authUser( null, mockUser )
+				client.on( 'init', () => next() )
+			} )
+			server.emit( 'connection', socket )
+			return events
+		}
 	} )
 
 	describe( 'with authorized user', () => {
@@ -62,27 +69,26 @@ describe( 'Customer Service', () => {
 		ok( connected )
 	} )
 
-	it( 'should request a token', ( done ) => {
-		client.on( 'token', () => done() )
-
-		customer( server )
+	it( 'should emit connection', ( done ) => {
+		const customers = customer( server )
+		customers.on( 'connection', () => {
+			done()
+		} )
 		server.emit( 'connection', socket )
 	} )
 
 	it( 'should authenticate and init client', ( done ) => {
-		customer( server, ( token, callback ) => {
-			equal( typeof( callback ), 'function' )
-			equal( token, 'valid' )
-			client.once( 'init', () => {
-				debug( 'socket rooms', socket.rooms )
-				contains( socket.rooms, 'user1' )
-				done()
-			} )
-			callback( null, { id: 'user1', username: 'user1' } )
+		customer( server ).once( 'connection', ( _socket, authUser ) => {
+			authUser( null, { id: 'user1', username: 'user1' } )
+		} )
+
+		client.once( 'init', () => {
+			debug( 'socket rooms', socket.rooms )
+			contains( socket.rooms, 'user1' )
+			done()
 		} )
 
 		server.emit( 'connection', socket )
-		client.emit( 'token', 'valid' )
 	} )
 
 	it( 'should notify user join and leave', ( done ) => {
@@ -102,11 +108,8 @@ describe( 'Customer Service', () => {
 	} )
 
 	it( 'should fail to authenticate with invalid token', ( done ) => {
-		customer( server, ( token, callback ) => {
-			client.once( 'unauthorized', () => done() )
-			callback( new Error( 'Invalid token' ) )
-		} )
+		customer( server ).once( 'connection', ( _socket, authorize ) => authorize( new Error( 'nope' ) ) )
+		client.on( 'unauthorized', () => done() )
 		server.emit( 'connection', socket )
-		client.emit( 'token', 'invalid' )
 	} )
 } )
