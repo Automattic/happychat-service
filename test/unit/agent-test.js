@@ -5,7 +5,7 @@ import agent from '../../lib/agent'
 const debug = require( 'debug' )( 'tinkerchat:test:agent' )
 
 describe( 'Agent Service', () => {
-	let server, socket, client, mockCustomers
+	let server, socket, client
 
 	beforeEach( () => {
 		( { server, socket, client } = mockIO() )
@@ -49,13 +49,15 @@ describe( 'Agent Service', () => {
 		} )
 
 		it( 'should send messsage to customer', ( done ) => {
-			service.once( 'send', ( { id, text, context, timestamp } ) => {
+			service.once( 'message', ( { id, text, context, timestamp } ) => {
+				debug( 'help' )
 				equal( id, 'fake-agent-message-id' )
 				equal( text, 'hello' )
 				equal( context, 'mock-user-context-id' )
 				ok( timestamp )
 				done()
 			} )
+			debug( 'emitting client' )
 			client.emit( 'message', {
 				id: 'fake-agent-message-id',
 				timestamp: ( new Date() ).getTime(),

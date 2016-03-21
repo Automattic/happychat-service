@@ -55,7 +55,7 @@ describe( 'Customer Service', () => {
 			server.once( 'fake-user.message', () => {
 				done()
 			} )
-			customerEvents.emit( 'send', { context: 'fake-user', text: 'hello', user: { id: 'fake-user-id' } } )
+			customerEvents.emit( 'receive', { context: 'fake-user', text: 'hello', user: { id: 'fake-user-id' } } )
 		} )
 	} )
 
