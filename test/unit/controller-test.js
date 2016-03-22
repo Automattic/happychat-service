@@ -41,4 +41,17 @@ describe( 'Controller', () => {
 		// - `author_type`: One of `customer`, `support`, `agent`
 		agents.emit( 'message', { id: 'message-id', context: 'chat-id', timestamp: 12345, author_id: 'author' } )
 	} )
+
+	it( 'notifies agent when user joins', ( done ) => {
+		const user = { id: 'user-id', displayName: 'Furiosa' }
+		const socketIdentifier = { id: user.id, socketId: user.id }
+		agents.on( 'join', ( { id, socketId }, { id: user_id, displayName } ) => {
+			equal( id, 'user-id' )
+			equal( socketId, 'user-id' )
+			equal( user_id, 'user-id' )
+			equal( displayName, 'Furiosa' )
+			done()
+		} )
+		customers.emit( 'join', socketIdentifier, user )
+	} )
 } )
