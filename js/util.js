@@ -3,6 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+var debug = require('debug')('tinkerchat:util');
+
 var asCallback = function asCallback(_ref) {
 	var resolve = _ref.resolve;
 	var reject = _ref.reject;
@@ -21,7 +23,8 @@ var connect = function connect(_ref2) {
 };
 
 var rejectAndClose = function rejectAndClose(socket) {
-	return function () {
+	return function (e) {
+		debug('closing socket', e);
 		socket.emit('unauthorized');
 		socket.close();
 	};

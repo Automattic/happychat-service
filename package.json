@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "`npm bin`/mocha --compilers js:babel-register --recursive",
-    "build": "`npm bin`/babel -d js ./lib/"
+    "build": "babel -d js ./lib/"
   },
   "repository": {
     "type": "git",

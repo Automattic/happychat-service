@@ -30,6 +30,7 @@ var onAuthorized = function onAuthorized(_ref) {
 		});
 		socket.on('message', function (message) {
 			// TODO: validate message
+			debug('received message');
 			events.emit('message', message);
 		});
 		socket.emit('init', agent);
