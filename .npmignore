@@ -1,0 +1,7 @@
+src/
+test/
+.eslintrc
+.babelrc
+.travis.yml
+*.tgz
+.npmignore

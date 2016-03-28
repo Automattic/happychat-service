@@ -1,6 +1,6 @@
 import { createServer } from 'http'
 import { fail, equal } from 'assert'
-import service from '../../lib/service'
+import service from '../../src/service'
 import IO from 'socket.io-client'
 
 const debug = require( 'debug' )( 'tinkerchat:test:integration' )
