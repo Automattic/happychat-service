@@ -1,4 +1,4 @@
-import customer from '../../lib/customer'
+import customer from '../../src/customer'
 import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
 

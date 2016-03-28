@@ -1,6 +1,6 @@
 import { ok, equal } from 'assert'
 import mockIO from '../mock-io'
-import agent from '../../lib/agent'
+import agent from '../../src/agent'
 
 const debug = require( 'debug' )( 'tinkerchat:test:agent' )
 

@@ -1,6 +1,7 @@
-lib/
+src/
 test/
-.eslint
+.eslintrc
+.babelrc
 .travis.yml
 *.tgz
 .npmignore
