@@ -1,0 +1,6 @@
+lib/
+test/
+.eslint
+.travis.yml
+*.tgz
+.npmignore
