@@ -29,6 +29,7 @@ const onAuthorized = ( { socket, events } ) => ( agent ) => {
 
 export default ( io ) => {
 	const events = new EventEmitter()
+	events.io = io
 
 	events.on( 'receive', ( message ) => io.emit( 'message', message ) )
 
