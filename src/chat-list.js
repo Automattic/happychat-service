@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events'
 import { omit } from 'lodash/object'
+import { isEmpty } from 'lodash/lang'
 
 const debug = require( 'debug' )( 'tinkerchat:chat-list' )
 
@@ -34,6 +35,7 @@ export class ChatList extends EventEmitter {
 				this.operators.emit( 'assign', channelIdentity, ( error, operatorId ) => {
 					clearTimeout( timeout )
 					if ( error ) {
+						this._pending[ id ] = undefined
 						return reject( error )
 					}
 					return resolve( operatorId )
@@ -42,10 +44,23 @@ export class ChatList extends EventEmitter {
 
 			opened
 			.then( ( operator ) => {
-				// TODO: should operator be a socket?
+				debug( 'found operator', operator )
 				this._chats[ id ] = operator
 				this._pending = omit( this._pending, id )
 				this.emit( 'found', channelIdentity, operator )
+				operator.socket.once( 'disconnect', () => {
+					const room_name = `customers/${ id }`
+					this.operators.io.in( room_name ).clients( ( error, clients ) => {
+						if ( error ) {
+							return debug( 'Failed to query rooms', room_name )
+						}
+						if ( isEmpty( clients ) ) {
+							// TODO: attempt to find another operator?
+							debug( 'Chat is no longer managed', id )
+							this._chats = omit( this._chats, id )
+						}
+					} )
+				} )
 			} )
 			.catch( ( e ) => {
 				debug( 'failed to find operator', e )
@@ -53,14 +68,14 @@ export class ChatList extends EventEmitter {
 			} )
 		} )
 
-		.catch( ( e ) => debug( 'Failed to find chat', e ) )
+		.catch( ( e ) => debug( 'Failed to find chat', e, e.stack ) )
 	}
 
 	findChat( channelIdentity ) {
 		const { id } = channelIdentity
 		return new Promise( ( resolve ) => {
 			if ( this._pending[id] ) {
-				return resolve( this.pending[id] )
+				return resolve( this._pending[id] )
 			}
 
 			if ( this._chats[id] ) {

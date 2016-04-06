@@ -3,9 +3,9 @@ import { EventEmitter } from 'events'
 import { isFunction } from 'lodash/lang'
 
 import { ChatList } from '../../src/chat-list'
+import { tick } from '../tick'
 
 // for breaking out of the promise chain so errors are thrown to mocha
-const tick = ( fn ) => ( ... args ) => process.nextTick( () => fn( ... args ) )
 
 describe( 'ChatList', () => {
 	let chatlist
@@ -41,7 +41,7 @@ describe( 'ChatList', () => {
 
 	it( 'should move chat to active when operator found', ( done ) => {
 		operators.on( 'assign', tick( ( _, callback ) => {
-			callback( null, { id: 'operator-id' } )
+			callback( null, { id: 'operator-id', socket: new EventEmitter() } )
 		} ) )
 		chatlist.on( 'found', tick( ( { id }, operator ) => {
 			equal( id, 'chat-id' )

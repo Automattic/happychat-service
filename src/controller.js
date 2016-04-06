@@ -33,7 +33,7 @@ export default ( { customers, agents, operators } ) => {
 
 	chats
 	.on( 'miss', ( e, { id } ) => {
-		debug( 'failed to find operator', e, id )
+		debug( 'failed to find operator', e, id, e.stack )
 	} )
 	.on( 'open', ( { id } ) => {
 		debug( 'looking for operator', id )
