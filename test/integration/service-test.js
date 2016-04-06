@@ -27,7 +27,9 @@ describe( 'Service', () => {
 		debug( 'authenticating agent' )
 		callback( null, {} )
 	}
-	service( server, { customerAuthenticator, agentAuthenticator } )
+	let operatorAuthenticator = () => {
+	}
+	service( server, { customerAuthenticator, agentAuthenticator, operatorAuthenticator } )
 
 	before( ( done ) => {
 		debug( 'listening' )
