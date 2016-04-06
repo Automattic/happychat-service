@@ -29,7 +29,7 @@ describe( 'ChatList', () => {
 	} )
 
 	it( 'should emit open request to operators', ( done ) => {
-		operators.on( 'open', tick( ( { id }, callback ) => {
+		operators.on( 'assign', tick( ( { id }, callback ) => {
 			// chat is now pending an operator
 			ok( chatlist._pending['chat-id'] )
 			equal( id, 'chat-id' )
@@ -40,7 +40,7 @@ describe( 'ChatList', () => {
 	} )
 
 	it( 'should move chat to active when operator found', ( done ) => {
-		operators.on( 'open', tick( ( _, callback ) => {
+		operators.on( 'assign', tick( ( _, callback ) => {
 			callback( null, { id: 'operator-id' } )
 		} ) )
 		chatlist.on( 'found', tick( ( { id }, operator ) => {

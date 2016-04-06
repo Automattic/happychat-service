@@ -31,7 +31,7 @@ export class ChatList extends EventEmitter {
 			this._pending[ id ] = channelIdentity
 			const opened = new Promise( ( resolve, reject ) => {
 				const timeout = setTimeout( () => reject( new Error( 'timeout: failed to find operator' ) ), this._timeout )
-				this.operators.emit( 'open', channelIdentity, ( error, operatorId ) => {
+				this.operators.emit( 'assign', channelIdentity, ( error, operatorId ) => {
 					clearTimeout( timeout )
 					if ( error ) {
 						return reject( error )
