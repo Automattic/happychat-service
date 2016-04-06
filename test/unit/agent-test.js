@@ -29,7 +29,7 @@ describe( 'Agent Service', () => {
   - `author_id`: the id of the author of the message
   - `author_type`: One of `customer`, `support`, `agent`
 		 */
-			client.on( 'message', ( { id, timestamp, text, context, author_id, author_type } ) => {
+			server.on( 'message', ( { id, timestamp, text, context, author_id, author_type } ) => {
 				equal( id, 'fake-message-id' )
 				ok( timestamp )
 				equal( text, 'hello' )
