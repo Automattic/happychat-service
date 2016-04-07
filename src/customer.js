@@ -1,14 +1,10 @@
 import { EventEmitter } from 'events'
-import { onConnection } from './util'
+import { onConnection, timestamp } from './util'
 
 const debug = require( 'debug' )( 'tinkerchat:customer' )
 
 const identityForUser = ( { id, displayName, avatarURL } ) => (
 	{ id, displayName, avatarURL }
-)
-
-const timestamp = () => (
-	Math.ceil( ( new Date() ).getTime() / 1000 )
 )
 
 /**
@@ -27,10 +23,9 @@ const init = ( { user, socket, events, io } ) => () => {
 	socket.on( 'message', ( { text, id } ) => {
 		const meta = {}
 		const userIdentity = identityForUser( user )
-		const message = { id: id, text, timestamp: timestamp(), user: userIdentity, meta }
+		const message = { context: user.id, id: id, text, timestamp: timestamp(), user: userIdentity, meta }
 		// all customer connections for this user receive the message
-		debug( 'broadcasting message', user.id, id, text )
-		io.to( user.id ).emit( 'message', message )
+		// io.to( user.id ).emit( 'message', message )
 		events.emit( 'message', user, message )
 	} )
 
@@ -48,10 +43,11 @@ const join = ( { events, io, user, socket } ) => {
 
 export default ( io ) => {
 	const events = new EventEmitter()
+	events.io = io
 
-	events.on( 'receive', ( message ) => {
-		let { context } = message
-		io.to( context ).emit( 'message', message )
+	events.on( 'receive', ( user, message ) => {
+		debug( 'sendding message to customer', user, message )
+		io.to( user.id ).emit( 'message', message )
 	} )
 	io.on( 'connection', ( socket ) => {
 		debug( 'customer connecting' )

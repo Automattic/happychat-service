@@ -15,17 +15,23 @@ const onAuthorized = ( { socket, events } ) => ( agent ) => {
   - `author_id`: the id of the author of the message
   - `author_type`: One of `customer`, `support`, `agent`
 	 */
-	events.on( 'receive', ( message ) => socket.emit( 'message', message ) )
 	socket.on( 'message', ( message ) => {
 		// TODO: validate message
 		debug( 'received message' )
 		events.emit( 'message', message )
+	} )
+	socket.on( 'role.add', ( role, done ) => {
+		debug( 'agent joining role', role )
+		socket.join( role, done )
 	} )
 	socket.emit( 'init', agent )
 }
 
 export default ( io ) => {
 	const events = new EventEmitter()
+	events.io = io
+
+	events.on( 'receive', ( message ) => io.emit( 'message', message ) )
 
 	io.on( 'connection', ( socket ) => {
 		debug( 'connection' )

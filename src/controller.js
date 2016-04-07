@@ -1,3 +1,8 @@
+import { isFunction } from 'lodash/lang'
+import { assign } from 'lodash/object'
+
+import { ChatList } from './chat-list'
+
 const debug = require( 'debug' )( 'tinkerchat:controller' )
 
 // change a lib/customer message to what an agent client expects
@@ -8,26 +13,75 @@ const formatAgentMessage = ( author_type, author_id, context, { id, timestamp, t
 	author_type
 } )
 
-const forward = ( dest ) => ( org, event, dstEvent ) => {
-	org.on( event, ( ... args ) => dest.emit( dstEvent ? dstEvent : event, ... args ) )
+const pure = ( ... args ) => args
+
+const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
+	if ( isFunction( dstEvent ) ) {
+		mapArgs = dstEvent
+		dstEvent = event
+	}
+	if ( !dstEvent ) {
+		dstEvent = event
+	}
+	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
 }
 
-const on = ( emitter, event, listener ) => emitter.on( event, listener )
-
-export default ( { customers, agents } ) => {
+export default ( { customers, agents, operators } ) => {
 	const toAgents = forward( agents )
+	const chats = new ChatList( { customers, operators } )
 
-	on( customers, 'message', ( { id }, message ) => {
-		debug( 'received customer message', message )
-		agents.emit( 'receive', formatAgentMessage( 'customer', id, id, message ) )
+	chats
+	.on( 'miss', ( e, { id } ) => {
+		debug( 'failed to find operator', e, id, e.stack )
+	} )
+	.on( 'open', ( { id } ) => {
+		debug( 'looking for operator', id )
+	} )
+	.on( 'found', ( channel, operator ) => {
+		debug( 'found operator', channel.id, operator.id )
 	} )
 
-	// forward customer join and leave events to agents
 	toAgents( customers, 'join', 'customer.join' )
 	toAgents( customers, 'leave', 'customer.leave' )
 
-	on( agents, 'message', ( message ) => {
-		debug( 'received agent message', message )
-		customers.emit( 'receive', Object.assign( {}, { author_type: 'agent' }, message ) )
+	customers.on( 'message', ( chat, message ) => {
+		// broadcast the message to
+		// - agents
+		agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, message ) )
+		// - customers
+		customers.emit( 'receive', chat, message )
+		// - operators
+		operators.emit( 'receive', chat, message )
 	} )
+
+	operators.on( 'message', ( chat, user, message ) => {
+		debug( 'operator message', chat, message )
+		agents.emit( 'receive', formatAgentMessage( 'operator', message.user.id, chat.id, message ) )
+		operators.emit( 'receive', chat, message )
+		customers.emit( 'receive', chat, message )
+		// - customers
+	} )
+
+	agents.on( 'message', ( message ) => {
+		// broadcast the message to
+		// - agents
+		agents.emit( 'receive', assign( {}, { author_type: 'agent' }, message ) )
+		// - operators
+		operators.emit( 'receive', { id: message.context }, assign( {}, { author_type: 'agent' }, message ) )
+		// - customers
+		customers.emit( 'receive', { id: message.context }, assign( {}, { author_type: 'agent' }, message ) )
+	} )
+
+	// TODO: Operator message -> Customers
+	// toCustomers( operators, 'message', 'receive', ( chat, user, message ) => {
+	// 	debug( 'message context', chat.id )
+	// 	return [Object.assign( {}, { author_type: 'operator', context: chat.id }, message )]
+	// } )
+
+	// TODO: Operator message -> Agents
+	// toAgents( operators, 'message', 'receive', ( { id }, user, message ) => {
+	// 	debug( 'format agent message', message )
+	// 	return [ formatAgentMessage( 'operator', message.user.id, id, message ) ]
+	// } )
 }
+
