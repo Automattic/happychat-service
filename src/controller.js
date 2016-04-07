@@ -54,7 +54,8 @@ export default ( { customers, agents, operators } ) => {
 		operators.emit( 'receive', chat, message )
 	} )
 
-	operators.on( 'message', ( chat, message ) => {
+	operators.on( 'message', ( chat, user, message ) => {
+		debug( 'operator message', chat, message )
 		agents.emit( 'receive', formatAgentMessage( 'operator', message.user.id, chat.id, message ) )
 		operators.emit( 'receive', chat, message )
 		customers.emit( 'receive', chat, message )

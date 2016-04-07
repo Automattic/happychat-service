@@ -125,7 +125,7 @@ describe( 'Controller', () => {
 				equal( message.id, 'message-id' )
 				done()
 			} )
-			operators.emit( 'message', { id: 'chat-id' }, { id: 'message-id', user: mockUser } )
+			operators.emit( 'message', { id: 'chat-id' }, mockUser, { id: 'message-id', user: mockUser } )
 		} )
 
 		it( 'should notify agents', ( done ) => {
@@ -137,7 +137,7 @@ describe( 'Controller', () => {
 				equal( timestamp, 12345 )
 				done()
 			} )
-			operators.emit( 'message', { id: 'chat-id' }, { id: 'message-id', user: mockUser, timestamp: 12345 } )
+			operators.emit( 'message', { id: 'chat-id' }, mockUser, { id: 'message-id', user: mockUser, timestamp: 12345 } )
 		} )
 
 		it( 'should notify customers', ( done ) => {
@@ -146,7 +146,7 @@ describe( 'Controller', () => {
 				equal( message.id, 'message-id' )
 				done()
 			} )
-			operators.emit( 'message', { id: 'chat-id' }, { id: 'message-id', user: mockUser, timestamp: 12345 } )
+			operators.emit( 'message', { id: 'chat-id' }, mockUser, { id: 'message-id', user: mockUser, timestamp: 12345 } )
 		} )
 	} )
 } )
