@@ -46,9 +46,8 @@ export default ( io ) => {
 	events.io = io
 
 	events.on( 'receive', ( user, message ) => {
-		let { context } = message
-		debug( 'sendding message to customer', user, context, message )
-		io.to( context ).emit( 'message', message )
+		debug( 'sendding message to customer', user, message )
+		io.to( user.id ).emit( 'message', message )
 	} )
 	io.on( 'connection', ( socket ) => {
 		debug( 'customer connecting' )
