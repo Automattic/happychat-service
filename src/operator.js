@@ -1,5 +1,5 @@
 import EventEmitter from 'events'
-import { onConnection } from './util'
+import { onConnection, timestamp } from './util'
 import { parallel } from 'async'
 import { isEmpty } from 'lodash/lang'
 import { assign } from 'lodash/object'
@@ -17,8 +17,13 @@ const withTimeout = ( fn, onError = throwTimeout, ms = DEFAULT_TIMEOUT ) => {
 	fn( () => clearTimeout( timeout ) )
 }
 
+const identityForUser = ( { id, displayName, avatarURL } ) => (
+	{ id, displayName, avatarURL }
+)
+
 const join = ( { socket, events, user, io } ) => {
 	// TODO: initialize the agent
+	const user_room = `operators/${user.id}`
 	debug( 'initialize the operator', user )
 	socket.on( 'status', ( status, done ) => {
 		debug( 'set operator status', status )
@@ -29,8 +34,19 @@ const join = ( { socket, events, user, io } ) => {
 			socket.leave( 'online', done )
 		}
 	} )
-	socket.join( `operators/${user.id}`, () => {
+
+	socket.join( user_room, () => {
 		socket.emit( 'init', user )
+	} )
+
+	socket.on( 'message', ( chat_id, { id, text } ) => {
+		const meta = {}
+		const userIdentity = identityForUser( user )
+		debug( 'Identify user', user )
+		const message = { id: id, text, timestamp: timestamp(), user: userIdentity, meta }
+		// all customer connections for this user receive the message
+		debug( 'broadcasting message', user.id, id, message )
+		events.emit( 'message', { id: chat_id }, user, message )
 	} )
 
 	socket.on( 'disconnect', () => {
@@ -42,6 +58,11 @@ export default ( io ) => {
 	const events = new EventEmitter()
 
 	events.io = io
+
+	events.on( 'receive', ( { id }, message ) => {
+		const room_name = `customers/${ id }`
+		io.in( room_name ).emit( 'chat.message', { id }, message )
+	} )
 
 	events.on( 'assign', ( chat, callback ) => {
 		// find an operator

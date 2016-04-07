@@ -43,18 +43,18 @@ describe( 'Service', () => {
 			agent.once( 'unauthorized', () => fail( 'failed to authorize agent' ) )
 			agent.once( 'init', () => {
 				agent.once( 'message', ( { context, text, id } ) => {
-					equal( id, '12345' )
-					agent.emit( 'message', { id: '123456', context, text: `re: ${text}`, user: botUser } )
+					equal( id, 'message-1' )
+					agent.emit( 'message', { id: 'message-2', context, text: `re: ${text}`, user: botUser } )
 				} )
 				client.once( 'message', ( { id } ) => {
-					equal( id, '12345' )
+					equal( id, 'message-1' )
 					client.once( 'message', ( { id: next_id, text } ) => {
-						equal( next_id, '123456' )
+						equal( next_id, 'message-2' )
 						equal( text, 're: hello' )
 						done()
 					} )
 				} )
-				client.emit( 'message', { text: 'hello', id: '12345' } )
+				client.emit( 'message', { text: 'hello', id: 'message-1' } )
 			} )
 		}
 

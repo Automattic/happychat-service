@@ -15,4 +15,8 @@ const rejectAndClose = ( socket ) => ( e ) => {
 	socket.close()
 }
 
+export const timestamp = () => (
+	Math.ceil( ( new Date() ).getTime() / 1000 )
+)
+
 export const onConnection = ( { events, socket } ) => ( success ) => connect( { events, socket } ).then( success, rejectAndClose( socket ) )

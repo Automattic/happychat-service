@@ -8,13 +8,15 @@ const noop = () => {}
 export default ( socketid ) => {
 	const server = new EventEmitter()
 
+	server.rooms = {}
+
 	server.to = ( room ) => ( {
-		emit: ( name, ... args ) => {
-			server.emit( `${room}.${name}`, ... args )
+		emit: ( ... args ) => {
+			get( server.rooms, room, [] ).forEach( ( socket ) => {
+				socket.emit( ... args )
+			} )
 		}
 	} )
-
-	server.rooms = {}
 
 	server.in = ( room ) => {
 		const sockets = get( server.rooms, room, [] )

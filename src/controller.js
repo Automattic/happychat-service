@@ -1,4 +1,5 @@
 import { isFunction } from 'lodash/lang'
+import { assign } from 'lodash/object'
 
 import { ChatList } from './chat-list'
 
@@ -25,8 +26,6 @@ const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
 	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
 }
 
-const on = ( emitter, event, listener ) => emitter.on( event, listener )
-
 export default ( { customers, agents, operators } ) => {
 	const toAgents = forward( agents )
 	const chats = new ChatList( { customers, operators } )
@@ -42,15 +41,46 @@ export default ( { customers, agents, operators } ) => {
 		debug( 'found operator', channel.id, operator.id )
 	} )
 
-	// forward customer join and leave events to agents
-	toAgents( customers, 'message', 'receive', ( { id }, message ) => {
-		return [ formatAgentMessage( 'customer', id, id, message ) ]
-	} )
 	toAgents( customers, 'join', 'customer.join' )
 	toAgents( customers, 'leave', 'customer.leave' )
 
-	on( agents, 'message', ( message ) => {
-		customers.emit( 'receive', Object.assign( {}, { author_type: 'agent' }, message ) )
+	customers.on( 'message', ( chat, message ) => {
+		// broadcast the message to
+		// - agents
+		agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, message ) )
+		// - customers
+		customers.emit( 'receive', chat, message )
+		// - operators
+		operators.emit( 'receive', chat, message )
 	} )
+
+	operators.on( 'message', ( chat, message ) => {
+		agents.emit( 'receive', formatAgentMessage( 'operator', message.user.id, chat.id, message ) )
+		operators.emit( 'receive', chat, message )
+		customers.emit( 'receive', chat, message )
+		// - customers
+	} )
+
+	agents.on( 'message', ( message ) => {
+		// broadcast the message to
+		// - agents
+		agents.emit( 'receive', assign( {}, { author_type: 'agent' }, message ) )
+		// - operators
+		operators.emit( 'receive', { id: message.context }, assign( {}, { author_type: 'agent' }, message ) )
+		// - customers
+		customers.emit( 'receive', { id: message.context }, assign( {}, { author_type: 'agent' }, message ) )
+	} )
+
+	// TODO: Operator message -> Customers
+	// toCustomers( operators, 'message', 'receive', ( chat, user, message ) => {
+	// 	debug( 'message context', chat.id )
+	// 	return [Object.assign( {}, { author_type: 'operator', context: chat.id }, message )]
+	// } )
+
+	// TODO: Operator message -> Agents
+	// toAgents( operators, 'message', 'receive', ( { id }, user, message ) => {
+	// 	debug( 'format agent message', message )
+	// 	return [ formatAgentMessage( 'operator', message.user.id, id, message ) ]
+	// } )
 }
 

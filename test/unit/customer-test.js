@@ -4,16 +4,6 @@ import { contains, ok, equal, deepEqual } from '../assert'
 
 const debug = require( 'debug' )( 'tinkerchat:test:customer' )
 
-// const authorizeAndInit = ( { client, server, socket, user} ) => ( next = () => {} ) => {
-// 	client.on( 'init', () => next() )
-// 	let events = customer( server, ( token, callback ) => callback( null, user ) )
-// 	process.nextTick( () => {
-// 		server.emit( 'connection', socket )
-// 		client.emit( 'token', 'hello' )
-// 	} )
-// 	return events
-// }
-
 describe( 'Customer Service', () => {
 	let server, socket, client, customerEvents
 	const mockUser = { id: 'abdefgh', username: 'ridley', displayName: 'Ridley', avatarURL: 'http://example.com/image' }
@@ -36,11 +26,13 @@ describe( 'Customer Service', () => {
 		} )
 
 		it( 'should receive message and broadcast it', ( done ) => {
-			server.once( `${mockUser.id}.message`, ( { id, text, timestamp, user, meta } ) => {
+			customerEvents.once( 'message', ( chat, { id, text, timestamp, user, meta, context } ) => {
+				equal( chat.id, mockUser.id )
+				equal( chat.id, context )
 				equal( id, 'message-id' )
+				equal( text, 'hello world' )
 				ok( timestamp )
 				ok( meta )
-				equal( text, 'hello world' )
 				deepEqual( user, {
 					id: mockUser.id,
 					displayName: mockUser.displayName,
@@ -52,10 +44,11 @@ describe( 'Customer Service', () => {
 		} )
 
 		it( 'should receive message via event', ( done ) => {
-			server.once( 'fake-user.message', () => {
+			client.once( 'message', ( message ) => {
+				equal( message.text, 'hello' )
 				done()
 			} )
-			customerEvents.emit( 'receive', { context: 'fake-user', text: 'hello', user: { id: 'fake-user-id' } } )
+			customerEvents.emit( 'receive', { id: mockUser.id }, { context: mockUser.id, text: 'hello', user: mockUser } )
 		} )
 	} )
 
