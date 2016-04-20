@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events'
-import { omit } from 'lodash/object'
+import { omit, omitBy, forIn } from 'lodash/object'
+import { find, every } from 'lodash/collection'
 import { isEmpty } from 'lodash/lang'
 
 const debug = require( 'debug' )( 'tinkerchat:chat-list' )
@@ -10,6 +11,7 @@ export class ChatList extends EventEmitter {
 		super()
 		this._chats = {}
 		this._pending = {}
+		this._abandoned = {}
 
 		this._timeout = timeout
 		this.customers = customers
@@ -17,6 +19,25 @@ export class ChatList extends EventEmitter {
 
 		customers.on( 'message', ( ... args ) => {
 			this.onCustomerMessage( ... args )
+		} )
+		operators.on( 'init', ( operator ) => {
+			this.onOperatorConnected( operator )
+		} )
+	}
+
+	onOperatorConnected( { id, socket } ) {
+		// find all chats abandoned by operator and re-assign them
+		this.findAbandonedChats( id )
+		.then( ( chats ) => {
+			socket.emit( 'chats', chats, () => {
+				this._abandoned = omitBy( this._abandoned, ( { operator, channel } ) => {
+					return find( chats, ( { id: channel_id } ) => channel_id === channel.id )
+				} )
+				every( chats, ( { id: chat_id } ) => this._chats[chat_id] = id )
+			} )
+		} )
+		.catch( ( e ) => {
+			debug( 'failed to search chats', e )
 		} )
 	}
 
@@ -58,6 +79,7 @@ export class ChatList extends EventEmitter {
 							// TODO: attempt to find another operator?
 							debug( 'Chat is no longer managed', id )
 							this._chats = omit( this._chats, id )
+							this._abandoned[id] = { operator: operator.id, channel: channelIdentity }
 						}
 					} )
 				} )
@@ -83,6 +105,18 @@ export class ChatList extends EventEmitter {
 			}
 
 			resolve()
+		} )
+	}
+
+	findAbandonedChats( operator_id ) {
+		return new Promise( ( resolve ) => {
+			var chats = []
+			forIn( this._abandoned, ( { operator, channel } ) => {
+				if ( operator === operator_id ) {
+					chats.push( channel )
+				}
+			} )
+			resolve( chats )
 		} )
 	}
 }

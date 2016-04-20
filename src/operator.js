@@ -37,6 +37,7 @@ const join = ( { socket, events, user, io } ) => {
 
 	socket.join( user_room, () => {
 		socket.emit( 'init', user )
+		events.emit( 'init', user )
 	} )
 
 	socket.on( 'message', ( chat_id, { id, text } ) => {

@@ -36,6 +36,10 @@ describe( 'Service', () => {
 		server.listen( 61616, () => done() )
 	} )
 
+	after( () => {
+		server.close()
+	} )
+
 	it( 'should allow agent to communicate with user', ( done ) => {
 		const client = new IO( 'http://localhost:61616/customer' )
 		const startAgent = () => {
