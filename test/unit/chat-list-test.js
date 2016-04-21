@@ -24,7 +24,7 @@ describe( 'ChatList', () => {
 	beforeEach( () => {
 		operators = mockServer()
 		customers = mockServer()
-		chatlist = new ChatList( { operators, customers, timeout: 200 } )
+		chatlist = new ChatList( { operators, customers, timeout: 30 } )
 	} )
 
 	it( 'should notify when new chat has started', ( done ) => {
