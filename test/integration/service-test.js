@@ -1,5 +1,5 @@
 import { createServer } from 'http'
-import { fail, equal } from 'assert'
+import { equal } from 'assert'
 import service from '../../src/service'
 import IO from 'socket.io-client'
 
@@ -31,38 +31,45 @@ describe( 'Service', () => {
 	}
 	service( server, { customerAuthenticator, agentAuthenticator, operatorAuthenticator } )
 
-	before( ( done ) => {
-		debug( 'listening' )
-		server.listen( 61616, () => done() )
-	} )
-
-	after( () => {
-		server.close()
-	} )
-
-	it( 'should allow agent to communicate with user', ( done ) => {
+	const initClient = () => new Promise( ( resolve, reject ) => {
 		const client = new IO( 'http://localhost:61616/customer' )
-		const startAgent = () => {
-			const agent = new IO( 'http://localhost:61616/agent' )
-			agent.once( 'unauthorized', () => fail( 'failed to authorize agent' ) )
-			agent.once( 'init', () => {
-				agent.once( 'message', ( { context, text, id } ) => {
-					equal( id, 'message-1' )
-					agent.emit( 'message', { id: 'message-2', context, text: `re: ${text}`, user: botUser } )
-				} )
-				client.once( 'message', ( { id } ) => {
-					equal( id, 'message-1' )
-					client.once( 'message', ( { id: next_id, text } ) => {
-						equal( next_id, 'message-2' )
-						equal( text, 're: hello' )
-						done()
-					} )
-				} )
-				client.emit( 'message', { text: 'hello', id: 'message-1' } )
-			} )
-		}
-
-		client.on( 'init', () => startAgent() )
-		client.on( 'unauthorized', () => fail( 'failed to authorize client' ) )
+		client.once( 'init', () => resolve( client ) )
+		client.once( 'unauthorized', reject )
 	} )
+
+	const startAgent = () => new Promise( ( resolve, reject ) => {
+		const agent = new IO( 'http://localhost:61616/agent' )
+		agent.once( 'unauthorized', reject )
+		agent.once( 'init', () => resolve( agent ) )
+	} )
+
+	const initClientAndAgent = () => new Promise( ( resolve, reject ) => {
+		initClient().then( ( client ) => startAgent().then( ( agent ) => {
+			resolve( { client, agent } )
+		} ) )
+		.catch( reject )
+	} )
+
+	before( ( done ) => server.listen( 61616, done ) )
+	after( () => server.close() )
+
+	it( 'should allow agent to communicate with user', () => initClientAndAgent().then(
+		( { client, agent } ) => new Promise( ( resolve, reject ) => {
+			agent.once( 'message', ( { context, text, id } ) => {
+				equal( id, 'message-1' )
+				agent.emit( 'message', { id: 'message-2', context, text: `re: ${text}`, user: botUser } )
+			} )
+			client.once( 'message', ( { id } ) => {
+				equal( id, 'message-1' )
+				client.once( 'message', ( { id: next_id, text } ) => {
+					equal( next_id, 'message-2' )
+					equal( text, 're: hello' )
+					client.close()
+					agent.close()
+					resolve()
+				} )
+			} )
+			client.emit( 'message', { text: 'hello', id: 'message-1' } )
+		} )
+	) )
 } )
