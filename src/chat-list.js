@@ -9,11 +9,16 @@ export class ChatList extends EventEmitter {
 
 	constructor( { customers, operators, timeout = 1000 } ) {
 		super()
+
+		// chat state management
 		this._chats = {}
 		this._pending = {}
 		this._abandoned = {}
 
+		// Default timeout for querying operator clients for information
 		this._timeout = timeout
+
+		// event and io for customer and operator connections
 		this.customers = customers
 		this.operators = operators
 
