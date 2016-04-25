@@ -1,9 +1,11 @@
 import { EventEmitter } from 'events'
 
-import { get, assign, keys } from 'lodash/object'
+import { get, assign } from 'lodash/object'
 
 const debug = require( 'debug' )( 'tinkerchat:mockio' )
 const noop = () => {}
+
+var COUNTER = 0
 
 export default ( socketid ) => {
 	const server = new EventEmitter()
@@ -41,7 +43,9 @@ export default ( socketid ) => {
 		process.nextTick( () => server.emit( 'connection', socket ) )
 	}
 
-	server.newClient = ( id = 'socket-io-id' ) => {
+	server.newClient = ( id ) => {
+		if ( id === undefined ) id = `socket-io-id-${ COUNTER }`
+		COUNTER ++
 		const client = new EventEmitter()
 		const socket = new EventEmitter()
 
@@ -67,7 +71,7 @@ export default ( socketid ) => {
 		return { socket, client }
 	}
 
-	server.connectNewClient = ( id = `socket-io-id ${ keys( server.connections ).count }`, next = noop ) => {
+	server.connectNewClient = ( id, next = noop ) => {
 		const connection = server.newClient( id )
 		const { socket } = connection
 		server.once( 'connection', next )
