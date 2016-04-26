@@ -40,6 +40,9 @@ export default ( { customers, agents, operators } ) => {
 	.on( 'found', ( channel, operator ) => {
 		debug( 'found operator', channel.id, operator.id )
 	} )
+	.on( 'chat.status', ( status, chat ) => {
+		debug( 'chats status changed', status, chat.id )
+	} )
 
 	toAgents( customers, 'join', 'customer.join' )
 	toAgents( customers, 'leave', 'customer.leave' )
@@ -71,17 +74,5 @@ export default ( { customers, agents, operators } ) => {
 		// - customers
 		customers.emit( 'receive', { id: message.context }, assign( {}, { author_type: 'agent' }, message ) )
 	} )
-
-	// TODO: Operator message -> Customers
-	// toCustomers( operators, 'message', 'receive', ( chat, user, message ) => {
-	// 	debug( 'message context', chat.id )
-	// 	return [Object.assign( {}, { author_type: 'operator', context: chat.id }, message )]
-	// } )
-
-	// TODO: Operator message -> Agents
-	// toAgents( operators, 'message', 'receive', ( { id }, user, message ) => {
-	// 	debug( 'format agent message', message )
-	// 	return [ formatAgentMessage( 'operator', message.user.id, id, message ) ]
-	// } )
 }
 

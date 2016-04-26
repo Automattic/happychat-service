@@ -86,6 +86,10 @@ const queryOnline = ( io, timeout ) => online( io ).then( ( clients ) => new Pro
 	parallel( map( clients, ( client_id ) => ( complete ) => {
 		const client = io.connected[client_id]
 		withTimeout( ( cancel ) => {
+			if ( !client ) {
+				cancel()
+				return complete( null, null )
+			}
 			client.emit( 'identify', ( identity ) => {
 				cancel()
 				complete( null, identity )
@@ -111,10 +115,9 @@ const all = ( ... fns ) => ( ... args ) => forEach( fns, ( fn ) => fn( ... args 
 const emitOnline = throttle( ( io ) => {
 	// when a socket disconnects, query the online room for connected operators
 	queryOnline( io ).then( ( identities ) => {
-		debug( 'emitOnline called', identities )
 		io.emit( 'operators.online', reduceUniqueOperators( identities ) )
 	} )
-	.catch( ( e ) => debug( 'failed to query online', e ) )
+	.catch( ( e ) => debug( 'failed to query online', e, e.stack ) )
 }, 100 )
 
 const join = ( { socket, events, user, io } ) => {
@@ -131,7 +134,13 @@ const join = ( { socket, events, user, io } ) => {
 		}
 	} )
 
-	socket.on( 'disconnect', () => emitOnline() )
+	socket.on( 'disconnect', () => {
+		emitOnline( io )
+		io.in( user_room ).clients( ( error, clients ) => {
+			debug( 'clients?', clients.length )
+			events.emit( 'leave', user )
+		} )
+	} )
 
 	socket.join( user_room, () => {
 		socket.emit( 'init', user )
@@ -168,6 +177,7 @@ const assignChat = ( { io, operator, chat, room } ) => new Promise( ( resolve, r
 			if ( e ) {
 				reject( e )
 			}
+			debug( 'Assigning chat: (chat.open)', chat )
 			io.in( operator_room_name ).emit( 'chat.open', chat )
 			resolve( operator )
 		} )
@@ -187,6 +197,7 @@ export default ( io ) => {
 	events.on( 'recover', ( { user }, chats, callback ) => {
 		parallel( map( chats, ( chat ) => ( complete ) => {
 			const room = `customers/${ chat.id }`
+			debug( 'Recover chats: ', room )
 			assignChat( { io, operator: user, chat, room } ).then( () => complete( null ), complete )
 		} ), ( e ) => {
 			if ( e ) {

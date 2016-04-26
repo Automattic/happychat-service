@@ -3,7 +3,6 @@ import operator from '../../src/operator'
 import mockio from '../mock-io'
 import { tick } from '../tick'
 import { map } from 'lodash/collection'
-import { isEmpty } from 'lodash/lang'
 
 const debug = require( 'debug' )( 'tinkerchat:test:operators' )
 
@@ -17,7 +16,7 @@ describe( 'Operators', () => {
 		debug( 'connect operator', authUser )
 		operators.once( 'connection', ( _, callback ) => callback( null, authUser ) )
 		useClient.once( 'init', ( clientUser ) => {
-			useClient.emit( 'status', 'online', () => resolve( clientUser ) )
+			useClient.emit( 'status', 'online', () => resolve( { user: clientUser, client: useClient, socket: useSocket } ) )
 		} )
 		server.connect( useSocket )
 	} )
@@ -31,7 +30,7 @@ describe( 'Operators', () => {
 		var op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var' }
 		beforeEach( ( done ) => {
 			connectOperator( { socket, client }, op )
-			.then( ( operatorUser ) => {
+			.then( ( { user: operatorUser } ) => {
 				user = operatorUser
 				done()
 			} )
@@ -42,6 +41,14 @@ describe( 'Operators', () => {
 				equal( operators.io.rooms['customers/something'].length, 1 )
 				done()
 			} ) )
+		} )
+
+		it( 'should emit leave event when last operator socket disconnects', ( done ) => {
+			operators.on( 'leave', tick( ( { id } ) => {
+				equal( id, op.id )
+				done()
+			} ) )
+			server.disconnect( { socket, client } )
 		} )
 
 		it( 'should emit message', ( done ) => {
@@ -122,5 +129,25 @@ describe( 'Operators', () => {
 			done()
 		} )
 		connectOperator( server.newClient(), { id: 'a-user' } ).catch( done )
+	} )
+
+	describe( 'with multiple connections from same operator', () => {
+		it( 'should not emit leave when one socket disconnects', () => {
+			var op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var' }
+			return connectOperator( server.newClient(), op )
+			.then( () => connectOperator( server.newClient(), op ) )
+			.then( ( { client: c, socket: s } ) => new Promise( ( resolve, reject ) => {
+				operators.on( 'leave', () => {
+					reject( new Error( 'there are still clients connected' ) )
+				} )
+				c.on( 'disconnect', () => {
+					resolve()
+				} )
+				operators.io.in( 'operators/user-id' ).clients( ( e, clients ) => {
+					equal( clients.length, 2 )
+					server.disconnect( { client: c, socket: s } )
+				} )
+			} ) )
+		} )
 	} )
 } )

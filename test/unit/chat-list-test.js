@@ -29,10 +29,11 @@ describe( 'ChatList', () => {
 	} )
 
 	it( 'should notify when new chat has started', ( done ) => {
-		chatlist.once( 'open', ( { id } ) => {
+		chatlist.once( 'chat.status', tick( ( status, { id } ) => {
+			equal( status, 'pending' )
 			equal( id, 'chat-id' )
 			done()
-		} )
+		} ) )
 		emitCustomerMessage()
 	} )
 
@@ -54,6 +55,7 @@ describe( 'ChatList', () => {
 		chatlist.on( 'found', tick( ( { id }, operator ) => {
 			equal( id, 'chat-id' )
 			equal( operator.id, 'operator-id' )
+			deepEqual( chatlist._operators[operator.id], [ id ] )
 			ok( ! chatlist._pending[id] )
 			ok( chatlist._chats[id] )
 			done()
@@ -82,7 +84,7 @@ describe( 'ChatList', () => {
 			// mock up some connected customer accounts
 			chatlist._pending = { abd: { id: 'abd', user: 'Pending' } }
 			chatlist._chats = { 123: { id: '123', user: 'Active' } }
-			chatlist._abandoned = { xyz: { id: 'xyz', user: 'Abandoned' } }
+			chatlist._abandoned = { xyz: { channel: { id: 'xyz', user: 'Abandoned' } } }
 			socket = new EventEmitter()
 		} )
 		it( 'should send operator list of active connections', ( done ) => {
@@ -100,12 +102,15 @@ describe( 'ChatList', () => {
 		var socket = new EventEmitter()
 		beforeEach( () => assignOperator( operator_id, socket ) )
 
-		it( 'should mark chats as abandoned when their operator disconnects', () => {
-			socket.emit( 'disconnect' )
-			const abandoned = chatlist._abandoned['chat-id']
-			ok( abandoned, 'chat not marked as abandoned' )
-			equal( abandoned.operator, operator_id )
-			ok( socket )
+		it( 'should mark chats as abandoned when operator is completely disconnected', ( done ) => {
+			chatlist._chats[ 'the-id' ] = { id: 'the-id' }
+			chatlist._operators = { 'op-id': [ 'the-id' ] }
+			operators.on( 'leave', tick( () => {
+				ok( chatlist._abandoned['the-id'] )
+				ok( !chatlist._chats['the-id'], 'chat not removed from active chat list' )
+				done()
+			} ) )
+			operators.emit( 'leave', { id: 'op-id' } )
 		} )
 	} )
 
@@ -114,7 +119,7 @@ describe( 'ChatList', () => {
 			const operator_id = 'operator-id'
 			const chat_id = 'chat-id'
 			const socket = new EventEmitter()
-			const abandoned = { operator: operator_id, channel: { id: chat_id } }
+			const abandoned = { operator: { id: 'operator-id' }, channel: { id: chat_id } }
 			chatlist._abandoned = { 'chat-id': abandoned }
 
 			operators.on( 'recover', tick( ( operator, chats, complete ) => {
@@ -126,7 +131,7 @@ describe( 'ChatList', () => {
 				ok( isFunction( complete ) )
 				equal( chats.length, 1 )
 				ok( !chatlist._abandoned[chat_id], 'chat still marked as abandoned' )
-				equal( chatlist._chats[chat_id], operator_id, 'chat not marked as an active chat' )
+				ok( chatlist._chats[chat_id], 'chat not marked as an active chat' )
 				done()
 			} ) )
 			operators.emit( 'init', { user: { id: operator_id }, socket } )

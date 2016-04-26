@@ -1,8 +1,9 @@
 import { EventEmitter } from 'events'
 
 import { get, assign } from 'lodash/object'
+import { forEach } from 'lodash/collection'
 
-const debug = require( 'debug' )( 'tinkerchat:mockio' )
+const debug = require( 'debug' )( 'tinkerchat:test:mockio' )
 const noop = () => {}
 
 var COUNTER = 0
@@ -77,6 +78,20 @@ export default ( socketid ) => {
 		server.once( 'connection', next )
 		server.connect( socket )
 		return connection
+	}
+
+	server.disconnect = ( { socket, client } ) => {
+		debug( 'disconnect client and leave rooms', socket, client )
+		forEach( socket.rooms, ( room ) => {
+			server.rooms[ room ][ socket.id ] = null
+		} )
+		socket.rooms = []
+		delete server.connected[socket.id]
+		process.nextTick( () => {
+			socket.emit( 'disconnect' )
+			client.emit( 'disconnect' )
+			server.emit( 'disconnect', socket )
+		} )
 	}
 
 	return assign( { server }, server.newClient( socketid ) )
