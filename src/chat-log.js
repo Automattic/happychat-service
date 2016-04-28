@@ -1,21 +1,34 @@
+import { get, set, assign } from 'lodash/object'
+
 export class ChatLog {
 
-	recordCustomer() {
-		return new Promise( ( resolve ) => {
+	constructor() {
+		this.chats = {}
+	}
+
+	append( id, message ) {
+		return this.findLog( id )
+		.then( ( log ) => new Promise( ( resolve ) => {
+			set( this.chats, id, log.concat( message ) )
 			resolve()
+		} ) )
+	}
+
+	findLog( id ) {
+		return new Promise( ( resolve ) => {
+			resolve( get( this.chats, id, [] ) )
 		} )
 	}
 
-	recordOperatorMessage() {
-		return new Promise( ( resolve ) => {
-			resolve()
-		} )
+	recordCustomerMessage( chat, message ) {
+		return this.append( chat.id, message )
 	}
 
-	recordAgentMessage() {
-		return new Promise( ( resolve ) => {
-			resolve()
-		} )
+	recordOperatorMessage( chat, operator, message ) {
+		return this.append( chat.id, message )
 	}
 
+	recordAgentMessage( chat, message ) {
+		return this.append( chat.id, message )
+	}
 }

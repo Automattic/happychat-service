@@ -51,7 +51,7 @@ export default ( { customers, agents, operators } ) => {
 
 	customers.on( 'message', ( chat, message ) => {
 		// broadcast the message to
-		log.recordCustomer( chat, message )
+		log.recordCustomerMessage( chat, message )
 		.then( () => {
 			agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, message ) )
 			customers.emit( 'receive', chat, message )
@@ -59,9 +59,9 @@ export default ( { customers, agents, operators } ) => {
 		} )
 	} )
 
-	operators.on( 'message', ( chat, user, message ) => {
+	operators.on( 'message', ( chat, operator, message ) => {
 		debug( 'operator message', chat, message )
-		log.recordOperatorMessage( chat, user, message )
+		log.recordOperatorMessage( chat, operator, message )
 		.then( () => {
 			agents.emit( 'receive', formatAgentMessage( 'operator', message.user.id, chat.id, message ) )
 			operators.emit( 'receive', chat, message )
@@ -72,7 +72,7 @@ export default ( { customers, agents, operators } ) => {
 	agents.on( 'message', ( message ) => {
 		const chat = { id: message.context }
 		const formattedMessage = assign( {}, { author_type: 'agent' }, message )
-		log.recordAgentMessage( message )
+		log.recordAgentMessage( chat, message )
 		.then( () => {
 			agents.emit( 'receive', assign( {}, { author_type: 'agent' }, message ) )
 			operators.emit( 'receive', chat, formattedMessage )
