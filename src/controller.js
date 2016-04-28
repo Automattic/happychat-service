@@ -2,6 +2,7 @@ import { isFunction } from 'lodash/lang'
 import { assign } from 'lodash/object'
 
 import { ChatList } from './chat-list'
+import { ChatLog } from './chat-log'
 
 const debug = require( 'debug' )( 'tinkerchat:controller' )
 
@@ -29,6 +30,7 @@ const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
 export default ( { customers, agents, operators } ) => {
 	const toAgents = forward( agents )
 	const chats = new ChatList( { customers, operators } )
+	const log = new ChatLog()
 
 	chats
 	.on( 'miss', ( e, { id } ) => {
@@ -49,30 +51,33 @@ export default ( { customers, agents, operators } ) => {
 
 	customers.on( 'message', ( chat, message ) => {
 		// broadcast the message to
-		// - agents
-		agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, message ) )
-		// - customers
-		customers.emit( 'receive', chat, message )
-		// - operators
-		operators.emit( 'receive', chat, message )
+		log.recordCustomer( chat, message )
+		.then( () => {
+			agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, message ) )
+			customers.emit( 'receive', chat, message )
+			operators.emit( 'receive', chat, message )
+		} )
 	} )
 
 	operators.on( 'message', ( chat, user, message ) => {
 		debug( 'operator message', chat, message )
-		agents.emit( 'receive', formatAgentMessage( 'operator', message.user.id, chat.id, message ) )
-		operators.emit( 'receive', chat, message )
-		customers.emit( 'receive', chat, message )
-		// - customers
+		log.recordOperatorMessage( chat, user, message )
+		.then( () => {
+			agents.emit( 'receive', formatAgentMessage( 'operator', message.user.id, chat.id, message ) )
+			operators.emit( 'receive', chat, message )
+			customers.emit( 'receive', chat, message )
+		} )
 	} )
 
 	agents.on( 'message', ( message ) => {
-		// broadcast the message to
-		// - agents
-		agents.emit( 'receive', assign( {}, { author_type: 'agent' }, message ) )
-		// - operators
-		operators.emit( 'receive', { id: message.context }, assign( {}, { author_type: 'agent' }, message ) )
-		// - customers
-		customers.emit( 'receive', { id: message.context }, assign( {}, { author_type: 'agent' }, message ) )
+		const chat = { id: message.context }
+		const formattedMessage = assign( {}, { author_type: 'agent' }, message )
+		log.recordAgentMessage( message )
+		.then( () => {
+			agents.emit( 'receive', assign( {}, { author_type: 'agent' }, message ) )
+			operators.emit( 'receive', chat, formattedMessage )
+			customers.emit( 'receive', chat, formattedMessage )
+		} )
 	} )
 }
 
