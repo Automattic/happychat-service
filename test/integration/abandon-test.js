@@ -1,5 +1,5 @@
 import { ok, equal } from 'assert'
-import util from './util'
+import util, { authenticators } from './util'
 
 const debug = require( 'debug' )( 'tinkerchat:test:integration' )
 
@@ -16,11 +16,8 @@ describe( 'Abandoned service', () => {
 		username: 'ridley',
 		avatarURL: 'http://sample.com/ridley'
 	}
-	let customerAuthenticator = ( socket, callback ) => callback( null, mockUser )
-	let agentAuthenticator = ( socket, callback ) => callback( null, {} )
-	let operatorAuthenticator = ( socket, callback ) => callback( null, opUser )
 
-	const service = util( { customerAuthenticator, agentAuthenticator, operatorAuthenticator } )
+	const service = util( authenticators( mockUser, opUser, {} ) )
 
 	const setOperatorStatus = ( { operator, customer }, status = 'online' ) => new Promise( ( resolve ) => {
 		operator.emit( 'status', status, () => {

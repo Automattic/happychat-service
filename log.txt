@@ -1,0 +1,1189 @@
+
+> tinkerchat-service@0.2.0 test /Users/beaucollins/code/tinkerchat-service
+> `npm bin`/mocha --compilers js:babel-register --recursive "-w"
+
+
+[?25l
+
+  Abandoned service
+    ✓ recover abandoned chats (81ms)
+
+  Chat logs
+    ✓ should deliver logs when customer joins chat (105ms)
+    1) should deliver logs to agent when joining chat
+
+  Service
+    ✓ should allow agent to communicate with user
+
+  Agent Service
+    ✓ should initilize service
+    ✓ should emit unauthenticated when failing authentication
+    when authenticated
+      ✓ should emit message from customer
+      ✓ should send messsage to customer
+
+  ChatList
+    ✓ should notify when new chat has started
+    ✓ should emit open request to operators
+    ✓ should move chat to active when operator found
+    ✓ should timeout if no operator provided
+    with customer connections
+      ✓ should send operator list of active connections
+    with active chat
+      ✓ should mark chats as abandoned when operator is completely disconnected
+    with abandoned chat
+      ✓ should reassign operator and make chats active
+
+  ChatLog
+    ✓ should append customer message
+    ✓ should append operator message
+    ✓ should append agent message
+    ✓ should find log by chat id
+    ✓ should limit the size of the chat log cache
+
+  Controller
+    with user
+      ✓ notifies agent when user joins
+      ✓ notifies agent when user disconnects
+    customer message
+      ✓ should notify customers
+      ✓ should notify agents
+      ✓ should notify operators
+    agent message
+      ✓ should notify agents
+      ✓ should notify customers
+      ✓ should notify operators
+    operator message
+      ✓ should notify operators
+      ✓ should notify agents
+      ✓ should notify customers
+
+  Customer Service
+    ✓ should allow connections
+    ✓ should emit connection
+    ✓ should authenticate and init client
+    ✓ should notify user join and leave
+    ✓ should fail to authenticate with invalid token
+    with authorized user
+      ✓ should receive message and broadcast it
+      ✓ should receive message via event
+
+  Operators
+    ✓ should send init message to events
+    when authenticated and online
+      ✓ should recover chats for an operator
+      ✓ should emit leave event when last operator socket disconnects
+      ✓ should emit message
+      ✓ should assign an operator to a new chat
+      ✓ should notify with updated operator list when operator joins (95ms)
+    with multiple connections from same operator
+      ✓ should not emit leave when one socket disconnects
+
+
+  44 passing (3s)
+  1 failing
+
+  1) Chat logs should deliver logs to agent when joining chat:
+     Error: timeout of 2000ms exceeded. Ensure the done() callback is being called in this test.
+  
+
+
+
+[?25h
+
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:main configuring socket.io server
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:main configuring socket.io server
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:main configuring socket.io server
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer user joined nausicaa fake-user-id
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer user joined room fake-user-id
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:mock:service client is connecting  /customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator initialize the operator { id: 'operator-id',
+  displayName: 'Ridley',
+  username: 'ridley',
+  avatarURL: 'http://sample.com/ridley' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list attempt to recover chats [] operator-id
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:mock:service client is connecting  /agent
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:mock:service client is connecting  /operator
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:test:integration operator is online
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller customer message fake-user-id message-1
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer sending message to customer { id: 'fake-user-id',
+  displayName: 'Nasuicaä',
+  username: 'nausicaa',
+  avatarURL: 'http://example.com/nausicaa' } { context: 'fake-user-id',
+  id: 'message-1',
+  text: 'help',
+  timestamp: 1461958428,
+  user: 
+   { id: 'fake-user-id',
+     displayName: 'Nasuicaä',
+     avatarURL: 'http://example.com/nausicaa' },
+  meta: {} }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'fake-user-id',
+  displayName: 'Nasuicaä',
+  username: 'nausicaa',
+  avatarURL: 'http://example.com/nausicaa' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller chats status changed pending fake-user-id
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator find an operator for fake-user-id
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller emitting chat log to operator operator-id
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator Assigning chat: (chat.open) { id: 'fake-user-id',
+  displayName: 'Nasuicaä',
+  username: 'nausicaa',
+  avatarURL: 'http://example.com/nausicaa' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller chats status changed found fake-user-id
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller found operator fake-user-id operator-id
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator clients? 0
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller chats status changed abandoned fake-user-id
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator initialize the operator { id: 'operator-id',
+  displayName: 'Ridley',
+  username: 'ridley',
+  avatarURL: 'http://sample.com/ridley' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list attempt to recover chats [ { id: 'fake-user-id',
+    displayName: 'Nasuicaä',
+    username: 'nausicaa',
+    avatarURL: 'http://example.com/nausicaa' } ] operator-id
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator Recover chats:  customers/fake-user-id
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller emitting chat log to operator operator-id
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator Assigning chat: (chat.open) { id: 'fake-user-id',
+  displayName: 'Nasuicaä',
+  username: 'nausicaa',
+  avatarURL: 'http://example.com/nausicaa' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer user joined undefined customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer user joined room customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator initialize the operator { id: 'operator' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list attempt to recover chats [] operator
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:mock:service client is connecting  /customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:test:chat-logs waiting for logs
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:mock:service client is connecting  /agent
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:mock:service client is connecting  /operator
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller customer message customer 1461958427709
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer sending message to customer { id: 'customer' } { context: 'customer',
+  id: 1461958427709,
+  text: 'hello',
+  timestamp: 1461958428,
+  user: { id: 'customer', displayName: undefined, avatarURL: undefined },
+  meta: {} }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'customer' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller chats status changed pending customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator find an operator for customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller failed to find operator [Error: no operators connected] customer Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller customer message customer 1461958427710
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller customer message customer 1461958427710
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer sending message to customer { id: 'customer' } { context: 'customer',
+  id: 1461958427710,
+  text: 'i need some help',
+  timestamp: 1461958428,
+  user: { id: 'customer', displayName: undefined, avatarURL: undefined },
+  meta: {} }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer sending message to customer { id: 'customer' } { context: 'customer',
+  id: 1461958427710,
+  text: 'can you help me?',
+  timestamp: 1461958428,
+  user: { id: 'customer', displayName: undefined, avatarURL: undefined },
+  meta: {} }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'customer' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller chats status changed pending customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator find an operator for customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'customer' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller chats status changed pending customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator find an operator for customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller failed to find operator [Error: no operators connected] customer Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller failed to find operator [Error: no operators connected] customer Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer user joined undefined customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer user joined room customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer user joined undefined customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer user joined room customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator initialize the operator { id: 'operator' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list attempt to recover chats [] operator
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:mock:service client is connecting  /customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:test:chat-logs waiting for logs
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:mock:service client is connecting  /agent
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:mock:service client is connecting  /operator
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller customer message customer 1461958427806
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer sending message to customer { id: 'customer' } { context: 'customer',
+  id: 1461958427806,
+  text: 'hello',
+  timestamp: 1461958428,
+  user: { id: 'customer', displayName: undefined, avatarURL: undefined },
+  meta: {} }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'customer' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller chats status changed pending customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator find an operator for customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller failed to find operator [Error: no operators connected] customer Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller customer message customer 1461958427807
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller customer message customer 1461958427807
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer sending message to customer { id: 'customer' } { context: 'customer',
+  id: 1461958427807,
+  text: 'i need some help',
+  timestamp: 1461958428,
+  user: { id: 'customer', displayName: undefined, avatarURL: undefined },
+  meta: {} }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:customer sending message to customer { id: 'customer' } { context: 'customer',
+  id: 1461958427807,
+  text: 'can you help me?',
+  timestamp: 1461958428,
+  user: { id: 'customer', displayName: undefined, avatarURL: undefined },
+  meta: {} }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'customer' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller chats status changed pending customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator find an operator for customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'customer' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller chats status changed pending customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator find an operator for customer
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller failed to find operator [Error: no operators connected] customer Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:controller failed to find operator [Error: no operators connected] customer Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:operator initialize the operator { id: 'operator' }
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:chat-list attempt to recover chats [] operator
+Fri, 29 Apr 2016 19:33:47 GMT tinkerchat:mock:service client is connecting  /operator
+Fri, 29 Apr 2016 19:33:48 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:33:48 GMT tinkerchat:customer user joined undefined customer
+Fri, 29 Apr 2016 19:33:48 GMT tinkerchat:customer user joined room customer
+Fri, 29 Apr 2016 19:33:48 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:service time to test customer
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer user joined nausicaa fake-user-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer user joined room fake-user-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'operator-id' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list attempt to recover chats [] operator-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:mock:service client is connecting  /customer
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:mock:service client is connecting  /agent
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:mock:service client is connecting  /operator
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller customer message fake-user-id message-1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer sending message to customer { id: 'fake-user-id',
+  displayName: 'Nasuicaä',
+  username: 'nausicaa',
+  avatarURL: 'http://example.com/nausicaa' } { context: 'fake-user-id',
+  id: 'message-1',
+  text: 'hello',
+  timestamp: 1461958430,
+  user: 
+   { id: 'fake-user-id',
+     displayName: 'Nasuicaä',
+     avatarURL: 'http://example.com/nausicaa' },
+  meta: {} }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'fake-user-id',
+  displayName: 'Nasuicaä',
+  username: 'nausicaa',
+  avatarURL: 'http://example.com/nausicaa' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller chats status changed pending fake-user-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator find an operator for fake-user-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller failed to find operator [Error: no operators connected] fake-user-id Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:agent received message
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer sending message to customer { id: 'fake-user-id' } { author_type: 'agent',
+  id: 'message-2',
+  context: 'fake-user-id',
+  text: 're: hello',
+  user: 
+   { id: 'imperator',
+     dispayName: 'Furiosa',
+     username: 'furiosa',
+     avatarURL: 'http://example.com/furiousa' } }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:util closing socket [Error: nope]
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:agent emitting client
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:agent received message
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:agent help
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'chat-id' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'chat-id' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'chat-id' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'chat-id' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list failed to find operator [Error: timeout: failed to find operator]
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list failed to find operator [Error: timeout: failed to find operator]
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list failed to find operator [Error: timeout: failed to find operator]
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list failed to search chats [TypeError: Cannot read property 'id' of undefined]
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'chat-id' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list attempt to recover chats [ { id: 'chat-id' } ] operator-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller customer message user-id message-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'user-id' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller chats status changed pending user-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller customer message user-id message-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'user-id' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller chats status changed pending user-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller customer message user-id message-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'user-id' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller chats status changed pending user-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller operator message { id: 'chat-id' } { id: 'message-id',
+  user: { id: 'user-id', displayName: 'Furiosa' } }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller operator message { id: 'chat-id' } { id: 'message-id',
+  user: { id: 'user-id', displayName: 'Furiosa' },
+  timestamp: 12345 }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:controller operator message { id: 'chat-id' } { id: 'message-id',
+  user: { id: 'user-id', displayName: 'Furiosa' },
+  timestamp: 12345 }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer user joined user1 user1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at user1 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer user joined room user1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:customer socket rooms [ 'user1' ]
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer user joined ridley abdefgh
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at abdefgh 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer user joined room abdefgh
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:util closing socket [Error: nope]
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer user joined ridley abdefgh
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at abdefgh 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer user joined room abdefgh
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer user joined ridley abdefgh
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at abdefgh 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer user joined room abdefgh
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:customer sending message to customer { id: 'abdefgh' } { context: 'abdefgh',
+  text: 'hello',
+  user: 
+   { id: 'abdefgh',
+     username: 'ridley',
+     displayName: 'Ridley',
+     avatarURL: 'http://example.com/image' } }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:operators connect operator { id: 'a-user' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'a-user' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at operators/a-user 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio requesting room online 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at operators/user-id 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator Recover chats:  customers/something
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio requesting room operators/user-id 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at customers/something 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator Assigning chat: (chat.open) { id: 'something' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio requesting room operators/user-id 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at operators/user-id 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio disconnect client and leave rooms EventEmitter {
+  domain: null,
+  _events: 
+   { status: [Function],
+     disconnect: [Function],
+     message: [Function] },
+  _eventsCount: 3,
+  _maxListeners: undefined,
+  id: 'socket-id',
+  emit: [Function: bound emit],
+  rooms: [ 'operators/user-id', 'online' ],
+  join: [Function],
+  close: [Function] } EventEmitter {
+  domain: null,
+  _events: {},
+  _eventsCount: 0,
+  _maxListeners: undefined,
+  id: 'socket-id',
+  emit: [Function: bound emit] }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio requesting room operators/user-id 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator clients? 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at operators/user-id 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator broadcasting message user-id message-id { id: 'message-id',
+  text: 'message',
+  timestamp: 1461958430,
+  user: { id: 'user-id', displayName: 'furiosa', avatarURL: 'url' },
+  meta: {} }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at operators/user-id 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at operators/user-id 2
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at online 2
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator find an operator for chat-id
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio requesting room online 2
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio requesting room operators/user-id 2
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at room-name 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at room-name 2
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator Assigning chat: (chat.open) { id: 'chat-id' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio requesting room operators/user-id 2
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at operators/user-id 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:operators connect operator { id: 'a-user', displayName: 'Jem' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'a-user', displayName: 'Jem' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at operators/a-user 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at online 2
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at operators/user-id 2
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at online 3
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:operators connect operator { id: 'abcdefg', displayName: 'other' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'abcdefg', displayName: 'other' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at operators/abcdefg 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at online 4
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio requesting room online 4
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at operators/user-id 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio requesting room online 1
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at operators/user-id 2
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio room now at online 2
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio requesting room operators/user-id 2
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio disconnect client and leave rooms EventEmitter {
+  domain: null,
+  _events: 
+   { status: [Function],
+     disconnect: [Function],
+     message: [Function] },
+  _eventsCount: 3,
+  _maxListeners: undefined,
+  id: 'socket-io-id-38',
+  emit: [Function: bound emit],
+  rooms: [ 'operators/user-id', 'online' ],
+  join: [Function],
+  close: [Function] } EventEmitter {
+  domain: null,
+  _events: { disconnect: [Function] },
+  _eventsCount: 1,
+  _maxListeners: undefined,
+  id: 'socket-io-id-38',
+  emit: [Function: bound emit] }
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:test:mockio requesting room operators/user-id 2
+Fri, 29 Apr 2016 19:33:49 GMT tinkerchat:operator clients? 2
+Fri, 29 Apr 2016 19:33:50 GMT tinkerchat:test:mockio requesting room online 2
+Fri, 29 Apr 2016 19:33:50 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:33:50 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:33:50 GMT tinkerchat:chat-list failed to find operator [Error: timeout: failed to find operator]
+Fri, 29 Apr 2016 19:33:50 GMT tinkerchat:controller failed to find operator [Error: timeout: failed to find operator] user-id Error: timeout: failed to find operator
+    at Timeout._onTimeout (chat-list.js:80:46)
+    at tryOnTimeout (timers.js:224:11)
+    at Timer.listOnTimeout (timers.js:198:5)
+Fri, 29 Apr 2016 19:33:50 GMT tinkerchat:chat-list failed to find operator [Error: timeout: failed to find operator]
+Fri, 29 Apr 2016 19:33:50 GMT tinkerchat:controller failed to find operator [Error: timeout: failed to find operator] user-id Error: timeout: failed to find operator
+    at Timeout._onTimeout (chat-list.js:80:46)
+    at tryOnTimeout (timers.js:224:11)
+    at Timer.listOnTimeout (timers.js:198:5)
+Fri, 29 Apr 2016 19:33:50 GMT tinkerchat:chat-list failed to find operator [Error: timeout: failed to find operator]
+Fri, 29 Apr 2016 19:33:50 GMT tinkerchat:controller failed to find operator [Error: timeout: failed to find operator] user-id Error: timeout: failed to find operator
+    at Timeout._onTimeout (chat-list.js:80:46)
+    at tryOnTimeout (timers.js:224:11)
+    at Timer.listOnTimeout (timers.js:198:5)
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:main configuring socket.io server
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:main configuring socket.io server
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:main configuring socket.io server
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:customer user joined nausicaa fake-user-id
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:customer user joined room fake-user-id
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:mock:service client is connecting  /customer
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:operator initialize the operator { id: 'operator-id',
+  displayName: 'Ridley',
+  username: 'ridley',
+  avatarURL: 'http://sample.com/ridley' }
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:chat-list found existing chats, reassign undefined
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:chat-list attempt to recover chats [] operator-id
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:mock:service client is connecting  /operator
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:mock:service client is connecting  /agent
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:test:integration operator is online
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:controller customer message fake-user-id message-1
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:customer sending message to customer { id: 'fake-user-id',
+  displayName: 'Nasuicaä',
+  username: 'nausicaa',
+  avatarURL: 'http://example.com/nausicaa' } { context: 'fake-user-id',
+  id: 'message-1',
+  text: 'help',
+  timestamp: 1461958518,
+  user: 
+   { id: 'fake-user-id',
+     displayName: 'Nasuicaä',
+     avatarURL: 'http://example.com/nausicaa' },
+  meta: {} }
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'fake-user-id',
+  displayName: 'Nasuicaä',
+  username: 'nausicaa',
+  avatarURL: 'http://example.com/nausicaa' }
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:controller chats status changed pending fake-user-id
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:operator find an operator for fake-user-id
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:controller emitting chat log to operator operator-id
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:operator Assigning chat: (chat.open) { id: 'fake-user-id',
+  displayName: 'Nasuicaä',
+  username: 'nausicaa',
+  avatarURL: 'http://example.com/nausicaa' }
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:controller chats status changed found fake-user-id
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:controller found operator fake-user-id operator-id
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:operator clients? 0
+Fri, 29 Apr 2016 19:35:17 GMT tinkerchat:controller chats status changed abandoned fake-user-id
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator initialize the operator { id: 'operator-id',
+  displayName: 'Ridley',
+  username: 'ridley',
+  avatarURL: 'http://sample.com/ridley' }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list found existing chats, reassign undefined
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list attempt to recover chats [ { id: 'fake-user-id',
+    displayName: 'Nasuicaä',
+    username: 'nausicaa',
+    avatarURL: 'http://example.com/nausicaa' } ] operator-id
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator Recover chats:  customers/fake-user-id
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller emitting chat log to operator operator-id
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator Assigning chat: (chat.open) { id: 'fake-user-id',
+  displayName: 'Nasuicaä',
+  username: 'nausicaa',
+  avatarURL: 'http://example.com/nausicaa' }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer user joined undefined customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer user joined room customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator initialize the operator { id: 'operator' }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list found existing chats, reassign undefined
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list attempt to recover chats [] operator
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:mock:service client is connecting  /customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:test:chat-logs waiting for logs
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:mock:service client is connecting  /operator
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:mock:service client is connecting  /agent
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller customer message customer 1461958518535
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer sending message to customer { id: 'customer' } { context: 'customer',
+  id: 1461958518535,
+  text: 'hello',
+  timestamp: 1461958519,
+  user: { id: 'customer', displayName: undefined, avatarURL: undefined },
+  meta: {} }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'customer' }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller chats status changed pending customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator find an operator for customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller failed to find operator [Error: no operators connected] customer Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller customer message customer 1461958518535
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller customer message customer 1461958518535
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer sending message to customer { id: 'customer' } { context: 'customer',
+  id: 1461958518535,
+  text: 'i need some help',
+  timestamp: 1461958519,
+  user: { id: 'customer', displayName: undefined, avatarURL: undefined },
+  meta: {} }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer sending message to customer { id: 'customer' } { context: 'customer',
+  id: 1461958518535,
+  text: 'can you help me?',
+  timestamp: 1461958519,
+  user: { id: 'customer', displayName: undefined, avatarURL: undefined },
+  meta: {} }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'customer' }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller chats status changed pending customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator find an operator for customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'customer' }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller chats status changed pending customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator find an operator for customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller failed to find operator [Error: no operators connected] customer Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller failed to find operator [Error: no operators connected] customer Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer user joined undefined customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer user joined room customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer user joined undefined customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer user joined room customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:mock:service client is connecting  /customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:test:chat-logs waiting for logs
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:mock:service client is connecting  /agent
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator initialize the operator { id: 'operator' }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list found existing chats, reassign undefined
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list attempt to recover chats [] operator
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:mock:service client is connecting  /operator
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller customer message customer 1461958518570
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer sending message to customer { id: 'customer' } { context: 'customer',
+  id: 1461958518570,
+  text: 'hello',
+  timestamp: 1461958519,
+  user: { id: 'customer', displayName: undefined, avatarURL: undefined },
+  meta: {} }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'customer' }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller chats status changed pending customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator find an operator for customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller failed to find operator [Error: no operators connected] customer Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller customer message customer 1461958518570
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller customer message customer 1461958518570
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer sending message to customer { id: 'customer' } { context: 'customer',
+  id: 1461958518570,
+  text: 'i need some help',
+  timestamp: 1461958519,
+  user: { id: 'customer', displayName: undefined, avatarURL: undefined },
+  meta: {} }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:customer sending message to customer { id: 'customer' } { context: 'customer',
+  id: 1461958518570,
+  text: 'can you help me?',
+  timestamp: 1461958519,
+  user: { id: 'customer', displayName: undefined, avatarURL: undefined },
+  meta: {} }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'customer' }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller chats status changed pending customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator find an operator for customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'customer' }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller chats status changed pending customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator find an operator for customer
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller failed to find operator [Error: no operators connected] customer Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:controller failed to find operator [Error: no operators connected] customer Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:operator initialize the operator { id: 'operator' }
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list found existing chats, reassign undefined
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:chat-list attempt to recover chats [] operator
+Fri, 29 Apr 2016 19:35:18 GMT tinkerchat:mock:service client is connecting  /operator
+Fri, 29 Apr 2016 19:35:19 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:19 GMT tinkerchat:operator initialize the operator { id: 'operator' }
+Fri, 29 Apr 2016 19:35:19 GMT tinkerchat:chat-list found existing chats, reassign undefined
+Fri, 29 Apr 2016 19:35:19 GMT tinkerchat:chat-list attempt to recover chats [] operator
+Fri, 29 Apr 2016 19:35:19 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:35:19 GMT tinkerchat:customer user joined undefined customer
+Fri, 29 Apr 2016 19:35:19 GMT tinkerchat:customer user joined room customer
+Fri, 29 Apr 2016 19:35:19 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:service time to test customer
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer user joined nausicaa fake-user-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer user joined room fake-user-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:mock:service client is connecting  /customer
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:mock:service client is connecting  /agent
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'operator-id' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list found existing chats, reassign undefined
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list attempt to recover chats [] operator-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:mock:service client is connecting  /operator
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller customer message fake-user-id message-1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer sending message to customer { id: 'fake-user-id',
+  displayName: 'Nasuicaä',
+  username: 'nausicaa',
+  avatarURL: 'http://example.com/nausicaa' } { context: 'fake-user-id',
+  id: 'message-1',
+  text: 'hello',
+  timestamp: 1461958521,
+  user: 
+   { id: 'fake-user-id',
+     displayName: 'Nasuicaä',
+     avatarURL: 'http://example.com/nausicaa' },
+  meta: {} }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'fake-user-id',
+  displayName: 'Nasuicaä',
+  username: 'nausicaa',
+  avatarURL: 'http://example.com/nausicaa' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller chats status changed pending fake-user-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator find an operator for fake-user-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list failed to find operator [Error: no operators connected]
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller failed to find operator [Error: no operators connected] fake-user-id Error: no operators connected
+    at operator.js:39:18
+    at queryAvailability (operator.js:37:52)
+    at operator.js:233:25
+    at runMicrotasksCallback (internal/process/next_tick.js:58:5)
+    at _combinedTickCallback (internal/process/next_tick.js:67:7)
+    at process._tickCallback (internal/process/next_tick.js:98:9)
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:agent received message
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer sending message to customer { id: 'fake-user-id' } { author_type: 'agent',
+  id: 'message-2',
+  context: 'fake-user-id',
+  text: 're: hello',
+  user: 
+   { id: 'imperator',
+     dispayName: 'Furiosa',
+     username: 'furiosa',
+     avatarURL: 'http://example.com/furiousa' } }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:util closing socket [Error: nope]
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:agent connection
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:agent emitting client
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:agent received message
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:agent help
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'chat-id' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'chat-id' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'chat-id' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'chat-id' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list failed to find operator [Error: timeout: failed to find operator]
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list failed to find operator [Error: timeout: failed to find operator]
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list failed to find operator [Error: timeout: failed to find operator]
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list found existing chats, reassign undefined
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list failed to search chats [TypeError: Cannot read property 'id' of undefined]
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'chat-id' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list found existing chats, reassign undefined
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list attempt to recover chats [ { id: 'chat-id' } ] operator-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller emitting chat log
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller customer message user-id message-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'user-id' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller chats status changed pending user-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller customer message user-id message-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'user-id' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller chats status changed pending user-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller customer message user-id message-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:chat-list chat has not be assigned, finding an operator { id: 'user-id' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller chats status changed pending user-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller operator message { id: 'chat-id' } { id: 'message-id',
+  user: { id: 'user-id', displayName: 'Furiosa' } }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller operator message { id: 'chat-id' } { id: 'message-id',
+  user: { id: 'user-id', displayName: 'Furiosa' },
+  timestamp: 12345 }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:controller operator message { id: 'chat-id' } { id: 'message-id',
+  user: { id: 'user-id', displayName: 'Furiosa' },
+  timestamp: 12345 }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer user joined user1 user1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at user1 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer user joined room user1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:customer socket rooms [ 'user1' ]
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer user joined ridley abdefgh
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at abdefgh 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer user joined room abdefgh
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:util closing socket [Error: nope]
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer user joined ridley abdefgh
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at abdefgh 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer user joined room abdefgh
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer customer connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer user joined ridley abdefgh
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at abdefgh 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer user joined room abdefgh
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:customer sending message to customer { id: 'abdefgh' } { context: 'abdefgh',
+  text: 'hello',
+  user: 
+   { id: 'abdefgh',
+     username: 'ridley',
+     displayName: 'Ridley',
+     avatarURL: 'http://example.com/image' } }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:operators connect operator { id: 'a-user' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'a-user' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at operators/a-user 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio requesting room online 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at operators/user-id 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator Recover chats:  customers/something
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio requesting room operators/user-id 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at customers/something 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator Assigning chat: (chat.open) { id: 'something' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio requesting room operators/user-id 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at operators/user-id 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio disconnect client and leave rooms EventEmitter {
+  domain: null,
+  _events: 
+   { status: [Function],
+     disconnect: [Function],
+     message: [Function] },
+  _eventsCount: 3,
+  _maxListeners: undefined,
+  id: 'socket-id',
+  emit: [Function: bound emit],
+  rooms: [ 'operators/user-id', 'online' ],
+  join: [Function],
+  close: [Function] } EventEmitter {
+  domain: null,
+  _events: {},
+  _eventsCount: 0,
+  _maxListeners: undefined,
+  id: 'socket-id',
+  emit: [Function: bound emit] }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio requesting room operators/user-id 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator clients? 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at operators/user-id 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator broadcasting message user-id message-id { id: 'message-id',
+  text: 'message',
+  timestamp: 1461958521,
+  user: { id: 'user-id', displayName: 'furiosa', avatarURL: 'url' },
+  meta: {} }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at operators/user-id 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at operators/user-id 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at online 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator find an operator for chat-id
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio requesting room online 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio requesting room operators/user-id 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at room-name 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at room-name 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator Assigning chat: (chat.open) { id: 'chat-id' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio requesting room operators/user-id 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at operators/user-id 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:operators connect operator { id: 'a-user', displayName: 'Jem' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'a-user', displayName: 'Jem' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at operators/a-user 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at online 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at operators/user-id 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at online 3
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:operators connect operator { id: 'abcdefg', displayName: 'other' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'abcdefg', displayName: 'other' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at operators/abcdefg 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at online 4
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio requesting room online 4
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at operators/user-id 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at online 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio requesting room online 1
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:operators connect operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator operator connecting
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator initialize the operator { id: 'user-id',
+  displayName: 'furiosa',
+  avatarURL: 'url',
+  priv: 'var' }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at operators/user-id 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator joining room online
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio room now at online 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio requesting room operators/user-id 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio disconnect client and leave rooms EventEmitter {
+  domain: null,
+  _events: 
+   { status: [Function],
+     disconnect: [Function],
+     message: [Function] },
+  _eventsCount: 3,
+  _maxListeners: undefined,
+  id: 'socket-io-id-38',
+  emit: [Function: bound emit],
+  rooms: [ 'operators/user-id', 'online' ],
+  join: [Function],
+  close: [Function] } EventEmitter {
+  domain: null,
+  _events: { disconnect: [Function] },
+  _eventsCount: 1,
+  _maxListeners: undefined,
+  id: 'socket-io-id-38',
+  emit: [Function: bound emit] }
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio requesting room operators/user-id 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator clients? 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:test:mockio requesting room online 2
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:35:20 GMT tinkerchat:operator calling with timeout 1000
+Fri, 29 Apr 2016 19:35:21 GMT tinkerchat:chat-list failed to find operator [Error: timeout: failed to find operator]
+Fri, 29 Apr 2016 19:35:21 GMT tinkerchat:controller failed to find operator [Error: timeout: failed to find operator] user-id Error: timeout: failed to find operator
+    at Timeout._onTimeout (chat-list.js:81:9)
+    at tryOnTimeout (timers.js:224:11)
+    at Timer.listOnTimeout (timers.js:198:5)
+Fri, 29 Apr 2016 19:35:21 GMT tinkerchat:chat-list failed to find operator [Error: timeout: failed to find operator]
+Fri, 29 Apr 2016 19:35:21 GMT tinkerchat:controller failed to find operator [Error: timeout: failed to find operator] user-id Error: timeout: failed to find operator
+    at Timeout._onTimeout (chat-list.js:81:9)
+    at tryOnTimeout (timers.js:224:11)
+    at Timer.listOnTimeout (timers.js:198:5)
+Fri, 29 Apr 2016 19:35:21 GMT tinkerchat:chat-list failed to find operator [Error: timeout: failed to find operator]
+Fri, 29 Apr 2016 19:35:21 GMT tinkerchat:controller failed to find operator [Error: timeout: failed to find operator] user-id Error: timeout: failed to find operator
+    at Timeout._onTimeout (chat-list.js:81:9)
+    at tryOnTimeout (timers.js:224:11)
+    at Timer.listOnTimeout (timers.js:198:5)
+
+> tinkerchat-service@0.2.0 test /Users/beaucollins/code/tinkerchat-service
+> `npm bin`/mocha --compilers js:babel-register --recursive "-w"
+
+
+[?25l
+
+  Abandoned service
+    ✓ recover abandoned chats (84ms)
+
+  Chat logs
+    ✓ should deliver logs when customer joins chat (98ms)
+[?25h
+

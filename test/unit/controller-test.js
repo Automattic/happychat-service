@@ -24,7 +24,7 @@ describe( 'Controller', () => {
 				equal( displayName, 'Furiosa' )
 				done()
 			} )
-			customers.emit( 'join', socketIdentifier, mockUser )
+			customers.emit( 'join', socketIdentifier, mockUser, new EventEmitter() )
 		} )
 
 		it( 'notifies agent when user disconnects', ( done ) => {

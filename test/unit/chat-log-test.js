@@ -2,8 +2,6 @@ import { equal, ok } from 'assert'
 import { ChatLog } from '../../src/chat-log'
 import { reduce } from 'lodash/collection'
 
-const debug = require( 'debug' )( 'tinkerchat:test:chat-log' )
-
 describe( 'ChatLog', () => {
 	const maxMessages = 10
 	const chat = { id: 'chat-id' }
@@ -55,7 +53,6 @@ describe( 'ChatLog', () => {
 	it( 'should limit the size of the chat log cache', () => {
 		var head, rest
 		var record = ( i ) => () => {
-			debug( 'recording', i )
 			return log.recordCustomerMessage( chat, { id:`message-${i}`, text: `message-${i}` } )
 		}
 		var actions = []

@@ -30,8 +30,8 @@ const init = ( { user, socket, events, io } ) => () => {
 	} )
 
 	socket.on( 'disconnect', () => events.emit( 'leave', socketIdentifier ) )
-	events.emit( 'join', socketIdentifier, user )
 	socket.emit( 'init', user )
+	events.emit( 'join', socketIdentifier, user, socket )
 }
 
 const join = ( { events, io, user, socket } ) => {

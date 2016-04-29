@@ -1,5 +1,5 @@
 import { equal } from 'assert'
-import util from './util'
+import util, { authenticators } from './util'
 
 const debug = require( 'debug' )( 'tinkerchat:test:service' )
 
@@ -16,11 +16,8 @@ describe( 'Service', () => {
 		username: 'furiosa',
 		avatarURL: 'http://example.com/furiousa'
 	}
-	let customerAuthenticator = ( socket, callback ) => callback( null, mockUser )
-	let agentAuthenticator = ( socket, callback ) => callback( null, botUser )
-	let operatorAuthenticator = ( socket, callback ) => callback( null, { id: 'operator-id' } )
 
-	const service = util( { customerAuthenticator, agentAuthenticator, operatorAuthenticator } )
+	const service = util( authenticators( mockUser, { id: 'operator-id' }, botUser ) )
 
 	before( () => service.start() )
 	after( () => service.stop() )

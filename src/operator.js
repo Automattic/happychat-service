@@ -112,10 +112,15 @@ const reduceUniqueOperators = ( operators ) => values( reduce( operators, ( uniq
 
 const all = ( ... fns ) => ( ... args ) => forEach( fns, ( fn ) => fn( ... args ) )
 
-const emitOnline = throttle( ( io ) => {
+const emitOnline = throttle( ( { io, events } ) => {
 	// when a socket disconnects, query the online room for connected operators
-	queryOnline( io ).then( ( identities ) => {
-		io.emit( 'operators.online', reduceUniqueOperators( identities ) )
+	debug( 'query availability' )
+	queryOnline( io )
+	.then( ( operators ) => Promise.resolve( reduceUniqueOperators( operators ) ) )
+	.then( ( identities ) => {
+		debug( 'updating availability' )
+		io.emit( 'operators.online', identities )
+		events.emit( 'available', identities )
 	} )
 	.catch( ( e ) => debug( 'failed to query online', e, e.stack ) )
 }, 100 )
@@ -128,14 +133,14 @@ const join = ( { socket, events, user, io } ) => {
 		// TODO: if operator has multiple clients, move all of them?
 		if ( status === 'online' ) {
 			debug( 'joining room', 'online' )
-			socket.join( 'online', all( done, () => emitOnline( io ) ) )
+			socket.join( 'online', all( done, () => emitOnline( { io, events } ) ) )
 		} else {
-			socket.leave( 'online', all( done, () => emitOnline( io ) ) )
+			socket.leave( 'online', all( done, () => emitOnline( { io, events } ) ) )
 		}
 	} )
 
 	socket.on( 'disconnect', () => {
-		emitOnline( io )
+		emitOnline( { io, events } )
 		io.in( user_room ).clients( ( error, clients ) => {
 			debug( 'clients?', clients.length )
 			events.emit( 'leave', user )
@@ -165,14 +170,19 @@ const operatorClients = ( { io, operator } ) => new Promise( ( resolve, reject )
 	} )
 } )
 
-const assignChat = ( { io, operator, chat, room } ) => new Promise( ( resolve, reject ) => {
+const assignChat = ( { io, operator, chat, room, events } ) => new Promise( ( resolve, reject ) => {
 	const operator_room_name = `operators/${operator.id}`
 	// send the event to the operator and confirm that the chat was opened
 	// TODO: timeouts? only one should have to succeed or should all of them have to succeed?
 	operatorClients( { io, operator } )
 	.then( ( clients ) => {
 		parallel( clients.map( ( socketid ) => ( complete ) => {
-			io.connected[socketid].join( room, complete )
+			const socket = io.connected[socketid]
+			socket.join( room, ( error ) => {
+				// a socket has joined
+				events.emit( 'join', chat, operator, socket )
+				complete( error )
+			} )
 		} ), ( e ) => {
 			if ( e ) {
 				reject( e )
@@ -194,11 +204,25 @@ export default ( io ) => {
 		io.in( room_name ).emit( 'chat.message', { id }, message )
 	} )
 
+	// additional operator socket came online
+	// assign all of the existing operator chats
+	// for now just broadcast to all operator connections
+	events.on( 'reassign', ( { user }, socket, chats ) => {
+		map( chats, ( chat ) => {
+			const room = `customers/${ chat.id }`
+			assignChat( { io, operator: user, chat, room, events } )
+			.then( () => {
+				debug( 'opened chat for operator:', user.id )
+			} )
+		} )
+	} )
+
+	// operator had completely disconnected so chats were abandoned
 	events.on( 'recover', ( { user }, chats, callback ) => {
 		parallel( map( chats, ( chat ) => ( complete ) => {
 			const room = `customers/${ chat.id }`
 			debug( 'Recover chats: ', room )
-			assignChat( { io, operator: user, chat, room } ).then( () => complete( null ), complete )
+			assignChat( { io, operator: user, chat, room, events } ).then( () => complete( null ), complete )
 		} ), ( e ) => {
 			if ( e ) {
 				debug( 'failed to recover chats', e )
@@ -214,7 +238,7 @@ export default ( io ) => {
 		online( io )
 		.then( ( clients ) => queryAvailability( chat, clients, io ) )
 		.then( pickAvailable )
-		.then( ( operator ) => assignChat( { io, operator, chat, room } ) )
+		.then( ( operator ) => assignChat( { io, operator, chat, room, events } ) )
 		.then( ( operator ) => callback( null, operator ) )
 		.catch( callback )
 	} )

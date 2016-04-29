@@ -49,8 +49,23 @@ export default ( { customers, agents, operators } ) => {
 	toAgents( customers, 'join', 'customer.join' )
 	toAgents( customers, 'leave', 'customer.leave' )
 
+	customers.on( 'join', ( socketIdentifier, user, socket ) => {
+		debug( 'emitting chat log' )
+		log.findLog( user.id )
+		.then( ( messages ) => socket.emit( 'log', messages ) )
+	} )
+
+	operators.on( 'join', ( chat, operator, socket ) => {
+		debug( 'emitting chat log to operator', operator.id )
+		log.findLog( chat.id )
+		.then( ( messages ) => {
+			socket.emit( 'log', chat, messages )
+		} )
+	} )
+
 	customers.on( 'message', ( chat, message ) => {
 		// broadcast the message to
+		debug( 'customer message', chat.id, message.id )
 		log.recordCustomerMessage( chat, message )
 		.then( () => {
 			agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, message ) )
