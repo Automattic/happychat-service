@@ -1,15 +1,19 @@
-import { get, set, assign } from 'lodash/object'
+import { get, set } from 'lodash/object'
 
+const debug = require( 'debug' )( 'tinkerchat:chat-log' )
+const DEFAULT_MAX_MESSAGES = 100
 export class ChatLog {
 
-	constructor() {
+	constructor( options = { maxMessages: DEFAULT_MAX_MESSAGES } ) {
+		this.maxMessages = options.maxMessages
 		this.chats = {}
 	}
 
 	append( id, message ) {
+		debug( 'append message', id, message.id )
 		return this.findLog( id )
 		.then( ( log ) => new Promise( ( resolve ) => {
-			set( this.chats, id, log.concat( message ) )
+			set( this.chats, id, log.concat( message ).slice( - this.maxMessages ) )
 			resolve()
 		} ) )
 	}
@@ -17,6 +21,7 @@ export class ChatLog {
 	findLog( id ) {
 		return new Promise( ( resolve ) => {
 			resolve( get( this.chats, id, [] ) )
+			debug( 'found log', id )
 		} )
 	}
 
