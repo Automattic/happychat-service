@@ -2,7 +2,7 @@ import { ok, equal, deepEqual } from 'assert'
 import operator from '../../src/operator'
 import mockio from '../mock-io'
 import { tick } from '../tick'
-import { map } from 'lodash/collection'
+import { map, includes } from 'lodash/collection'
 
 const debug = require( 'debug' )( 'tinkerchat:test:operators' )
 
@@ -86,14 +86,39 @@ describe( 'Operators', () => {
 				clientb.on( 'available', ( chat, callback ) => {
 					callback( { load: 5, capacity: 5, id: userb.id } )
 				} )
-				operators.emit( 'assign', { id: 'chat-id' }, 'room-name', ( error, assigned ) => {
+				operators.emit( 'assign', { id: 'chat-id' }, 'customer/room-name', tick( ( error, assigned ) => {
 					ok( ! error )
 					ok( a_open )
 					ok( b_open )
 					ok( assigned.socket )
 					equal( assigned.id, 'user-id' )
+					ok( includes( socket.rooms, 'customer/room-name' ) )
+					done()
+				} ) )
+			} )
+		} )
+
+		describe( 'with assigned chat', () => {
+			var chat = { id: 'chat-id' }
+			beforeEach( () => new Promise( ( resolve, reject ) => {
+				client.once( 'available', ( pendingChat, available ) => {
+					available( { load: 0, capacity: 1, id: user.id } )
+				} )
+				client.once( 'chat.open', () => {
+					resolve()
+				} )
+				operators.emit( 'assign', chat, 'room-name', ( error, assigned ) => {
+					if ( error ) return reject( error )
+					debug( 'assigned', assigned )
+				} )
+			} ) )
+
+			it( 'should end an open chat', ( done ) => {
+				operators.once( 'chat.close', ( chat_id, operatorUser ) => {
+					deepEqual( user, operatorUser )
 					done()
 				} )
+				client.emit( 'chat.close', chat.id )
 			} )
 		} )
 

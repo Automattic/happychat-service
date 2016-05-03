@@ -160,6 +160,10 @@ const join = ( { socket, events, user, io } ) => {
 		debug( 'broadcasting message', user.id, id, message )
 		events.emit( 'message', { id: chat_id }, user, message )
 	} )
+
+	socket.on( 'chat.close', ( chat_id ) => {
+		events.emit( 'chat.close', chat_id, user )
+	} )
 }
 
 const operatorClients = ( { io, operator } ) => new Promise( ( resolve, reject ) => {
