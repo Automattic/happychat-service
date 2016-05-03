@@ -175,7 +175,7 @@ export class ChatList extends EventEmitter {
 		return new Promise( ( resolve ) => {
 			// _chats are live with operators
 			const lists = [ this._chats, this._pending, mapValues( this._abandoned, ( { channel } ) => channel ) ]
-			const reduceChats = ( list ) => reduce( list, ( all, value ) => all.concat( value ), [] )
+			const reduceChats = ( list ) => reduce( list, ( all, value ) => value ? all.concat( value ) : all, [] )
 			const chats = reduce( lists, ( all, list ) => {
 				return all.concat( reduceChats( list ) )
 			}, [] )
