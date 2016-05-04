@@ -1,8 +1,10 @@
 import { EventEmitter } from 'events'
 import { omit, omitBy, forIn, mapValues, get, set } from 'lodash/object'
-import { find, every, reduce, forEach } from 'lodash/collection'
+import { find, every, reduce, forEach, map, filter } from 'lodash/collection'
 
 const debug = require( 'debug' )( 'tinkerchat:chat-list' )
+
+const notNull = ( value ) => !!value
 
 export class ChatList extends EventEmitter {
 
@@ -38,12 +40,23 @@ export class ChatList extends EventEmitter {
 		operators.on( 'leave', ( operator ) => {
 			this.findOperatorChats( operator )
 			.then( ( chats ) => {
-				forEach( chats, ( id ) => {
-					const chat = this._chats[id]
-					this._chats = omitBy( this._chats, ( { id: chat_id } ) => chat_id === id )
-					this._abandoned[id] = { channel: chat, operator }
+				forEach( chats, ( chat ) => {
+					this._chats = omitBy( this._chats, ( { id: chat_id } ) => chat_id === chat.id )
+					this._abandoned[chat.id] = { channel: chat, operator }
 					this.emit( 'chat.status', 'abandoned', chat )
 				} )
+			} )
+		} )
+
+		operators.on( 'chat.join', ( chat_id, operator ) => {
+			debug( 'find chat', chat_id )
+			this.findChatById( chat_id )
+			.then( ( chat ) => {
+				const room_name = `customers/${ chat.id }`
+				operators.emit( 'open', chat, room_name, operator )
+			} )
+			.catch( () => {
+				debug( 'failed to find chat', chat_id )
 			} )
 		} )
 	}
@@ -56,7 +69,7 @@ export class ChatList extends EventEmitter {
 		this.findOperatorChats( user )
 		.then( ( chats ) => {
 			debug( 'found existing chats, reassign:', user, chats )
-			this.operators.emit( 'reassign', chats )
+			this.operators.emit( 'reassign', user, socket, chats )
 		} )
 
 		// find all chats abandoned by operator and re-assign them
@@ -144,19 +157,20 @@ export class ChatList extends EventEmitter {
 		} )
 	}
 
-	findChat( channelIdentity ) {
-		const { id } = channelIdentity
-		return new Promise( ( resolve, reject ) => {
-			if ( this._pending[id] ) {
-				return resolve( this._pending[id] )
+	findChatById( id ) {
+		return this.findAllOpenChats()
+		.then( ( chats ) => new Promise( ( resolve, reject ) => {
+			debug( 'searching chats', chats.length, id )
+			const chat = find( chats, ( { id: chat_id } ) => chat_id === id )
+			if ( chat ) {
+				return resolve( chat )
 			}
-
-			if ( this._chats[id] ) {
-				return resolve( this._chats[id] )
-			}
-
 			reject()
-		} )
+		} ) )
+	}
+
+	findChat( channelIdentity ) {
+		return this.findChatById( channelIdentity.id )
 	}
 
 	findAbandonedChats( operator_id ) {
@@ -175,7 +189,7 @@ export class ChatList extends EventEmitter {
 		return new Promise( ( resolve ) => {
 			// _chats are live with operators
 			const lists = [ this._chats, this._pending, mapValues( this._abandoned, ( { channel } ) => channel ) ]
-			const reduceChats = ( list ) => reduce( list, ( all, value ) => value ? all.concat( value ) : all, [] )
+			const reduceChats = ( list ) => reduce( list, ( all, value ) => value ? all.concat( value ) : all, get( this, '_missed', [] ) )
 			const chats = reduce( lists, ( all, list ) => {
 				return all.concat( reduceChats( list ) )
 			}, [] )
@@ -185,12 +199,13 @@ export class ChatList extends EventEmitter {
 
 	findOperatorChats( operator ) {
 		return new Promise( ( resolve ) => {
-			resolve( get( this._operators, operator.id, [] ) )
+			const ids = get( this._operators, operator.id, [] )
+			resolve( filter( map( ids, ( id ) => this._chats[id] ), notNull ) )
 		} )
 	}
 
 	attemptAssignMissed() {
-		return new Promise( ( resolve, reject ) => {
+		return new Promise( ( resolve ) => {
 			const [next, ... rest] = get( this, '_missed', [] )
 			if ( !next ) {
 				return

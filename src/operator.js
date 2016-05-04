@@ -161,8 +161,15 @@ const join = ( { socket, events, user, io } ) => {
 		events.emit( 'message', { id: chat_id }, user, message )
 	} )
 
+	socket.on( 'chat.join', ( chat_id ) => {
+		events.emit( 'chat.join', chat_id, user )
+	} )
+
 	socket.on( 'chat.close', ( chat_id ) => {
 		events.emit( 'chat.close', chat_id, user )
+		// tell all operatores in the customer channel that the chat has been closed
+		// TODO: chat_id should be the room name?
+		io.in( `customers/${ chat_id }` ).emit( 'chat.close', chat_id, user )
 	} )
 }
 
@@ -211,9 +218,11 @@ export default ( io ) => {
 	// additional operator socket came online
 	// assign all of the existing operator chats
 	// for now just broadcast to all operator connections
-	events.on( 'reassign', ( { user }, socket, chats ) => {
+	events.on( 'reassign', ( user, socket, chats ) => {
+		debug( 'REASSIGNING', user, chats )
 		map( chats, ( chat ) => {
 			const room = `customers/${ chat.id }`
+			debug( 'reassigning chat', user, chat )
 			assignChat( { io, operator: user, chat, room, events } )
 			.then( () => {
 				debug( 'opened chat for operator:', user.id )
@@ -225,7 +234,7 @@ export default ( io ) => {
 	events.on( 'recover', ( { user }, chats, callback ) => {
 		parallel( map( chats, ( chat ) => ( complete ) => {
 			const room = `customers/${ chat.id }`
-			debug( 'Recover chats: ', room )
+			debug( 'Recover chats: ', room, chat )
 			assignChat( { io, operator: user, chat, room, events } ).then( () => complete( null ), complete )
 		} ), ( e ) => {
 			if ( e ) {
@@ -233,6 +242,18 @@ export default ( io ) => {
 				return
 			}
 			callback()
+		} )
+	} )
+
+	events.on( 'open', ( chat, room, operator ) => {
+		const operator_room_name = `operators/${operator.id}`
+		debug( 'open chat for operator', chat, operator, operator_room_name )
+		assignChat( { io, operator, chat, room, events } )
+		.then( () => {
+			debug( 'operator joined chat', operator, chat )
+		} )
+		.catch( ( e ) => {
+			debug( 'failed to join chat', e )
 		} )
 	} )
 
