@@ -257,6 +257,11 @@ export default ( io ) => {
 		} )
 	} )
 
+	events.on( 'close', ( chat, room, operator ) => {
+		debug( 'chat closed by operator', chat, operator )
+		io.in( room ).emit( 'chat.close', chat, operator )
+	} )
+
 	events.on( 'assign', ( chat, room, callback ) => {
 		// find an operator
 		debug( 'find an operator for', chat.id )

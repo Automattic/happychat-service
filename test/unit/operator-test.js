@@ -2,6 +2,7 @@ import { ok, equal, deepEqual } from 'assert'
 import operator from '../../src/operator'
 import mockio from '../mock-io'
 import { tick } from '../tick'
+import { parallel } from 'async'
 import { map, includes } from 'lodash/collection'
 
 const debug = require( 'debug' )( 'tinkerchat:test:operators' )
@@ -123,7 +124,7 @@ describe( 'Operators', () => {
 				} )
 			} ) )
 
-			it( 'should end an open chat', ( done ) => {
+			it( 'should emit chat.close from operator connection', ( done ) => {
 				operators.once( 'chat.close', ( chat_id, operatorUser ) => {
 					deepEqual( user, operatorUser )
 					done()
@@ -163,11 +164,36 @@ describe( 'Operators', () => {
 	} )
 
 	describe( 'with multiple connections from same operator', () => {
-		it( 'should not emit leave when one socket disconnects', () => {
-			var op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var' }
+		var connections
+		var op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var' }
+
+		const connectAllClientsToChat = ( operators, chat, op ) => new Promise( ( resolve, reject ) => {
+			parallel( map( connections, ( { client } ) => ( callback ) => {
+				client.once( 'chat.open', ( chat ) => callback( null, chat ) )
+			} ), ( e, chats ) => {
+				if ( e ) return reject( e )
+				resolve( chats )
+			} )
+			operators.emit( 'open', chat, `customers/${ chat.id }`, op )
+		} )
+
+		beforeEach( () => {
+			connections = []
 			return connectOperator( server.newClient(), op )
-			.then( () => connectOperator( server.newClient(), op ) )
-			.then( ( { client: c, socket: s } ) => new Promise( ( resolve, reject ) => {
+			.then( ( conn ) => {
+				connections.push( conn )
+				return connectOperator( server.newClient(), op )
+			} )
+			.then( ( conn ) => new Promise( ( resolve ) => {
+				connections.push( conn )
+				resolve()
+			} ) )
+		} )
+
+		it( 'should not emit leave when one socket disconnects', () => {
+			return new Promise( ( resolve, reject ) => {
+				const [ connection ] = connections
+				const { client: c, socket: s } = connection
 				operators.on( 'leave', () => {
 					reject( new Error( 'there are still clients connected' ) )
 				} )
@@ -178,7 +204,23 @@ describe( 'Operators', () => {
 					equal( clients.length, 2 )
 					server.disconnect( { client: c, socket: s } )
 				} )
+			} )
+		} )
+
+		it( 'should emit chat.close to all clients in a chat', () => {
+			return connectAllClientsToChat( operators, { id: 'chat-id' }, op )
+			.then( ( chats ) => new Promise( ( resolve, reject ) => {
+				parallel( map( connections, ( { client } ) => ( callback ) => {
+					client.once( 'chat.close', ( chat, operator ) => callback( null, { chat, operator, client } ) )
+				} ), ( e, messages ) => {
+					if ( e ) reject( e )
+					resolve( messages )
+				} )
+				operators.emit( 'close', { id: 'chat-id' }, 'customers/chat-id', op )
 			} ) )
+			.then( ( messages ) => {
+				equal( messages.length, 2 )
+			} )
 		} )
 	} )
 } )
