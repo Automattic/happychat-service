@@ -108,7 +108,6 @@ describe( 'ChatList', () => {
 
 		it( 'should mark chats as abandoned when operator is completely disconnected', ( done ) => {
 			operators.on( 'leave', tick( () => {
-				debug( 'Abandoned?', chatlist._abandoned )
 				ok( chatlist._abandoned['the-id'] )
 				ok( !chatlist._chats['the-id'], 'chat not removed from active chat list' )
 				done()
