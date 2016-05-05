@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events'
 
-import { get, assign } from 'lodash/object'
+import { get, assign, keys } from 'lodash/object'
 import { forEach } from 'lodash/collection'
 
 const debug = require( 'debug' )( 'tinkerchat:test:mockio' )
@@ -36,6 +36,10 @@ export default ( socketid ) => {
 				return server
 			}
 		}
+	}
+
+	server.clients = ( cb ) => {
+		cb( null, keys( get( server, 'connected', {} ) ) )
 	}
 
 	server.connected = {}
