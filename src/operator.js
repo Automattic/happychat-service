@@ -24,15 +24,21 @@ const identityForUser = ( { id, displayName, avatarURL } ) => (
 )
 
 const queryClients = ( io, room ) => new Promise( ( resolve, reject ) => {
-	io.in( room ).clients( ( error, clients ) => {
+	const onClients = ( error, clients ) => {
 		if ( error ) {
 			return reject( error )
 		}
 		resolve( clients )
-	} )
+	}
+	if ( room ) {
+		io.in( room ).clients( onClients )
+	} else {
+		io.clients( onClients )
+	}
 } )
 
 const online = ( io ) => queryClients( io, 'online' )
+const allClients = ( io ) => queryClients( io )
 
 const queryAvailability = ( chat, clients, io ) => new Promise( ( resolve, reject ) => {
 	if ( isEmpty( clients ) ) {
@@ -82,7 +88,7 @@ const pickAvailable = ( availability ) => new Promise( ( resolve, reject ) => {
 	resolve( operator )
 } )
 
-const queryOnline = ( io, timeout ) => online( io ).then( ( clients ) => new Promise( ( resolve, reject ) => {
+const identifyClients = ( io, timeout ) => ( clients ) =>  new Promise( ( resolve, reject ) => {
 	parallel( map( clients, ( client_id ) => ( complete ) => {
 		const client = io.connected[client_id]
 		withTimeout( ( cancel ) => {
@@ -101,7 +107,10 @@ const queryOnline = ( io, timeout ) => online( io ).then( ( clients ) => new Pro
 		}
 		resolve( results )
 	} )
-} ) )
+} )
+
+const identifyOnline = ( io, timeout ) => online( io ).then( identifyClients( io, timeout ) )
+const identifyAll = ( io, timeout ) => allClients( io ).then( identifyClients( io, timeout ) )
 
 const reduceUniqueOperators = ( operators ) => values( reduce( operators, ( unique, operator ) => {
 	if ( isEmpty( operator ) ) {
@@ -115,10 +124,10 @@ const all = ( ... fns ) => ( ... args ) => forEach( fns, ( fn ) => fn( ... args 
 const emitOnline = throttle( ( { io, events } ) => {
 	// when a socket disconnects, query the online room for connected operators
 	debug( 'query availability' )
-	queryOnline( io )
+	identifyAll( io )
 	.then( ( operators ) => Promise.resolve( reduceUniqueOperators( operators ) ) )
 	.then( ( identities ) => {
-		debug( 'updating availability' )
+		debug( 'updating availability', identities )
 		io.emit( 'operators.online', identities )
 		events.emit( 'available', identities )
 	} )
@@ -126,8 +135,10 @@ const emitOnline = throttle( ( { io, events } ) => {
 }, 100 )
 
 const join = ( { socket, events, user, io } ) => {
-	const user_room = `operators/${user.id}`
 	debug( 'initialize the operator', user )
+	const user_room = `operators/${user.id}`
+
+	emitOnline( { io, events } )
 
 	socket.on( 'status', ( status, done ) => {
 		// TODO: if operator has multiple clients, move all of them?
