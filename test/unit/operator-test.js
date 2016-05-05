@@ -29,7 +29,7 @@ describe( 'Operators', () => {
 	} )
 
 	describe( 'when authenticated and online', () => {
-		var op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var' }
+		var op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var', status: 'online' }
 		beforeEach( ( done ) => {
 			connectOperator( { socket, client }, op )
 			.then( ( { user: operatorUser } ) => {
@@ -134,11 +134,12 @@ describe( 'Operators', () => {
 		} )
 
 		it( 'should notify with updated operator list when operator joins', ( done ) => {
-			const userb = { id: 'a-user', displayName: 'Jem' }
-			const userc = { id: 'abcdefg', displayName: 'other' }
+			const userb = { id: 'a-user', displayName: 'Jem', status: 'online' }
+			const userc = { id: 'abcdefg', displayName: 'other', status: 'away' }
 			server.on( 'operators.online', tick( ( identities ) => {
 				equal( identities.length, 3 )
 				deepEqual( map( identities, ( { displayName } ) => displayName ), [ 'furiosa', 'Jem', 'other' ] )
+				deepEqual( map( identities, ( { status } ) => status ), [ 'online', 'online', 'away' ] )
 				done()
 			} ) )
 
