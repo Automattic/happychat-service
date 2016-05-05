@@ -14,6 +14,7 @@ describe( 'Operators', () => {
 
 	const connectOperator = ( { socket: useSocket, client: useClient }, authUser = { id: 'user-id', displayName: 'name' } ) => new Promise( ( resolve ) => {
 		debug( 'connect operator', authUser )
+		useClient.on( 'identify', ( identify ) => identify( authUser ) )
 		operators.once( 'connection', ( _, callback ) => callback( null, authUser ) )
 		useClient.once( 'init', ( clientUser ) => {
 			useClient.emit( 'status', 'online', () => resolve( { user: clientUser, client: useClient, socket: useSocket } ) )
@@ -135,10 +136,6 @@ describe( 'Operators', () => {
 			const connectionb = server.newClient()
 			const connectionc = server.newClient()
 
-			client.on( 'identify', ( callback ) => callback( user ) )
-			connectiona.client.on( 'identify', ( callback ) => callback( userb ) )
-			connectionb.client.on( 'identify', ( callback ) => callback( user ) )
-			connectionc.client.on( 'identify', ( callback ) => callback( userc ) )
 			connectOperator( connectiona, userb )
 			.then( () => connectOperator( connectionb, user ) )
 			.then( () => connectOperator( connectionc, userc ) )
