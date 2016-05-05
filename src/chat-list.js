@@ -59,6 +59,18 @@ export class ChatList extends EventEmitter {
 				debug( 'failed to find chat', chat_id )
 			} )
 		} )
+
+		operators.on( 'chat.close', ( chat_id, operator ) => {
+			this.findChatById( chat_id )
+			.then( ( chat ) => this.closeChat( chat ) )
+			.then( ( chat ) => {
+				const room_name = `customers/${ chat.id }`
+				operators.emit( 'close', chat, room_name, operator )
+			} )
+			.catch( () => {
+				throw new Error( 'failed to find chat: ' + chat_id )
+			} )
+		} )
 	}
 
 	onOperatorConnected( { user, socket, room } ) {
@@ -213,6 +225,13 @@ export class ChatList extends EventEmitter {
 			set( this, '_missed', rest )
 			debug( 'attempting to assign missed chat:', next )
 			this.onCustomerMessage( next )
+		} )
+	}
+
+	closeChat( chat ) {
+		return new Promise( ( resolve, reject ) => {
+			set( this, '_chats', omit( get( this, '_chats', {} ), chat.id ) )
+			resolve( chat )
 		} )
 	}
 
