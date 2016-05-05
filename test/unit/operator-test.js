@@ -66,6 +66,15 @@ describe( 'Operators', () => {
 			client.emit( 'message', 'chat-id', { id: 'message-id', text: 'message' } )
 		} )
 
+		it( 'should emit when user wants to join a chat', ( done ) => {
+			operators.on( 'chat.join', ( chat_id, clientUser ) => {
+				equal( chat_id, 'chat-id' )
+				deepEqual( clientUser, user )
+				done()
+			} )
+			client.emit( 'chat.join', 'chat-id' )
+		} )
+
 		it( 'should assign an operator to a new chat', ( done ) => {
 			// set up a second client
 			const connection = server.newClient()
