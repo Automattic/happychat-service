@@ -7,15 +7,10 @@ const debug = require( 'debug' )( 'tinkerchat:test:chat-logs' )
 describe( 'Chat logs', () => {
 	var service
 
-	beforeEach( () => {
-		service = util( authenticators( { id: 'customer' }, { id: 'operator' }, {} ) )
-		return service.start()
-	} )
-	afterEach( () => service.stop() )
-
 	const mockMessages = [ 'hello', 'i need some help', 'can you help me?' ]
 
-	const afterInit = ( { customer } ) => new Promise( ( resolve ) => {
+	const afterInit = ( { customer, operator } ) => new Promise( ( resolve ) => {
+		operator.on( 'available', ( _, available ) => available( { capacity: 0, load: 0 } ) )
 		customer.on( 'init', () => resolve( customer ) )
 	} )
 
@@ -40,21 +35,30 @@ describe( 'Chat logs', () => {
 	} )
 
 	const sendMessages = ( messages ) => ( customer ) => {
+		debug( 'sending messages', messages.length )
 		const [first, ... rest ] = messages
 		return reduce( rest, ( p, msg ) => p.then( sendMessage( msg ) ), sendMessage( first )( customer ) )
 	}
 
 	const setOperatorOnline = ( client ) => new Promise( ( resolve ) => {
+		debug( 'setting operator to online status' )
 		client.emit( 'status', 'online', () => resolve( client ) )
 	} )
 
 	const acceptAllAssignments = ( client ) => new Promise( ( resolve ) => {
+		debug( 'set accepting all chats' )
 		client.on( 'available', ( chat, available ) => {
 			debug( 'reporting as available' )
 			available( { capacity: 1, load: 0, id: 'operator' } )
 		} )
 		resolve( client )
 	} )
+
+	beforeEach( () => {
+		service = util( authenticators( { id: 'customer' }, { id: 'operator' }, {} ) )
+		return service.start()
+	} )
+	afterEach( () => service.stop() )
 
 	it( 'should deliver logs when customer joins chat', () => {
 		return service.startClients()
@@ -77,7 +81,7 @@ describe( 'Chat logs', () => {
 		.then( acceptAllAssignments )
 		.then( setOperatorOnline )
 		.then( listenForLog )
-		.then( ( [ chat, messages ] ) => {
+		.then( ( [ , messages ] ) => {
 			equal( messages.length, 3 )
 			deepEqual( map( messages, ( { text } ) => text ), mockMessages )
 		} )
