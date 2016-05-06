@@ -294,12 +294,15 @@ export default ( io ) => {
 	events.on( 'assign', ( chat, room, callback ) => {
 		// find an operator
 		debug( 'find an operator for', chat.id )
-		online( io )
+		allClients( io )
 		.then( ( clients ) => queryAvailability( chat, clients, io ) )
 		.then( pickAvailable )
 		.then( ( operator ) => assignChat( { io, operator, chat, room, events } ) )
 		.then( ( operator ) => callback( null, operator ) )
-		.catch( callback )
+		.catch( ( e ) => {
+			debug( 'failed to find operator', e )
+			callback( e )
+		} )
 	} )
 
 	io.on( 'connection', ( socket ) => {
