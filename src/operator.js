@@ -88,7 +88,7 @@ const pickAvailable = ( availability ) => new Promise( ( resolve, reject ) => {
 	resolve( operator )
 } )
 
-const identifyClients = ( io, timeout ) => ( clients ) =>  new Promise( ( resolve, reject ) => {
+const identifyClients = ( io, timeout ) => ( clients ) => new Promise( ( resolve, reject ) => {
 	parallel( map( clients, ( client_id ) => ( complete ) => {
 		const client = io.connected[client_id]
 		withTimeout( ( cancel ) => {
