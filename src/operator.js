@@ -134,6 +134,17 @@ const emitOnline = throttle( ( { io, events } ) => {
 	.catch( ( e ) => debug( 'failed to query online', e, e.stack ) )
 }, 100 )
 
+const emitInChat = throttle( ( { io, events, chat } ) => {
+	debug( 'querying operators in chat', chat )
+	const room = `customers/${chat.id}`
+	queryClients( io, room )
+	.then( identifyClients( io ) )
+	.then( ( operators ) => Promise.resolve( reduceUniqueOperators( operators ) ) )
+	.then( ( identities ) => {
+		io.in( room ).emit( 'chat.online', chat.id, identities )
+	} )
+} )
+
 const join = ( { socket, events, user, io } ) => {
 	debug( 'initialize the operator', user )
 	const user_room = `operators/${user.id}`
