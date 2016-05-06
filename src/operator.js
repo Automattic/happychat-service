@@ -199,31 +199,38 @@ const operatorClients = ( { io, operator } ) => new Promise( ( resolve, reject )
 	const room = `operators/${ operator.id }`
 	io.in( room ).clients( ( error, clients ) => {
 		if ( error ) reject( error )
-		resolve( map( clients ), ( socketid ) => io.connected[socketid] )
+		resolve( map( clients, ( socketid ) => io.connected[socketid] ) )
+	} )
+} )
+
+const openChatForClients = ( { io, events, operator, room, chat } ) => ( clients ) => new Promise( ( resolve, reject ) => {
+	const operator_room_name = `operators/${operator.id}`
+	debug( 'openChatForClients' )
+	parallel( map( clients, ( socket ) => ( complete ) => {
+		socket.join( room, ( error ) => {
+			// a socket has joined
+			debug( 'chat was opened' )
+			events.emit( 'join', chat, operator, socket )
+			complete( error )
+		} )
+	} ), ( e ) => {
+		if ( e ) {
+			reject( e )
+		}
+		debug( 'Assigning chat: (chat.open)', chat )
+		io.in( operator_room_name ).emit( 'chat.open', chat )
+		resolve( clients )
 	} )
 } )
 
 const assignChat = ( { io, operator, chat, room, events } ) => new Promise( ( resolve, reject ) => {
-	const operator_room_name = `operators/${operator.id}`
 	// send the event to the operator and confirm that the chat was opened
 	// TODO: timeouts? only one should have to succeed or should all of them have to succeed?
 	operatorClients( { io, operator } )
+	.then( openChatForClients( { io, events, operator, room, chat } ) )
 	.then( ( clients ) => {
-		parallel( clients.map( ( socketid ) => ( complete ) => {
-			const socket = io.connected[socketid]
-			socket.join( room, ( error ) => {
-				// a socket has joined
-				events.emit( 'join', chat, operator, socket )
-				complete( error )
-			} )
-		} ), ( e ) => {
-			if ( e ) {
-				reject( e )
-			}
-			debug( 'Assigning chat: (chat.open)', chat )
-			io.in( operator_room_name ).emit( 'chat.open', chat )
-			resolve( operator )
-		} )
+		emitInChat( { io, events, chat } )
+		resolve( operator )
 	} )
 } )
 
