@@ -12,7 +12,8 @@ const noop = () => {}
 describe( 'Operators in chat', () => {
 	let operators = [
 		{ id: 'operator-1' },
-		{ id: 'operator-2' }
+		{ id: 'operator-2' },
+		{ id: 'operator-3' }
 	]
 
 	var operatorClients;
@@ -85,7 +86,7 @@ describe( 'Operators in chat', () => {
 	} )
 
 	const disconnectClient = ( client ) => new Promise( ( resolve ) => {
-		client.cone( 'disconnect', () => resolve() )
+		client.once( 'disconnect', () => resolve() )
 		client.close()
 	} )
 
@@ -107,7 +108,7 @@ describe( 'Operators in chat', () => {
 		} )
 		// when an operator joins a chat, updated operator list should be sent
 		.then( ( list ) => {
-			deepEqual( map( list, prop( 'id' ) ), map( operators, prop( 'id' ) ) )
+			deepEqual( map( list, prop( 'id' ) ), ['operator-1', 'operator-3'] )
 			const client = operatorClients.slice( -1 )[0]
 
 			debug( 'listen for operator leaving' )
@@ -117,6 +118,13 @@ describe( 'Operators in chat', () => {
 		// when an operator leaves a chat, updated operator list should be sent
 		.then( ( list ) => {
 			deepEqual( map( list, prop( 'id' ) ), map( operators.slice( 0, 1 ), prop( 'id' ) ) )
+		} )
+		.then( () => joinChat( operatorClients[1], 'customer' ) )
+		.then( () => waitForChatOperatorList( operatorClients[1] ) )
+		.then( () => disconnectClient( operatorClients[1] ) )
+		.then( () => waitForChatOperatorList( operatorClients[0] ) )
+		.then( ( list ) => {
+			deepEqual( map( list, prop( 'id' ) ), [ 'operator-1' ] )
 		} )
 	} )
 } )

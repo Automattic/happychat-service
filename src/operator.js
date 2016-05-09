@@ -134,7 +134,7 @@ const emitOnline = throttle( ( { io, events } ) => {
 	.catch( ( e ) => debug( 'failed to query online', e, e.stack ) )
 }, 100 )
 
-const emitInChat = throttle( ( { io, events, chat } ) => {
+const emitInChat = throttle( ( { io, chat } ) => {
 	debug( 'querying operators in chat', chat )
 	const room = `customers/${chat.id}`
 	queryClients( io, room )
@@ -216,10 +216,11 @@ const openChatForClients = ( { io, events, operator, room, chat } ) => ( clients
 			debug( 'chat was opened' )
 			events.emit( 'join', chat, operator, socket )
 			complete( error )
+			socket.on( 'disconnect', () => emitInChat( { io, events, chat } ) )
 		} )
 	} ), ( e ) => {
 		if ( e ) {
-			reject( e )
+			return reject( e )
 		}
 		debug( 'Assigning chat: (chat.open)', chat )
 		io.in( operator_room_name ).emit( 'chat.open', chat )
