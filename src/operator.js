@@ -187,6 +187,10 @@ const join = ( { socket, events, user, io } ) => {
 		events.emit( 'chat.join', chat_id, user )
 	} )
 
+	socket.on( 'chat.leave', ( chat_id ) => {
+		events.emit( 'chat.leave', chat_id, user )
+	} )
+
 	socket.on( 'chat.close', ( chat_id ) => {
 		events.emit( 'chat.close', chat_id, user )
 		// tell all operatores in the customer channel that the chat has been closed
@@ -231,6 +235,26 @@ const assignChat = ( { io, operator, chat, room, events } ) => new Promise( ( re
 	.then( ( clients ) => {
 		emitInChat( { io, events, chat } )
 		resolve( operator )
+	} )
+} )
+
+const leaveChat = ( { io, operator, chat, room, events } ) => new Promise( ( resolve ) => {
+	const operator_room_name = `operators/${operator.id}`
+	operatorClients( { io, operator } )
+	.then( ( clients ) => new Promise( ( resolve, reject ) => {
+		parallel( map( clients, ( socket ) => ( callback ) => {
+			socket.leave( room, ( error ) => {
+				callback( error, socket )
+			} )
+		} ), ( e, results ) => {
+			if ( e ) return reject( e )
+			io.in( operator_room_name ).emit( 'chat.leave', chat )
+			resolve( clients )
+		} )
+	} ) )
+	.then( () => {
+		debug( 'emit in chat now' )
+		emitInChat( { io, events, chat } )
 	} )
 } )
 
@@ -289,6 +313,10 @@ export default ( io ) => {
 	events.on( 'close', ( chat, room, operator ) => {
 		debug( 'chat closed by operator', chat, operator )
 		io.in( room ).emit( 'chat.close', chat, operator )
+	} )
+
+	events.on( 'leave', ( chat, room, operator ) => {
+		leaveChat( { io, operator, chat, room, events } )
 	} )
 
 	events.on( 'assign', ( chat, room, callback ) => {

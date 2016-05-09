@@ -60,6 +60,15 @@ export class ChatList extends EventEmitter {
 			} )
 		} )
 
+		operators.on( 'chat.leave', ( chat_id, operator ) => {
+			this.findChatById( chat_id )
+			.then( ( chat ) => {
+				const room_name = `customers/${ chat.id }`
+				operators.emit( 'leave', chat, room_name, operator )
+			} )
+			.catch( ( e ) => debug( 'Chat does not exist', chat_id, e ) )
+		} )
+
 		operators.on( 'chat.close', ( chat_id, operator ) => {
 			this.findChatById( chat_id )
 			.then( ( chat ) => this.closeChat( chat ) )
