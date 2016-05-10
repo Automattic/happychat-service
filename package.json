@@ -1,6 +1,6 @@
 {
   "name": "tinkerchat-service",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Socket.IO based chat server for tinkerchat.",
   "main": "index.js",
   "scripts": {
