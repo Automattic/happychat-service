@@ -1,21 +1,24 @@
 import { EventEmitter } from 'events'
-import { omit, omitBy, forIn, mapValues, get, set } from 'lodash/object'
-import { find, every, reduce, forEach, map, filter } from 'lodash/collection'
+import { assign, omit, forIn, get, set, values } from 'lodash/object'
+import { find, filter, reduce, map } from 'lodash/collection'
+
+const STATUS_PENDING = 'pending'
+const STATUS_MISSED = 'missed'
+const STATUS_ASSIGNED = 'assigned'
+const STATUS_ABANDONED = 'abandoned'
 
 const debug = require( 'debug' )( 'tinkerchat:chat-list' )
-
-const notNull = ( value ) => !!value
 
 export class ChatList extends EventEmitter {
 
 	constructor( { customers, operators, timeout = 1000 } ) {
 		super()
 
-		// chat state management
+		// A single store of chats including:
+		// 1) a chat's status (pending, assigned, abandoned, missed)
+		// 2) the chat identity (user/chat_id)
+		// 3) the assigned operator identity
 		this._chats = {}
-		this._pending = {}
-		this._abandoned = {}
-		this._operators = {}
 
 		// Default timeout for querying operator clients for information
 		this._timeout = timeout
@@ -40,11 +43,9 @@ export class ChatList extends EventEmitter {
 		operators.on( 'leave', ( operator ) => {
 			this.findOperatorChats( operator )
 			.then( ( chats ) => {
-				forEach( chats, ( chat ) => {
-					this._chats = omitBy( this._chats, ( { id: chat_id } ) => chat_id === chat.id )
-					this._abandoned[chat.id] = { channel: chat, operator }
-					this.emit( 'chat.status', 'abandoned', chat )
-				} )
+				this._chats = assign( {}, this._chats, reduce( chats, ( abandoned, chat ) => {
+					return set( abandoned, chat.id, [ STATUS_ABANDONED, chat, operator ] )
+				}, {} ) )
 			} )
 		} )
 
@@ -98,10 +99,9 @@ export class ChatList extends EventEmitter {
 		.then( ( chats ) => {
 			debug( 'attempt to recover chats', chats, id )
 			this.operators.emit( 'recover', { user, socket, room }, chats, () => {
-				this._abandoned = omitBy( this._abandoned, ( { channel } ) => {
-					return find( chats, ( { id: channel_id } ) => channel_id === channel.id )
-				} )
-				every( chats, ( chat ) => this._chats[chat.id] = chat )
+				this._chats = assign( {}, this._chats, reduce( chats, ( recovered, chat ) => {
+					return set( recovered, chat.id, [ STATUS_ASSIGNED, chat, user ] )
+				}, {} ) )
 			} )
 		} )
 		.catch( ( e ) => {
@@ -116,13 +116,11 @@ export class ChatList extends EventEmitter {
 	}
 
 	queryClientAssignment( channelIdentity, room_name ) {
-		const { id } = channelIdentity
 		return new Promise( ( resolve, reject ) => {
 			const timeout = setTimeout( () => reject( new Error( 'timeout: failed to find operator' ) ), this._timeout )
 			this.operators.emit( 'assign', channelIdentity, room_name, ( error, operatorId ) => {
 				clearTimeout( timeout )
 				if ( error ) {
-					this._pending[ id ] = undefined
 					return reject( error )
 				}
 				return resolve( operatorId )
@@ -130,7 +128,7 @@ export class ChatList extends EventEmitter {
 		} )
 	}
 
-	onCustomerMessage( channelIdentity, message ) {
+	onCustomerMessage( channelIdentity ) {
 		// TODO: make a queue and only assign one at a time?
 		const { id } = channelIdentity
 		const room_name = `customers/${ id }`
@@ -153,27 +151,22 @@ export class ChatList extends EventEmitter {
 			debug( 'chat already managed', chat.id )
 		} )
 		.catch( ( e ) => {
-			debug( 'chat has not be assigned, finding an operator', e, channelIdentity )
-			this._pending[ id ] = channelIdentity
+			debug( 'chat has not been assigned, finding an operator', e, channelIdentity )
+			this._chats = set( this._chats, channelIdentity.id, [ STATUS_PENDING, channelIdentity ] )
 			this.emit( 'chat.status', 'pending', channelIdentity )
 
 			this.queryClientAssignment( channelIdentity, room_name )
 			.then( ( operator ) => {
-				if ( ! this._operators[ operator.id ] ) {
-					this._operators[operator.id] = []
-				}
-				this._operators[ operator.id ].push( id )
-				this._chats[ id ] = channelIdentity
-				this._pending = omit( this._pending, id )
+				this._chats = set( this._chats, channelIdentity.id, [ STATUS_ASSIGNED, channelIdentity, operator ] )
 				this.emit( 'chat.status', 'found', channelIdentity, operator )
 				this.emit( 'found', channelIdentity, operator )
 				// TODO see if there are any operators in this users's channel,
 				// if not we need to assign a new operator
 			} )
-			.catch( ( e ) => {
-				set( this, '_missed', get( this, '_missed', [] ).concat( channelIdentity ) );
-				debug( 'failed to find operator', e, this._missed.length )
-				this.emit( 'miss', e, channelIdentity )
+			.catch( ( assignmentError ) => {
+				debug( 'failed to find operator' )
+				this._chats = set( this._chats, channelIdentity.id, [ STATUS_MISSED, channelIdentity ] )
+				this.emit( 'miss', assignmentError, channelIdentity )
 			} )
 		} )
 	}
@@ -181,7 +174,6 @@ export class ChatList extends EventEmitter {
 	findChatById( id ) {
 		return this.findAllOpenChats()
 		.then( ( chats ) => new Promise( ( resolve, reject ) => {
-			debug( 'searching chats', chats.length, id )
 			const chat = find( chats, ( { id: chat_id } ) => chat_id === id )
 			if ( chat ) {
 				return resolve( chat )
@@ -197,9 +189,9 @@ export class ChatList extends EventEmitter {
 	findAbandonedChats( operator_id ) {
 		return new Promise( ( resolve ) => {
 			var chats = []
-			forIn( this._abandoned, ( { operator, channel } ) => {
-				if ( operator.id === operator_id ) {
-					chats.push( channel )
+			forIn( this._chats, ( [ status, chat, operator ] ) => {
+				if ( ( operator && operator.id === operator_id ) && status === STATUS_ABANDONED ) {
+					chats.push( chat )
 				}
 			} )
 			resolve( chats )
@@ -207,38 +199,33 @@ export class ChatList extends EventEmitter {
 	}
 
 	findAllOpenChats() {
-		return new Promise( ( resolve ) => {
-			// _chats are live with operators
-			const lists = [ this._chats, this._pending, mapValues( this._abandoned, ( { channel } ) => channel ) ]
-			const reduceChats = ( list ) => reduce( list, ( all, value ) => value ? all.concat( value ) : all, get( this, '_missed', [] ) )
-			const chats = reduce( lists, ( all, list ) => {
-				return all.concat( reduceChats( list ) )
-			}, [] )
-			resolve( chats )
-		} )
+		const records = values( this._chats )
+		return Promise.resolve( map( records, ( [, chat] ) => chat ) )
 	}
 
 	findOperatorChats( operator ) {
 		return new Promise( ( resolve ) => {
-			const ids = get( this._operators, operator.id, [] )
-			resolve( filter( map( ids, ( id ) => this._chats[id] ), notNull ) )
+			resolve( map( filter( values( this._chats ), ( [ , , op ] ) => op.id === operator.id ), ( [, chat] ) => chat ) )
 		} )
 	}
 
 	attemptAssignMissed() {
-		return new Promise( ( resolve ) => {
-			const [next, ... rest] = get( this, '_missed', [] )
-			if ( !next ) {
-				return
+		const [ next ] = reduce( this._chats, ( chats, [ status, chat ] ) => {
+			if ( status === STATUS_MISSED ) {
+				return chats.concat( chat )
 			}
-			set( this, '_missed', rest )
-			debug( 'attempting to assign missed chat:', next )
-			this.onCustomerMessage( next )
-		} )
+			return chats
+		}, [] )
+		if ( !next ) {
+			debug( 'no missed chats' )
+			return
+		}
+		debug( 'attempting to assign missed chat:', next )
+		this.onCustomerMessage( next )
 	}
 
 	closeChat( chat ) {
-		return new Promise( ( resolve, reject ) => {
+		return new Promise( ( resolve ) => {
 			set( this, '_chats', omit( get( this, '_chats', {} ), chat.id ) )
 			resolve( chat )
 		} )

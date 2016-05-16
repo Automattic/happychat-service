@@ -47,6 +47,9 @@ describe( 'Chat logs', () => {
 
 	const acceptAllAssignments = ( client ) => new Promise( ( resolve ) => {
 		debug( 'set accepting all chats' )
+		client.on( 'identify', ( callback ) => {
+			callback( { id: 'operator' } )
+		} )
 		client.on( 'available', ( chat, available ) => {
 			debug( 'reporting as available' )
 			available( { capacity: 1, load: 0, id: 'operator' } )

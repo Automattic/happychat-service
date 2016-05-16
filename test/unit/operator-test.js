@@ -14,7 +14,6 @@ describe( 'Operators', () => {
 	let socket, client, server
 
 	const connectOperator = ( { socket: useSocket, client: useClient }, authUser = { id: 'user-id', displayName: 'name' } ) => new Promise( ( resolve ) => {
-		debug( 'connect operator', authUser )
 		useClient.on( 'identify', ( identify ) => identify( authUser ) )
 		operators.once( 'connection', ( _, callback ) => callback( null, authUser ) )
 		useClient.once( 'init', ( clientUser ) => {
@@ -129,7 +128,6 @@ describe( 'Operators', () => {
 				} )
 				operators.emit( 'assign', chat, 'room-name', ( error, assigned ) => {
 					if ( error ) return reject( error )
-					debug( 'assigned', assigned )
 				} )
 			} ) )
 
