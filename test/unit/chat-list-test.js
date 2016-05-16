@@ -107,6 +107,10 @@ describe( 'ChatList', () => {
 			return assignOperator( operator_id, socket )
 		} )
 
+		it( 'should store assigned operator', () => {
+			equal( chatlist._chats['the-id'][2].id, 'op-id' )
+		} )
+
 		it( 'should mark chats as abandoned when operator is completely disconnected', ( done ) => {
 			operators.on( 'leave', tick( () => {
 				ok( chatlist._chats['the-id'] )
