@@ -83,9 +83,9 @@ describe( 'ChatList', () => {
 		beforeEach( () => {
 			// mock up some connected customer accounts
 			chatlist._chats = {
-				'abd': [ 'pending', { id: 'abd', user: 'Pending' } ],
-				'123': [ 'assigned', { id: '123', user: 'Active' } ],
-				'xyz': [ 'abandoned', { id: 'xyz', user: 'Abandoned' } ]
+				abd: [ 'pending', { id: 'abd', user: 'Pending' } ],
+				123: [ 'assigned', { id: '123', user: 'Active' } ],
+				xyz: [ 'abandoned', { id: 'xyz', user: 'Abandoned' } ]
 			}
 			socket = new EventEmitter()
 		} )
@@ -137,7 +137,6 @@ describe( 'ChatList', () => {
 			const operator_id = 'operator-id'
 			const chat_id = 'chat-id'
 			const socket = new EventEmitter()
-			const abandoned = { operator: { id: 'operator-id' }, channel: { id: chat_id } }
 			chatlist._chats = { 'chat-id': [ 'abandoned', { id: chat_id }, { id: operator_id } ] }
 
 			operators.on( 'recover', tick( ( operator, chats, complete ) => {
