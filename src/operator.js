@@ -193,9 +193,6 @@ const join = ( { socket, events, user, io } ) => {
 
 	socket.on( 'chat.close', ( chat_id ) => {
 		events.emit( 'chat.close', chat_id, user )
-		// tell all operatores in the customer channel that the chat has been closed
-		// TODO: chat_id should be the room name?
-		io.in( `customers/${ chat_id }` ).emit( 'chat.close', chat_id, user )
 	} )
 }
 
