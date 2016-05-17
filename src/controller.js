@@ -1,5 +1,6 @@
-import { isFunction } from 'lodash/lang'
-import { assign } from 'lodash/object'
+import isFunction from 'lodash/isFunction'
+import isEmpty from 'lodash/isEmpty'
+import assign from 'lodash/assign'
 
 import { ChatList } from './chat-list'
 import { ChatLog } from './chat-log'
@@ -27,10 +28,40 @@ const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
 	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
 }
 
+const isPromise = ( obj ) => {
+	return obj && obj.constructor === Promise
+}
+
 export default ( { customers, agents, operators } ) => {
+	const middlewares = []
 	const toAgents = forward( agents )
 	const chats = new ChatList( { customers, operators } )
 	const log = new ChatLog()
+
+	const runMiddleware = ( { origin, destination, chat, user, message } ) => new Promise( ( resolve, reject ) => {
+		if ( isEmpty( middlewares ) ) {
+			return resolve( message )
+		}
+		// copy the middlewar
+		const context = middlewares.slice()
+		debug( 'running middleware', context.length )
+		// recursively run each middleware piping the result into
+		// the next middleware
+		const run = ( data, [ head, ... rest ] ) => {
+			const result = head( data )
+			const promise = isPromise( result ) ? result : Promise.resolve( result )
+			promise
+			.then( ( nextMessage ) => {
+				debug( 'middleware complete', rest.length )
+				if ( !isEmpty( rest ) ) {
+					return run( assign( {}, data, { message: nextMessage } ), rest )
+				}
+				resolve( nextMessage )
+			} )
+			.catch( reject )
+		}
+		run( { origin, destination, chat, user, message }, context )
+	} )
 
 	chats
 	.on( 'miss', ( e, { id } ) => {
@@ -68,8 +99,9 @@ export default ( { customers, agents, operators } ) => {
 		debug( 'customer message', chat.id, message.id )
 		log.recordCustomerMessage( chat, message )
 		.then( () => {
+			runMiddleware( { origin: 'customer', destination: 'customer', chat, message } )
+			.then( ( message ) => customers.emit( 'receive', chat, message ) )
 			agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, message ) )
-			customers.emit( 'receive', chat, message )
 			operators.emit( 'receive', chat, message )
 		} )
 	} )
@@ -94,5 +126,15 @@ export default ( { customers, agents, operators } ) => {
 			customers.emit( 'receive', chat, formattedMessage )
 		} )
 	} )
+
+	const external = {
+		middleware: ( middleware ) => {
+			middlewares.push( middleware )
+			return external
+		},
+		middlewares
+	}
+
+	return external
 }
 
