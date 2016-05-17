@@ -1,6 +1,6 @@
 import { equal } from 'assert'
 import { EventEmitter } from 'events'
-import { default as makeController } from '../../src/controller'
+import makeController from '../../src/controller'
 
 describe( 'Controller', () => {
 	var customers, agents, operators
