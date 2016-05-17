@@ -48,17 +48,27 @@ export default ( { customers, agents, operators } ) => {
 		// recursively run each middleware piping the result into
 		// the next middleware
 		const run = ( data, [ head, ... rest ] ) => {
-			const result = head( data )
+			if ( !head ) {
+				return resolve( data.message )
+			}
+			let result
+			try {
+				result = head( data )
+			} catch ( e ) {
+				debug( 'middlware exception', e )
+				run( data, rest )
+			}
 			const promise = isPromise( result ) ? result : Promise.resolve( result )
 			promise
 			.then( ( nextMessage ) => {
 				debug( 'middleware complete', rest.length )
-				if ( !isEmpty( rest ) ) {
-					return run( assign( {}, data, { message: nextMessage } ), rest )
-				}
-				resolve( nextMessage )
+				return run( assign( {}, data, { message: nextMessage } ), rest )
 			} )
-			.catch( reject )
+			.catch( ( e ) => {
+				debug( 'failure', e )
+				debug( e.stack )
+				run( data, rest )
+			} )
 		}
 		run( { origin, destination, chat, user, message }, context )
 	} )
@@ -99,10 +109,15 @@ export default ( { customers, agents, operators } ) => {
 		debug( 'customer message', chat.id, message.id )
 		log.recordCustomerMessage( chat, message )
 		.then( () => {
-			runMiddleware( { origin: 'customer', destination: 'customer', chat, message } )
-			.then( ( message ) => customers.emit( 'receive', chat, message ) )
-			agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, message ) )
-			operators.emit( 'receive', chat, message )
+			const origin = 'customer'
+			runMiddleware( { origin, destination: 'customer', chat, message } )
+			.then( m => customers.emit( 'receive', chat, m ) )
+
+			runMiddleware( { origin, destination: 'agent', chat, message } )
+			.then( m => agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, m ) ) )
+
+			runMiddleware( { origin, destination: 'customer', chat, message } )
+			.then( m => operators.emit( 'receive', chat, m ) )
 		} )
 	} )
 
@@ -110,26 +125,44 @@ export default ( { customers, agents, operators } ) => {
 		debug( 'operator message', chat, message )
 		log.recordOperatorMessage( chat, operator, message )
 		.then( () => {
-			agents.emit( 'receive', formatAgentMessage( 'operator', message.user.id, chat.id, message ) )
-			operators.emit( 'receive', chat, message )
-			customers.emit( 'receive', chat, message )
+			const origin = 'operator'
+
+			runMiddleware( { origin, destination: 'agent', chat, message, user: operator } )
+			.then( m => agents.emit( 'receive', formatAgentMessage( 'operator', message.user.id, chat.id, m ) ) )
+
+			runMiddleware( { origin, destination: 'operator', chat, message, user: operator } )
+			.then( m => operators.emit( 'receive', chat, m ) )
+
+			runMiddleware( { origin, destination: 'customer', chat, message, user: operator } )
+			.then( m => customers.emit( 'receive', chat, m ) )
 		} )
 	} )
 
 	agents.on( 'message', ( message ) => {
 		const chat = { id: message.context }
-		const formattedMessage = assign( {}, { author_type: 'agent' }, message )
+		const format = ( m ) => assign( {}, { author_type: 'agent' }, m )
 		log.recordAgentMessage( chat, message )
 		.then( () => {
-			agents.emit( 'receive', assign( {}, { author_type: 'agent' }, message ) )
-			operators.emit( 'receive', chat, formattedMessage )
-			customers.emit( 'receive', chat, formattedMessage )
+			const origin = 'agent'
+
+			runMiddleware( { origin, destination: 'agent', chat, message } )
+			.then( m => agents.emit( 'receive', assign( {}, { author_type: 'agent' }, m ) ) )
+
+			runMiddleware( { origin, destination: 'operator', chat, message } )
+			.then( m => operators.emit( 'receive', chat, format( m ) ) )
+
+			runMiddleware( { origin, destination: 'customer', chat, message } )
+			.then( m => customers.emit( 'receive', chat, format( m ) ) )
 		} )
 	} )
 
 	const external = {
 		middleware: ( middleware ) => {
-			middlewares.push( middleware )
+			if ( middleware.length >= 2 ) {
+				middlewares.push( ( ... args ) => new Promise( resolve => middleware( ... args.concat( resolve ) ) ) )
+			} else {
+				middlewares.push( middleware )
+			}
 			return external
 		},
 		middlewares

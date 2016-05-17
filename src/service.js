@@ -2,7 +2,7 @@ import IO from 'socket.io'
 import customer from './customer'
 import agent from './agent'
 import operator from './operator'
-import controller from './controller'
+import buildController from './controller'
 
 const debug = require( 'debug' )( 'tinkerchat:main' )
 
@@ -13,7 +13,7 @@ export default ( server, { customerAuthenticator, agentAuthenticator, operatorAu
 	const customers = customer( io.of( '/customer' ) ).on( 'connection', customerAuthenticator )
 	const operators = operator( io.of( '/operator' ) ).on( 'connection', operatorAuthenticator )
 
-	controller( { customers, agents, operators } )
+	const controller = buildController( { customers, agents, operators } )
 
-	return { io, agents, customers }
+	return { io, agents, customers, operators, controller }
 }
