@@ -44,8 +44,8 @@ describe( 'Operators', () => {
 			} ) )
 		} )
 
-		it( 'should emit leave event when last operator socket disconnects', ( done ) => {
-			operators.on( 'leave', tick( ( { id } ) => {
+		it( 'should emit disconnect event when last operator socket disconnects', ( done ) => {
+			operators.on( 'disconnect', tick( ( { id } ) => {
 				equal( id, op.id )
 				done()
 			} ) )

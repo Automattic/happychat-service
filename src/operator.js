@@ -164,8 +164,14 @@ const join = ( { socket, events, user, io } ) => {
 	socket.on( 'disconnect', () => {
 		emitOnline( { io, events } )
 		io.in( user_room ).clients( ( error, clients ) => {
-			debug( 'clients?', clients.length )
-			events.emit( 'leave', user )
+			if ( error ) {
+				debug( 'failed to query clients', error )
+				return;
+			}
+			if ( clients.length > 0 ) {
+				return;
+			}
+			events.emit( 'disconnect', user )
 		} )
 	} )
 

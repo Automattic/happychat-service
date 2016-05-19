@@ -1,7 +1,10 @@
 import { EventEmitter } from 'events'
 
-import { get, assign, keys } from 'lodash/object'
-import { forEach } from 'lodash/collection'
+import get from 'lodash/get'
+import assign from 'lodash/assign'
+import keys from 'lodash/keys'
+import forEach from 'lodash/forEach'
+import reject from 'lodash/reject'
 
 const debug = require( 'debug' )( 'tinkerchat:test:mockio' )
 const noop = () => {}
@@ -85,9 +88,10 @@ export default ( socketid ) => {
 	}
 
 	server.disconnect = ( { socket, client } ) => {
-		debug( 'disconnect client and leave rooms', socket, client )
+		debug( 'disconnect client and leave rooms', socket.id, client.id )
 		forEach( socket.rooms, ( room ) => {
-			server.rooms[ room ][ socket.id ] = null
+			debug( 'removing', socket.id, 'from', room, server.rooms[room] )
+			server.rooms[room] = reject( server.rooms[room], socket )
 		} )
 		socket.rooms = []
 		delete server.connected[socket.id]

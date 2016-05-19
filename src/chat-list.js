@@ -40,7 +40,7 @@ export class ChatList extends EventEmitter {
 
 		// All clients of a single operator are offline
 		// mark their chats as abandoned
-		operators.on( 'leave', ( operator ) => {
+		operators.on( 'disconnect', ( operator ) => {
 			this.findOperatorChats( operator )
 			.then( ( chats ) => {
 				this._chats = assign( {}, this._chats, reduce( chats, ( abandoned, chat ) => {
