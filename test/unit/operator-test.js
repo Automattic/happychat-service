@@ -138,7 +138,7 @@ describe( 'Operators', () => {
 			} )
 
 			it( 'should emit transfer request', ( done ) => {
-				operators.once( 'transfer', ( opUser, chat_id ) => {
+				operators.once( 'chat.transfer', ( opUser, chat_id ) => {
 					equal( chat_id, chat.id )
 					deepEqual( opUser, op )
 					done()
