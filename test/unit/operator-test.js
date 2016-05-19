@@ -138,6 +138,15 @@ describe( 'Operators', () => {
 				} )
 				client.emit( 'chat.close', chat.id )
 			} )
+
+			it( 'should emit transfer request', ( done ) => {
+				operators.once( 'transfer', ( opUser, chat_id ) => {
+					equal( chat_id, chat.id )
+					deepEqual( opUser, op )
+					done()
+				} )
+				client.emit( 'chat.transfer', chat.id )
+			} )
 		} )
 
 		it( 'should notify with updated operator list when operator joins', ( done ) => {

@@ -198,6 +198,10 @@ const join = ( { socket, events, user, io } ) => {
 	socket.on( 'chat.close', ( chat_id ) => {
 		events.emit( 'chat.close', chat_id, user )
 	} )
+
+	socket.on( 'chat.transfer', ( chat_id ) => {
+		events.emit( 'chat.transfer', user, chat_id )
+	} )
 }
 
 const operatorClients = ( { io, operator } ) => new Promise( ( resolve, reject ) => {
