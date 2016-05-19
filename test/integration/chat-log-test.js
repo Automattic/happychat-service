@@ -52,7 +52,7 @@ describe( 'Chat logs', () => {
 		} )
 		client.on( 'available', ( chat, available ) => {
 			debug( 'reporting as available' )
-			available( { capacity: 1, load: 0, id: 'operator' } )
+			available( { capacity: 1, load: 0 } )
 		} )
 		resolve( client )
 	} )

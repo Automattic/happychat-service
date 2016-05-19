@@ -1,10 +1,23 @@
 import EventEmitter from 'events'
-import { onConnection, timestamp } from './util'
+import { onConnection, timestamp } from '../util'
 import { parallel } from 'async'
-import { isEmpty } from 'lodash/lang'
-import { set, assign, values } from 'lodash/object'
-import { throttle } from 'lodash/function'
-import { map, forEach, reduce } from 'lodash/collection'
+import isEmpty from 'lodash/isEmpty'
+import set from 'lodash/set'
+import assign from 'lodash/assign'
+import values from 'lodash/values'
+import throttle from 'lodash/throttle'
+import map from 'lodash/map'
+import reduce from 'lodash/reduce'
+import {
+	default as reducer,
+	updateIdentity,
+	removeUser,
+	removeUserSocket,
+	selectIdentities,
+	selectSocketIdentity,
+	selectUser
+} from './store'
+import { createStore } from 'redux'
 
 const DEFAULT_TIMEOUT = 1000
 
@@ -60,7 +73,7 @@ const queryAvailability = ( chat, clients, io ) => new Promise( ( resolve, rejec
 	} )
 } )
 
-const pickAvailable = ( availability ) => new Promise( ( resolve, reject ) => {
+const pickAvailable = ( selectIdentity ) => ( availability ) => new Promise( ( resolve, reject ) => {
 	const operator = availability
 	.filter( ( op ) => op.capacity - op.load > 0 )
 	.sort( ( a, b ) => {
@@ -80,11 +93,11 @@ const pickAvailable = ( availability ) => new Promise( ( resolve, reject ) => {
 		return reject( new Error( 'no operators available' ) )
 	}
 
-	if ( !operator.id ) {
+	if ( !operator.socket ) {
 		return reject( new Error( 'invalid operator' ) )
 	}
 
-	resolve( operator )
+	resolve( selectIdentity( operator.socket ) )
 } )
 
 const identifyClients = ( io, timeout ) => ( clients ) => new Promise( ( resolve, reject ) => {
@@ -117,9 +130,7 @@ const reduceUniqueOperators = ( operators ) => values( reduce( operators, ( uniq
 	return set( unique, operator.id, operator )
 }, {} ) )
 
-const all = ( ... fns ) => ( ... args ) => forEach( fns, ( fn ) => fn( ... args ) )
-
-const emitOnline = throttle( ( { io, events } ) => {
+const emitOnlineDeprecated = throttle( ( { io, events } ) => {
 	// when a socket disconnects, query the online room for connected operators
 	debug( 'query availability' )
 	identifyAll( io )
@@ -143,24 +154,25 @@ const emitInChat = throttle( ( { io, chat } ) => {
 	} )
 } )
 
-const join = ( { socket, events, user, io } ) => {
+const join = ( { socket, events, user, io, selectIdentity } ) => {
 	debug( 'initialize the operator', user )
 	const user_room = `operators/${user.id}`
 
-	emitOnline( { io, events } )
+	// emitOnline( { io, events } )
 
 	socket.on( 'status', ( status, done ) => {
 		// TODO: if operator has multiple clients, move all of them?
 		if ( status === 'online' ) {
 			debug( 'joining room', 'online' )
-			socket.join( 'online', all( done, () => emitOnline( { io, events } ) ) )
+			socket.join( 'online', done )
 		} else {
-			socket.leave( 'online', all( done, () => emitOnline( { io, events } ) ) )
+			socket.leave( 'online', done )
 		}
 	} )
 
 	socket.on( 'disconnect', () => {
-		emitOnline( { io, events } )
+		// emitOnline( { io, events } )
+		events.emit( 'disconnect-socket', { user, socket } )
 		io.in( user_room ).clients( ( error, clients ) => {
 			if ( error ) {
 				debug( 'failed to query clients', error )
@@ -199,8 +211,9 @@ const join = ( { socket, events, user, io } ) => {
 		events.emit( 'chat.close', chat_id, user )
 	} )
 
-	socket.on( 'chat.transfer', ( chat_id ) => {
-		events.emit( 'chat.transfer', user, chat_id )
+	socket.on( 'chat.transfer', ( chat_id, user_id ) => {
+		const toUser = selectIdentity( user_id )
+		events.emit( 'chat.transfer', user, chat_id, toUser )
 	} )
 }
 
@@ -268,8 +281,29 @@ const leaveChat = ( { io, operator, chat, room, events } ) => {
 
 export default ( io ) => {
 	const events = new EventEmitter()
+	const store = createStore( reducer() )
+	const emitOnline = throttle( ( users ) => {
+		io.emit( 'operators.online', users )
+		events.emit( 'available', users )
+	}, 100 )
+
+	const selectIdentity = ( userId ) => selectUser( store.getState(), userId )
+
+	store.subscribe( () => emitOnline( selectIdentities( store.getState() ) ) )
 
 	events.io = io
+
+	events.on( 'init', ( { socket, user } ) => {
+		store.dispatch( updateIdentity( socket, user ) )
+	} )
+
+	events.on( 'disconnect-socket', ( { socket, user } ) => {
+		store.dispatch( removeUserSocket( socket, user ) )
+	} )
+
+	events.on( 'disconnect', ( user ) => {
+		store.dispatch( removeUser( user ) )
+	} )
 
 	events.on( 'receive', ( { id }, message ) => {
 		const room_name = `customers/${ id }`
@@ -330,11 +364,11 @@ export default ( io ) => {
 		// find an operator
 		debug( 'find an operator for', chat.id )
 		allClients( io )
-		.then( ( clients ) => queryAvailability( chat, clients, io ) )
-		.then( pickAvailable )
-		.then( ( operator ) => assignChat( { io, operator, chat, room, events } ) )
-		.then( ( operator ) => callback( null, operator ) )
-		.catch( ( e ) => {
+		.then( clients => queryAvailability( chat, clients, io ) )
+		.then( pickAvailable( socket => selectSocketIdentity( store.getState(), socket ) ) )
+		.then( operator => assignChat( { io, operator, chat, room, events } ) )
+		.then( operator => callback( null, operator ) )
+		.catch( e => {
 			debug( 'failed to find operator', e )
 			callback( e )
 		} )
@@ -342,7 +376,7 @@ export default ( io ) => {
 
 	io.on( 'connection', ( socket ) => {
 		debug( 'operator connecting' )
-		onConnection( { socket, events } )( ( user ) => join( { socket, events, user, io } ) )
+		onConnection( { socket, events } )( ( user ) => join( { socket, events, user, io, selectIdentity } ) )
 	} )
 
 	return events

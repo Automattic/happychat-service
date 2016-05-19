@@ -107,7 +107,6 @@ describe( 'Operators', () => {
 					ok( ! error )
 					ok( a_open )
 					ok( b_open )
-					ok( assigned.socket )
 					equal( assigned.id, 'user-id' )
 					ok( includes( socket.rooms, 'customer/room-name' ) )
 					done()
@@ -119,7 +118,7 @@ describe( 'Operators', () => {
 			var chat = { id: 'chat-id' }
 			beforeEach( () => new Promise( ( resolve, reject ) => {
 				client.once( 'available', ( pendingChat, available ) => {
-					available( { load: 0, capacity: 1, id: user.id } )
+					available( { load: 0, capacity: 1 } )
 				} )
 				client.once( 'chat.open', () => {
 					resolve()
@@ -137,13 +136,19 @@ describe( 'Operators', () => {
 				client.emit( 'chat.close', chat.id )
 			} )
 
-			it( 'should emit transfer request', ( done ) => {
-				operators.once( 'chat.transfer', ( opUser, chat_id ) => {
-					equal( chat_id, chat.id )
-					deepEqual( opUser, op )
-					done()
-				} )
-				client.emit( 'chat.transfer', chat.id )
+			it( 'should emit transfer request', () => {
+				const userb = { id: 'a-user', displayName: 'Jem', status: 'online' }
+				const connectionb = server.newClient()
+				return connectOperator( connectionb, userb )
+				.then( () => new Promise( resolve => {
+					operators.once( 'chat.transfer', ( opUser, chat_id, toUser ) => {
+						equal( chat_id, chat.id )
+						deepEqual( opUser, op )
+						equal( toUser, userb )
+						resolve()
+					} )
+					client.emit( 'chat.transfer', chat.id, userb.id )
+				} ) )
 			} )
 		} )
 

@@ -46,7 +46,7 @@ describe( 'Operators in chat', () => {
 			.then( ( client ) => {
 				client.on( 'identify', ( identify ) => identify( operator ) )
 				client.on( 'available', ( chat, available ) => {
-					available( { capacity: 1, load: 0, id: operator.id } )
+					available( { capacity: 1, load: 0 } )
 				} )
 				callback( null, client )
 			} )
