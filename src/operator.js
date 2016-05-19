@@ -37,7 +37,6 @@ const queryClients = ( io, room ) => new Promise( ( resolve, reject ) => {
 	}
 } )
 
-const online = ( io ) => queryClients( io, 'online' )
 const allClients = ( io ) => queryClients( io )
 
 const queryAvailability = ( chat, clients, io ) => new Promise( ( resolve, reject ) => {
@@ -109,7 +108,6 @@ const identifyClients = ( io, timeout ) => ( clients ) => new Promise( ( resolve
 	} )
 } )
 
-const identifyOnline = ( io, timeout ) => online( io ).then( identifyClients( io, timeout ) )
 const identifyAll = ( io, timeout ) => allClients( io ).then( identifyClients( io, timeout ) )
 
 const reduceUniqueOperators = ( operators ) => values( reduce( operators, ( unique, operator ) => {
@@ -231,18 +229,20 @@ const openChatForClients = ( { io, events, operator, room, chat } ) => ( clients
 	} )
 } )
 
-const assignChat = ( { io, operator, chat, room, events } ) => new Promise( ( resolve, reject ) => {
+const assignChat = ( { io, operator, chat, room, events } ) => new Promise( ( resolve ) => {
 	// send the event to the operator and confirm that the chat was opened
-	// TODO: timeouts? only one should have to succeed or should all of them have to succeed?
+	// TODO: timeouts? only one should have to succeed or should all of them have
+	// to succeed?
 	operatorClients( { io, operator } )
 	.then( openChatForClients( { io, events, operator, room, chat } ) )
-	.then( ( clients ) => {
+	.then( () => {
 		emitInChat( { io, events, chat } )
 		resolve( operator )
 	} )
 } )
 
-const leaveChat = ( { io, operator, chat, room, events } ) => new Promise( ( resolve ) => {
+const leaveChat = ( { io, operator, chat, room, events } ) => {
+	debug( 'time to leave', operator )
 	const operator_room_name = `operators/${operator.id}`
 	operatorClients( { io, operator } )
 	.then( ( clients ) => new Promise( ( resolve, reject ) => {
@@ -260,7 +260,7 @@ const leaveChat = ( { io, operator, chat, room, events } ) => new Promise( ( res
 		debug( 'emit in chat now' )
 		emitInChat( { io, events, chat } )
 	} )
-} )
+}
 
 export default ( io ) => {
 	const events = new EventEmitter()
@@ -315,7 +315,6 @@ export default ( io ) => {
 	} )
 
 	events.on( 'close', ( chat, room, operator ) => {
-		debug( 'chat closed by operator', chat, operator )
 		io.in( room ).emit( 'chat.close', chat, operator )
 	} )
 

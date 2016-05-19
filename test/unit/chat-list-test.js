@@ -112,12 +112,12 @@ describe( 'ChatList', () => {
 		} )
 
 		it( 'should mark chats as abandoned when operator is completely disconnected', ( done ) => {
-			operators.on( 'leave', tick( () => {
+			operators.on( 'disconnect', tick( () => {
 				ok( chatlist._chats['the-id'] )
 				equal( chatlist._chats['the-id'][0], 'abandoned' )
 				done()
 			} ) )
-			operators.emit( 'leave', { id: 'op-id' } )
+			operators.emit( 'disconnect', { id: 'op-id' } )
 		} )
 
 		it( 'should allow operator to close chat', ( done ) => {

@@ -126,7 +126,7 @@ describe( 'Operators', () => {
 				client.once( 'chat.open', () => {
 					resolve()
 				} )
-				operators.emit( 'assign', chat, 'room-name', ( error, assigned ) => {
+				operators.emit( 'assign', chat, 'room-name', ( error ) => {
 					if ( error ) return reject( error )
 				} )
 			} ) )
@@ -175,14 +175,14 @@ describe( 'Operators', () => {
 		var connections
 		var op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var' }
 
-		const connectAllClientsToChat = ( operators, chat, op ) => new Promise( ( resolve, reject ) => {
-			parallel( map( connections, ( { client } ) => ( callback ) => {
-				client.once( 'chat.open', ( chat ) => callback( null, chat ) )
+		const connectAllClientsToChat = ( ops, chat, opUser ) => new Promise( ( resolve, reject ) => {
+			parallel( map( connections, ( { client: opClient } ) => ( callback ) => {
+				opClient.once( 'chat.open', ( _chat ) => callback( null, _chat ) )
 			} ), ( e, chats ) => {
 				if ( e ) return reject( e )
 				resolve( chats )
 			} )
-			operators.emit( 'open', chat, `customers/${ chat.id }`, op )
+			ops.emit( 'open', chat, `customers/${ chat.id }`, opUser )
 		} )
 
 		beforeEach( () => {
@@ -217,9 +217,9 @@ describe( 'Operators', () => {
 
 		it( 'should emit chat.close to all clients in a chat', () => {
 			return connectAllClientsToChat( operators, { id: 'chat-id' }, op )
-			.then( ( chats ) => new Promise( ( resolve, reject ) => {
-				parallel( map( connections, ( { client } ) => ( callback ) => {
-					client.once( 'chat.close', ( chat, operator ) => callback( null, { chat, operator, client } ) )
+			.then( () => new Promise( ( resolve, reject ) => {
+				parallel( map( connections, ( { client: opClient } ) => ( callback ) => {
+					opClient.once( 'chat.close', ( chat, opUser ) => callback( null, { chat, operator: opUser, client: opClient } ) )
 				} ), ( e, messages ) => {
 					if ( e ) reject( e )
 					resolve( messages )
