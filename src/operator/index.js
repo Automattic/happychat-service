@@ -227,7 +227,6 @@ const operatorClients = ( { io, operator } ) => new Promise( ( resolve, reject )
 
 const openChatForClients = ( { io, events, operator, room, chat } ) => ( clients ) => new Promise( ( resolve, reject ) => {
 	const operator_room_name = `operators/${operator.id}`
-	debug( 'openChatForClients' )
 	parallel( map( clients, ( socket ) => ( complete ) => {
 		socket.join( room, ( error ) => {
 			// a socket has joined
@@ -240,7 +239,7 @@ const openChatForClients = ( { io, events, operator, room, chat } ) => ( clients
 		if ( e ) {
 			return reject( e )
 		}
-		debug( 'Assigning chat: (chat.open)', chat )
+		debug( 'Assigning chat: (chat.open)', chat, operator_room_name )
 		io.in( operator_room_name ).emit( 'chat.open', chat )
 		resolve( clients )
 	} )
@@ -308,6 +307,14 @@ export default ( io ) => {
 	events.on( 'receive', ( { id }, message ) => {
 		const room_name = `customers/${ id }`
 		io.in( room_name ).emit( 'chat.message', { id }, message )
+	} )
+
+	events.on( 'transfer', ( chat, operator, complete ) => {
+		const user = selectUser( store.getState(), operator.id )
+		const room = `customers/${ chat.id }`
+		// TODO: test for user availability
+		assignChat( { io, operator: user, chat, room, events } )
+		.then( () => complete( null, user.id ) )
 	} )
 
 	// additional operator socket came online

@@ -5,6 +5,8 @@ import { tick } from '../tick'
 import { parallel } from 'async'
 import { map, includes } from 'lodash/collection'
 
+const debug = require( 'debug' )( 'tinkerchat:test:operators' )
+
 describe( 'Operators', () => {
 	let operators
 	let socketid = 'socket-id'
@@ -26,7 +28,7 @@ describe( 'Operators', () => {
 	} )
 
 	describe( 'when authenticated and online', () => {
-		var op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var', status: 'online' }
+		let op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var', status: 'online' }
 		beforeEach( ( done ) => {
 			connectOperator( { socket, client }, op )
 			.then( ( { user: operatorUser } ) => {
@@ -150,6 +152,30 @@ describe( 'Operators', () => {
 					client.emit( 'chat.transfer', chat.id, userb.id )
 				} ) )
 			} )
+
+			describe( 'with multiple operators', () => {
+				const users = [
+					{ id: 'nausica', displayName: 'nausica'},
+					{ id: 'ridley', displayName: 'ridley'}
+				]
+				let connections = []
+				beforeEach( () => users.reduce( ( promise, _user ) => {
+					let connection = server.newClient()
+					connections = connections.concat( connection )
+					return promise.then( () => connectOperator( connection, _user ) )
+				}, Promise.resolve() ) )
+
+				it( 'should transfer to user', ( done ) => {
+					operators.once( 'chat.transfer', ( id, from, to ) => {
+						operators.emit( 'transfer', chat, to, () => {} )
+					} )
+					connections[0].client.once( 'chat.open', ( _chat ) => {
+						deepEqual( _chat, chat )
+						done()
+					} )
+					client.emit( 'chat.transfer', chat.id, users[0].id )
+				} )
+			} )
 		} )
 
 		it( 'should notify with updated operator list when operator joins', ( done ) => {
@@ -184,8 +210,8 @@ describe( 'Operators', () => {
 	} )
 
 	describe( 'with multiple connections from same operator', () => {
-		var connections
-		var op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var' }
+		let connections
+		let op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var' }
 
 		const connectAllClientsToChat = ( ops, chat, opUser ) => new Promise( ( resolve, reject ) => {
 			parallel( map( connections, ( { client: opClient } ) => ( callback ) => {
