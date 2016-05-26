@@ -7,7 +7,6 @@ import { ChatList } from '../../src/chat-list'
 import { tick } from '../tick'
 import io from '../mock-io'
 
-// for breaking out of the promise chain so errors are thrown to mocha
 const mockServer = () => {
 	const server = new EventEmitter()
 	server.io = io().server
@@ -65,6 +64,7 @@ describe( 'ChatList', () => {
 
 	it( 'should timeout if no operator provided', () => new Promise( ( resolve ) => {
 		chatlist.on( 'miss', tick( ( error, { id } ) => {
+			equal( error.message, 'timeout' )
 			equal( id, 'chat-id' )
 			resolve()
 		} ) )
@@ -101,34 +101,69 @@ describe( 'ChatList', () => {
 
 	describe( 'with active chat', () => {
 		const operator_id = 'operator_id'
+		const chat = {id: 'the-id'}
 		var socket = new EventEmitter()
 		beforeEach( () => {
-			chatlist._chats[ 'the-id' ] = [ 'assigned', {id: 'the-id'}, {id: 'op-id'} ]
+			chatlist._chats[ 'the-id' ] = [ 'assigned', chat, {id: operator_id} ]
 			return assignOperator( operator_id, socket )
 		} )
 
 		it( 'should store assigned operator', () => {
-			equal( chatlist._chats['the-id'][2].id, 'op-id' )
+			equal( chatlist._chats[chat.id][2].id, operator_id )
 		} )
 
 		it( 'should mark chats as abandoned when operator is completely disconnected', ( done ) => {
 			operators.on( 'disconnect', tick( () => {
-				ok( chatlist._chats['the-id'] )
-				equal( chatlist._chats['the-id'][0], 'abandoned' )
+				ok( chatlist._chats[chat.id] )
+				equal( chatlist._chats[chat.id][0], 'abandoned' )
 				done()
 			} ) )
-			operators.emit( 'disconnect', { id: 'op-id' } )
+			operators.emit( 'disconnect', { id: operator_id } )
 		} )
 
 		it( 'should allow operator to close chat', ( done ) => {
-			operators.once( 'close', ( chat, room, operator ) => {
+			operators.once( 'close', ( _chat, room, operator ) => {
 				deepEqual( operator, { id: 'op-id' } )
-				deepEqual( chat, { id: 'the-id' } )
-				equal( room, 'customers/the-id' )
-				ok( !chatlist._chats['the-id'] )
+				deepEqual( _chat, chat )
+				equal( room, `customers/${chat.id}` )
+				ok( !chatlist._chats[chat.id] )
 				done()
 			} )
 			operators.emit( 'chat.close', 'the-id', { id: 'op-id' } )
+		} )
+
+		it( 'should request chat transfer', ( done ) => {
+			const newOperator = { id: 'new-operator' }
+			operators.once( 'transfer', ( _chat, operator, complete ) => {
+				deepEqual( _chat, chat )
+				deepEqual( operator, newOperator )
+				ok( isFunction( complete ) )
+				done()
+			} )
+			operators.emit( 'chat.transfer', chat.id, { id: operator_id }, newOperator )
+		} )
+
+		it( 'should timeout when transfering chat to unavailable operator', ( done ) => {
+			const newOperator = { id: 'new-operator' }
+			chatlist.once( 'miss', tick( ( error, _chat ) => {
+				equal( error.message, 'timeout' )
+				deepEqual( _chat, chat )
+				done()
+			} ) )
+			operators.emit( 'chat.transfer', chat.id, { id: operator_id }, newOperator )
+		} )
+
+		it( 'should transfer chat to new operator', ( done ) => {
+			const newOperator = { id: 'new-operator' }
+			operators.once( 'transfer', ( _chat, op, success ) => {
+				success( null, newOperator.id )
+			} )
+			chatlist.once( 'transfer', ( _chat, op ) => {
+				deepEqual( _chat, chat )
+				deepEqual( op, newOperator.id )
+				done()
+			} )
+			operators.emit( 'chat.transfer', chat.id, { id: operator_id }, newOperator )
 		} )
 	} )
 

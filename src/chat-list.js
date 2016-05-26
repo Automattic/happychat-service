@@ -1,6 +1,14 @@
 import { EventEmitter } from 'events'
-import { assign, omit, forIn, get, set, values } from 'lodash/object'
-import { find, filter, reduce, map } from 'lodash/collection'
+import assign from 'lodash/assign'
+import omit from 'lodash/omit'
+import forIn from 'lodash/forIn'
+import get from 'lodash/get'
+import set from 'lodash/set'
+import values from 'lodash/values'
+import find from 'lodash/find'
+import filter from 'lodash/filter'
+import reduce from 'lodash/reduce'
+import map from 'lodash/map'
 
 const STATUS_PENDING = 'pending'
 const STATUS_MISSED = 'missed'
@@ -8,6 +16,23 @@ const STATUS_ASSIGNED = 'assigned'
 const STATUS_ABANDONED = 'abandoned'
 
 const debug = require( 'debug' )( 'tinkerchat:chat-list' )
+
+const promiseTimeout = ( promise, ms = 1000 ) => new Promise( ( resolve, reject ) => {
+	const id = setTimeout( () => reject( new Error( 'timeout' ) ), ms );
+	const clear = () => clearTimeout( id )
+	promise.then( ( value ) => {
+		clear()
+		resolve( value )
+	}, ( error ) => {
+		clearTimeout( id )
+		reject( error );
+	} )
+} )
+
+const asCallback = ( resolve, reject ) => ( e, value ) => {
+	if ( e ) return reject( e );
+	resolve( value );
+}
 
 export class ChatList extends EventEmitter {
 
@@ -59,6 +84,29 @@ export class ChatList extends EventEmitter {
 			.catch( () => {
 				debug( 'failed to find chat', chat_id )
 			} )
+		} )
+
+		operators.on( 'chat.transfer', ( chat_id, from, to ) => {
+			debug( 'transfer chat', chat_id )
+			this.findChatById( chat_id )
+			.then( ( chat ) => {
+				return this.findChatOperator( chat_id )
+				.then( ( op ) => {
+					if ( op.id !== from.id ) {
+						throw new Error( 'Assigning operator does not match assigned operator' )
+					}
+					return promiseTimeout( new Promise( ( resolve, reject ) => {
+						operators.emit( 'transfer', chat, to, asCallback( resolve, reject ) )
+					} ), this._timeout )
+				} )
+				.then( ( op ) => this.setChatAsAssigned( chat, op ) )
+				.then( ( op ) => this.emit( 'transfer', chat, op ) )
+				.catch( ( e ) => {
+					debug( 'failed to transfer chat', e, chat )
+					this.setChatAsMissed( chat, e )
+				} )
+			} )
+			.catch( ( e ) => debug( 'chat does not exist', e ) )
 		} )
 
 		operators.on( 'chat.leave', ( chat_id, operator ) => {
@@ -116,16 +164,14 @@ export class ChatList extends EventEmitter {
 	}
 
 	queryClientAssignment( channelIdentity, room_name ) {
-		return new Promise( ( resolve, reject ) => {
-			const timeout = setTimeout( () => reject( new Error( 'timeout: failed to find operator' ) ), this._timeout )
-			this.operators.emit( 'assign', channelIdentity, room_name, ( error, operatorId ) => {
-				clearTimeout( timeout )
-				if ( error ) {
-					return reject( error )
-				}
-				return resolve( operatorId )
-			} )
-		} )
+		return promiseTimeout( new Promise( ( resolve, reject ) => {
+			this.operators.emit( 'assign', channelIdentity, room_name, asCallback( resolve, reject ) )
+		} ), this._timeout )
+	}
+
+	setChatAsAssigned( chat, operator ) {
+		this._chats = set( this._chats, chat.id, [ STATUS_ASSIGNED, chat, operator ] )
+		return Promise.resolve( operator )
 	}
 
 	onCustomerMessage( channelIdentity ) {
@@ -156,19 +202,21 @@ export class ChatList extends EventEmitter {
 			this.emit( 'chat.status', 'pending', channelIdentity )
 
 			this.queryClientAssignment( channelIdentity, room_name )
+			.then( ( operator ) => this.setChatAsAssigned( channelIdentity, operator ) )
 			.then( ( operator ) => {
-				this._chats = set( this._chats, channelIdentity.id, [ STATUS_ASSIGNED, channelIdentity, operator ] )
 				this.emit( 'chat.status', 'found', channelIdentity, operator )
 				this.emit( 'found', channelIdentity, operator )
-				// TODO see if there are any operators in this users's channel,
-				// if not we need to assign a new operator
 			} )
 			.catch( ( assignmentError ) => {
-				debug( 'failed to find operator' )
-				this._chats = set( this._chats, channelIdentity.id, [ STATUS_MISSED, channelIdentity ] )
-				this.emit( 'miss', assignmentError, channelIdentity )
+				debug( 'failed to find operator', assignmentError )
+				this.setChatAsMissed( channelIdentity, assignmentError )
 			} )
 		} )
+	}
+
+	setChatAsMissed( chat, error ) {
+		this._chats = set( this._chats, chat.id, [ STATUS_MISSED, chat ] )
+		this.emit( 'miss', error, chat )
 	}
 
 	findChatById( id ) {
@@ -180,6 +228,12 @@ export class ChatList extends EventEmitter {
 			}
 			reject()
 		} ) )
+	}
+
+	findChatOperator( chat_id ) {
+		return new Promise( ( resolve ) => {
+			resolve( get( this._chats, chat_id, [] )[2] )
+		} )
 	}
 
 	findChat( channelIdentity ) {
