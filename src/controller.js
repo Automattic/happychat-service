@@ -116,7 +116,7 @@ export default ( { customers, agents, operators } ) => {
 			runMiddleware( { origin, destination: 'agent', chat, message } )
 			.then( m => agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, m ) ) )
 
-			runMiddleware( { origin, destination: 'customer', chat, message } )
+			runMiddleware( { origin, destination: 'operator', chat, message } )
 			.then( m => operators.emit( 'receive', chat, m ) )
 		} )
 	} )
