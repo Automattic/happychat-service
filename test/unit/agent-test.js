@@ -2,7 +2,7 @@ import { ok, equal } from 'assert'
 import mockIO from '../mock-io'
 import agent from '../../src/agent'
 
-const debug = require( 'debug' )( 'tinkerchat:test:agent' )
+const debug = require( 'debug' )( 'happychat:test:agent' )
 
 describe( 'Agent Service', () => {
 	let server, socket, client

@@ -21,7 +21,7 @@ import { createStore } from 'redux'
 
 const DEFAULT_TIMEOUT = 1000
 
-const debug = require( 'debug' )( 'tinkerchat:operator' )
+const debug = require( 'debug' )( 'happychat:operator' )
 const throwTimeout = () => {
 	throw new Error( 'Operation timed out' )
 }

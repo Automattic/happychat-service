@@ -6,7 +6,7 @@ import keys from 'lodash/keys'
 import forEach from 'lodash/forEach'
 import reject from 'lodash/reject'
 
-const debug = require( 'debug' )( 'tinkerchat:test:mockio' )
+const debug = require( 'debug' )( 'happychat:test:mockio' )
 const noop = () => {}
 
 var COUNTER = 0

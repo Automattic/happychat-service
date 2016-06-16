@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events'
 import { onConnection, timestamp } from './util'
 
-const debug = require( 'debug' )( 'tinkerchat:customer' )
+const debug = require( 'debug' )( 'happychat:customer' )
 
 const identityForUser = ( { id, displayName, avatarURL } ) => (
 	{ id, displayName, avatarURL }

@@ -1,4 +1,4 @@
-const debug = require( 'debug' )( 'tinkerchat:util' )
+const debug = require( 'debug' )( 'happychat:util' )
 
 const asCallback = ( { resolve, reject } ) => ( error, result ) => {
 	if ( error ) return reject( error )

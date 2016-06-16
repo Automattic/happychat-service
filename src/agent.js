@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events'
 import { onConnection } from './util'
 
-const debug = require( 'debug' )( 'tinkerchat:agent' )
+const debug = require( 'debug' )( 'happychat:agent' )
 
 const onAuthorized = ( { socket, events } ) => ( agent ) => {
 	// any message sent from a customer needs to be forwarded to the agent socket

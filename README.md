@@ -1,10 +1,10 @@
-# Tinkerchat Chat Server
+# Happychat Chat Server
 
-Socket.IO based chat server for tinkerchat.
+Socket.IO based chat server for happychat.
 
-In progress implementation of [Tinkerchat Service][].
+In progress implementation of [Happychat Service][].
 
-[Tinkerchat Service]: http://github.com/Automattic/tinkerchat/blob/master/SERVICE.md
+[Happychat Service]: http://github.com/Automattic/happychat/blob/master/SERVICE.md
 
 ## Developing
 
@@ -15,13 +15,13 @@ node --version
 v5.7.1
 ```
 
-1. `git clone git@github.com:automattic/tinkerchat-service.git`
-2. `cd tinkerchat-service`
+1. `git clone git@github.com:automattic/happychat-service.git`
+2. `cd happychat-service`
 3. `npm install`
 4. `npm test`
 
 ```
-> tinkerchat-service@0.0.1 test /Users/beaucollins/code/tinkerchat-service
+> happychat-service@0.0.1 test /Users/beaucollins/code/happychat-service
 > `npm bin`/mocha --compilers js:babel-register --recursive
 
 

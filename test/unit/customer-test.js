@@ -2,7 +2,7 @@ import customer from '../../src/customer'
 import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
 
-const debug = require( 'debug' )( 'tinkerchat:test:customer' )
+const debug = require( 'debug' )( 'happychat:test:customer' )
 
 describe( 'Customer Service', () => {
 	let server, socket, client, customerEvents

@@ -1,7 +1,7 @@
 import { equal } from 'assert'
 import util, { authenticators } from './util'
 
-const debug = require( 'debug' )( 'tinkerchat:test:service' )
+const debug = require( 'debug' )( 'happychat:test:service' )
 
 describe( 'Service', () => {
 	let mockUser = {

@@ -4,7 +4,7 @@ import { map, forEach } from 'lodash/collection'
 import { get } from 'lodash/object'
 import util from './util'
 
-const debug = require( 'debug' )( 'tinkerchat:test:integration' )
+const debug = require( 'debug' )( 'happychat:test:integration' )
 
 const prop = ( name, fallback = undefined ) => ( obj ) => get( obj, name, fallback )
 

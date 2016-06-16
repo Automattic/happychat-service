@@ -5,7 +5,7 @@ import assign from 'lodash/assign'
 import { ChatList } from './chat-list'
 import { ChatLog } from './chat-log'
 
-const debug = require( 'debug' )( 'tinkerchat:controller' )
+const debug = require( 'debug' )( 'happychat:controller' )
 
 // change a lib/customer message to what an agent client expects
 const formatAgentMessage = ( author_type, author_id, context, { id, timestamp, text } ) => ( {

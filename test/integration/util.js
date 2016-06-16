@@ -4,7 +4,7 @@ import { assign } from 'lodash/object'
 
 import IO from 'socket.io-client'
 
-const debug = require( 'debug' )( 'tinkerchat:mock:service' )
+const debug = require( 'debug' )( 'happychat:mock:service' )
 
 export const startServer = ( server, port ) => new Promise( ( resolve ) => {
 	server.listen( port, () => resolve() )

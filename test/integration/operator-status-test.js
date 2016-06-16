@@ -3,7 +3,7 @@ import { series, parallel } from 'async'
 import { map } from 'lodash/collection'
 import util from './util'
 
-const debug = require( 'debug' )( 'tinkerchat:test:integration' )
+const debug = require( 'debug' )( 'happychat:test:integration' )
 
 const noop = () => {}
 describe( 'Operator list', () => {

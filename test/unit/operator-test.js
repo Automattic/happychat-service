@@ -5,7 +5,7 @@ import { tick } from '../tick'
 import { parallel } from 'async'
 import { map, includes } from 'lodash/collection'
 
-const debug = require( 'debug' )( 'tinkerchat:test:operators' )
+const debug = require( 'debug' )( 'happychat:test:operators' )
 
 describe( 'Operators', () => {
 	let operators

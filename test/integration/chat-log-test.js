@@ -2,7 +2,7 @@ import { equal, deepEqual } from 'assert'
 import util, { authenticators } from './util'
 import { map, reduce } from 'lodash/collection'
 
-const debug = require( 'debug' )( 'tinkerchat:test:chat-logs' )
+const debug = require( 'debug' )( 'happychat:test:chat-logs' )
 
 describe( 'Chat logs', () => {
 	var service

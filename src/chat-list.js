@@ -15,7 +15,7 @@ const STATUS_MISSED = 'missed'
 const STATUS_ASSIGNED = 'assigned'
 const STATUS_ABANDONED = 'abandoned'
 
-const debug = require( 'debug' )( 'tinkerchat:chat-list' )
+const debug = require( 'debug' )( 'happychat:chat-list' )
 
 const promiseTimeout = ( promise, ms = 1000 ) => new Promise( ( resolve, reject ) => {
 	const id = setTimeout( () => reject( new Error( 'timeout' ) ), ms );

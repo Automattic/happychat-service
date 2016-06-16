@@ -4,7 +4,7 @@ import agent from './agent'
 import operator from './operator'
 import buildController from './controller'
 
-const debug = require( 'debug' )( 'tinkerchat:main' )
+const debug = require( 'debug' )( 'happychat:main' )
 
 export default ( server, { customerAuthenticator, agentAuthenticator, operatorAuthenticator } ) => {
 	debug( 'configuring socket.io server' )
