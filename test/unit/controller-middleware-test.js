@@ -41,6 +41,19 @@ describe( 'Controller middleware', () => {
 		)
 	} )
 
+	it( 'should pass customer message to operator', done => {
+		controller.middleware( ( { origin, destination } ) => {
+			if ( origin === 'customer' && destination === 'operator' ) {
+				done()
+			}
+		} )
+		customers.emit(
+			'message',
+			{ id: 'user-id' },
+			{ context: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
+		)
+	} )
+
 	it( 'should support promise based middleware', ( done ) => {
 		controller.middleware( ( { origin, destination, message } ) => new Promise( ( resolve ) => {
 			equal( origin, 'agent' )
