@@ -6,7 +6,7 @@ const debug = require( 'debug' )( 'happychat:test:customer' )
 
 describe( 'Customer Service', () => {
 	let server, socket, client, customerEvents
-	const mockUser = { id: 'abdefgh', username: 'ridley', displayName: 'Ridley', avatarURL: 'http://example.com/image' }
+	const mockUser = { id: 'abdefgh', username: 'ridley', displayName: 'Ridley', avatarURL: 'http://example.com/image', session_id: 'abdefgh-chat' }
 	let auth
 	beforeEach( () => {
 		( { server, socket, client } = mockIO() )
@@ -26,9 +26,9 @@ describe( 'Customer Service', () => {
 		} )
 
 		it( 'should receive message and broadcast it', ( done ) => {
-			customerEvents.once( 'message', ( chat, { id, text, timestamp, user, meta, context } ) => {
+			customerEvents.once( 'message', ( chat, { id, text, timestamp, user, meta, session_id } ) => {
 				equal( chat.id, mockUser.id )
-				equal( chat.id, context )
+				equal( session_id, mockUser.session_id )
 				equal( id, 'message-id' )
 				equal( text, 'hello world' )
 				ok( timestamp )

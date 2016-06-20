@@ -3,9 +3,8 @@ import { onConnection, timestamp } from './util'
 
 const debug = require( 'debug' )( 'happychat:customer' )
 
-const identityForUser = ( { id, displayName, avatarURL } ) => (
-	{ id, displayName, avatarURL }
-)
+// limit the information for the user
+const identityForUser = ( { id, displayName, avatarURL } ) => ( { id, displayName, avatarURL } )
 
 /**
   - `user`: (**required**) a JSON key/value object containing:
@@ -17,12 +16,11 @@ const identityForUser = ( { id, displayName, avatarURL } ) => (
  */
 
 const init = ( { user, socket, events, io } ) => () => {
-	const socketIdentifier = { id: user.id, socket_id: socket.id }
+	const socketIdentifier = { id: user.id, socket_id: socket.id, session_id: user.session_id }
 	debug( 'user joined room', user.id )
 
 	socket.on( 'message', ( { text, id, meta } ) => {
-		const userIdentity = identityForUser( user )
-		const message = { context: user.id, id: id, text, timestamp: timestamp(), user: userIdentity, meta }
+		const message = { session_id: user.session_id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
 		// all customer connections for this user receive the message
 		// io.to( user.id ).emit( 'message', message )
 		events.emit( 'message', user, message )

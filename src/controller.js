@@ -8,9 +8,9 @@ import { ChatLog } from './chat-log'
 const debug = require( 'debug' )( 'happychat:controller' )
 
 // change a lib/customer message to what an agent client expects
-const formatAgentMessage = ( author_type, author_id, context, { id, timestamp, text, meta } ) => ( {
+const formatAgentMessage = ( author_type, author_id, session_id, { id, timestamp, text, meta } ) => ( {
 	id, timestamp, text,
-	context,
+	session_id,
 	author_id,
 	author_type,
 	meta
@@ -56,7 +56,7 @@ export default ( { customers, agents, operators } ) => {
 			// continue running with remaining middleware
 			.then( nextMessage => run( assign( {}, data, { message: nextMessage } ), rest ) )
 			// if middleware fails, log the error and continue processing
-			.catch( ( e ) => {
+			.catch( e => {
 				debug( 'middleware failed to run', e )
 				debug( e.stack )
 				run( data, rest )
@@ -132,7 +132,7 @@ export default ( { customers, agents, operators } ) => {
 	} )
 
 	agents.on( 'message', ( message ) => {
-		const chat = { id: message.context }
+		const chat = { id: message.session_id }
 		const format = ( m ) => assign( {}, { author_type: 'agent' }, m )
 		log.recordAgentMessage( chat, message )
 		.then( () => {

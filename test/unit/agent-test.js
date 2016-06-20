@@ -29,11 +29,11 @@ describe( 'Agent Service', () => {
   - `author_id`: the id of the author of the message
   - `author_type`: One of `customer`, `support`, `agent`
 		 */
-			server.on( 'message', ( { id, timestamp, text, context, author_id, author_type } ) => {
+			server.on( 'message', ( { id, timestamp, text, session_id, author_id, author_type } ) => {
 				equal( id, 'fake-message-id' )
 				ok( timestamp )
 				equal( text, 'hello' )
-				equal( context, 'fake-context' )
+				equal( session_id, 'fake-context' )
 				equal( author_id, 'fake-user-id' )
 				equal( author_type, 'customer' )
 				done()
@@ -42,27 +42,26 @@ describe( 'Agent Service', () => {
 				id: 'fake-message-id',
 				timestamp: ( new Date() ).getTime(),
 				text: 'hello',
-				context: 'fake-context',
+				session_id: 'fake-context',
 				author_id: 'fake-user-id',
 				author_type: 'customer'
 			} )
 		} )
 
 		it( 'should send messsage to customer', ( done ) => {
-			service.once( 'message', ( { id, text, context, timestamp } ) => {
+			service.once( 'message', ( { id, text, session_id, timestamp } ) => {
 				debug( 'help' )
 				equal( id, 'fake-agent-message-id' )
 				equal( text, 'hello' )
-				equal( context, 'mock-user-context-id' )
+				equal( session_id, 'mock-user-context-id' )
 				ok( timestamp )
 				done()
 			} )
-			debug( 'emitting client' )
 			client.emit( 'message', {
 				id: 'fake-agent-message-id',
 				timestamp: ( new Date() ).getTime(),
+				session_id: 'mock-user-context-id',
 				text: 'hello',
-				context: 'mock-user-context-id',
 				user: {
 					id: 'agent-user-id',
 					displayName: 'HAL-4000',
