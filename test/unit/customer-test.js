@@ -40,7 +40,7 @@ describe( 'Customer Service', () => {
 				} )
 				done()
 			} )
-			client.emit( 'message', { id: 'message-id', text: 'hello world' } )
+			client.emit( 'message', { id: 'message-id', text: 'hello world', meta: {} } )
 		} )
 
 		it( 'should receive message via event', ( done ) => {

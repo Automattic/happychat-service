@@ -8,11 +8,12 @@ import { ChatLog } from './chat-log'
 const debug = require( 'debug' )( 'happychat:controller' )
 
 // change a lib/customer message to what an agent client expects
-const formatAgentMessage = ( author_type, author_id, context, { id, timestamp, text } ) => ( {
+const formatAgentMessage = ( author_type, author_id, context, { id, timestamp, text, meta } ) => ( {
 	id, timestamp, text,
 	context,
 	author_id,
-	author_type
+	author_type,
+	meta
 } )
 
 const pure = ( ... args ) => args

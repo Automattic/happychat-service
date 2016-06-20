@@ -20,8 +20,7 @@ const init = ( { user, socket, events, io } ) => () => {
 	const socketIdentifier = { id: user.id, socket_id: socket.id }
 	debug( 'user joined room', user.id )
 
-	socket.on( 'message', ( { text, id } ) => {
-		const meta = {}
+	socket.on( 'message', ( { text, id, meta } ) => {
 		const userIdentity = identityForUser( user )
 		const message = { context: user.id, id: id, text, timestamp: timestamp(), user: userIdentity, meta }
 		// all customer connections for this user receive the message
