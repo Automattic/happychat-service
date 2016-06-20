@@ -28,48 +28,40 @@ const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
 	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
 }
 
-const isPromise = ( obj ) => {
-	return obj && obj.constructor === Promise
-}
-
 export default ( { customers, agents, operators } ) => {
 	const middlewares = []
 	const toAgents = forward( agents )
 	const chats = new ChatList( { customers, operators } )
 	const log = new ChatLog()
 
-	const runMiddleware = ( { origin, destination, chat, user, message } ) => new Promise( ( resolve, reject ) => {
+	const runMiddleware = ( { origin, destination, chat, user, message } ) => new Promise( middlewareComplete => {
 		if ( isEmpty( middlewares ) ) {
-			return resolve( message )
+			debug( 'no middlewares registered' )
+			return middlewareComplete( message )
 		}
-		// copy the middlewar
+		// copy the middleware
 		const context = middlewares.slice()
 		debug( 'running middleware', context.length )
 		// recursively run each middleware piping the result into
 		// the next middleware
 		const run = ( data, [ head, ... rest ] ) => {
 			if ( !head ) {
-				return resolve( data.message )
+				debug( 'middleware complete', chat.id, user )
+				return middlewareComplete( data.message )
 			}
-			let result
-			try {
-				result = head( data )
-			} catch ( e ) {
-				debug( 'middlware exception', e )
-				run( data, rest )
-			}
-			const promise = isPromise( result ) ? result : Promise.resolve( result )
-			promise
-			.then( ( nextMessage ) => {
-				debug( 'middleware complete', rest.length )
-				return run( assign( {}, data, { message: nextMessage } ), rest )
-			} )
+
+			// Wrapping call to middleware in Promise in case of exception
+			new Promise( resolve => resolve( head( data ) ) )
+			// continue running with remaining middleware
+			.then( nextMessage => run( assign( {}, data, { message: nextMessage } ), rest ) )
+			// if middleware fails, log the error and continue processing
 			.catch( ( e ) => {
-				debug( 'failure', e )
+				debug( 'middleware failed to run', e )
 				debug( e.stack )
 				run( data, rest )
 			} )
 		}
+		// kick off the middleware processing
 		run( { origin, destination, chat, user, message }, context )
 	} )
 
