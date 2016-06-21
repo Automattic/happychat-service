@@ -9,6 +9,8 @@ import find from 'lodash/find'
 import filter from 'lodash/filter'
 import reduce from 'lodash/reduce'
 import map from 'lodash/map'
+import { v4 as uuid } from 'uuid'
+import { timestamp } from './util'
 
 const STATUS_PENDING = 'pending'
 const STATUS_MISSED = 'missed'
@@ -97,6 +99,13 @@ export class ChatList extends EventEmitter {
 					}
 					return promiseTimeout( new Promise( ( resolve, reject ) => {
 						operators.emit( 'transfer', chat, to, asCallback( resolve, reject ) )
+						operators.emit( 'receive', chat, {
+							id: uuid(),
+							type: 'event',
+							timestamp: timestamp(),
+							text: 'chat transferred',
+							meta: { from, to }
+						} )
 					} ), this._timeout )
 				} )
 				.then( ( op ) => this.setChatAsAssigned( chat, op ) )

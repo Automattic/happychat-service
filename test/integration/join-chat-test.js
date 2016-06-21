@@ -40,14 +40,13 @@ describe( 'Operator', () => {
 	afterEach( () => service.stop() )
 
 	it( 'should join chat', () => service.startClients()
-	.then( emitCustomerMessage )
-	.then( operatorJoinChat )
-	.then( ( chat ) => {
-		ok( chat )
-	} ) )
+		.then( emitCustomerMessage )
+		.then( operatorJoinChat )
+		.then( chat => ok( chat ) )
+	)
 
 	describe( 'when in a chat', () => {
-		var operator
+		let operator
 
 		beforeEach( () => service.startClients()
 			.then( ( clients ) => {

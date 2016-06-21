@@ -165,6 +165,21 @@ describe( 'ChatList', () => {
 			} )
 			operators.emit( 'chat.transfer', chat.id, { id: operator_id }, newOperator )
 		} )
+
+		it( 'should log message when chat is transferred', done => {
+			const newOperator = { id: 'new-operator' }
+			operators.once( 'receive', tick( ( { id: chat_id }, message ) => {
+				equal( chat_id, chat.id )
+				ok( message.id )
+				ok( message.timestamp )
+				equal( message.type, 'event' )
+				equal( message.text, 'chat transferred' )
+				deepEqual( message.meta.to, newOperator )
+				deepEqual( message.meta.from, { id: operator_id } )
+				done()
+			} ) )
+			operators.emit( 'chat.transfer', chat.id, { id: operator_id }, newOperator )
+		} )
 	} )
 
 	describe( 'with abandoned chat', () => {
