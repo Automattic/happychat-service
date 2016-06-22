@@ -119,13 +119,9 @@ describe( 'Operators', () => {
 		describe( 'with assigned chat', () => {
 			var chat = { id: 'chat-id' }
 			beforeEach( () => new Promise( ( resolve, reject ) => {
-				client.once( 'available', ( pendingChat, available ) => {
-					available( { load: 0, capacity: 1 } )
-				} )
-				client.once( 'chat.open', () => {
-					resolve()
-				} )
-				operators.emit( 'assign', chat, 'room-name', ( error ) => {
+				client.once( 'available', ( pendingChat, available ) => available( { load: 0, capacity: 1 } ) )
+				client.once( 'chat.open', () => resolve() )
+				operators.emit( 'assign', chat, 'room-name', error => {
 					if ( error ) return reject( error )
 				} )
 			} ) )

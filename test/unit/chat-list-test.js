@@ -180,6 +180,29 @@ describe( 'ChatList', () => {
 			} ) )
 			operators.emit( 'chat.transfer', chat.id, { id: operator_id }, newOperator )
 		} )
+
+		it( 'should send message when operator joins', done => {
+			const newOperator = { id: 'joining-operator' }
+			operators.once( 'receive', tick( ( { id: chat_id }, message ) => {
+				equal( chat_id, chat.id )
+				ok( message.id )
+				deepEqual( message.meta.operator, newOperator )
+				done()
+			} ) )
+			operators.emit( 'chat.join', chat.id, newOperator )
+		} )
+
+		it( 'should send message when operator leaves', done => {
+			const newOperator = { id: 'leaving-operator' }
+			operators.once( 'receive', tick( ( { id: chat_id }, message ) => {
+				equal( chat_id, chat.id )
+				deepEqual( message.meta.operator, newOperator )
+				ok( message )
+				done()
+			} ) )
+			operators.emit( 'chat.leave', chat.id, newOperator )
+		} )
+
 	} )
 
 	describe( 'with abandoned chat', () => {

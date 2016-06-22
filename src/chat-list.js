@@ -9,8 +9,7 @@ import find from 'lodash/find'
 import filter from 'lodash/filter'
 import reduce from 'lodash/reduce'
 import map from 'lodash/map'
-import { v4 as uuid } from 'uuid'
-import { timestamp } from './util'
+import { makeEventMessage } from './util'
 
 const STATUS_PENDING = 'pending'
 const STATUS_MISSED = 'missed'
@@ -82,6 +81,9 @@ export class ChatList extends EventEmitter {
 			.then( ( chat ) => {
 				const room_name = `customers/${ chat.id }`
 				operators.emit( 'open', chat, room_name, operator )
+				operators.emit( 'receive', chat, assign( makeEventMessage( 'operator joined' ), {
+					meta: { operator }
+				} ) )
 			} )
 			.catch( () => {
 				debug( 'failed to find chat', chat_id )
@@ -99,13 +101,9 @@ export class ChatList extends EventEmitter {
 					}
 					return promiseTimeout( new Promise( ( resolve, reject ) => {
 						operators.emit( 'transfer', chat, to, asCallback( resolve, reject ) )
-						operators.emit( 'receive', chat, {
-							id: uuid(),
-							type: 'event',
-							timestamp: timestamp(),
-							text: 'chat transferred',
+						operators.emit( 'receive', chat, assign( makeEventMessage( 'chat transferred' ), {
 							meta: { from, to }
-						} )
+						} ) )
 					} ), this._timeout )
 				} )
 				.then( ( op ) => this.setChatAsAssigned( chat, op ) )
@@ -123,6 +121,9 @@ export class ChatList extends EventEmitter {
 			.then( ( chat ) => {
 				const room_name = `customers/${ chat.id }`
 				operators.emit( 'leave', chat, room_name, operator )
+				operators.emit( 'receive', chat, assign( makeEventMessage( 'operator left'), {
+					meta: { operator }
+				} ) )
 			} )
 			.catch( ( e ) => debug( 'Chat does not exist', chat_id, e ) )
 		} )

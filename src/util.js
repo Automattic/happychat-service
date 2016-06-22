@@ -1,3 +1,5 @@
+import { v4 as uuid } from 'uuid'
+
 const debug = require( 'debug' )( 'happychat:util' )
 
 const asCallback = ( { resolve, reject } ) => ( error, result ) => {
@@ -20,3 +22,10 @@ export const timestamp = () => (
 )
 
 export const onConnection = ( { events, socket } ) => ( success ) => connect( { events, socket } ).then( success, rejectAndClose( socket ) )
+
+export const makeEventMessage = ( text ) => ( {
+	type: 'event',
+	id: uuid(),
+	timestamp: timestamp(),
+	text
+} )

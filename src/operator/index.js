@@ -121,27 +121,12 @@ const identifyClients = ( io, timeout ) => ( clients ) => new Promise( ( resolve
 	} )
 } )
 
-const identifyAll = ( io, timeout ) => allClients( io ).then( identifyClients( io, timeout ) )
-
 const reduceUniqueOperators = ( operators ) => values( reduce( operators, ( unique, operator ) => {
 	if ( isEmpty( operator ) ) {
 		return unique
 	}
 	return set( unique, operator.id, operator )
 }, {} ) )
-
-const emitOnlineDeprecated = throttle( ( { io, events } ) => {
-	// when a socket disconnects, query the online room for connected operators
-	debug( 'query availability' )
-	identifyAll( io )
-	.then( ( operators ) => Promise.resolve( reduceUniqueOperators( operators ) ) )
-	.then( ( identities ) => {
-		debug( 'updating availability', identities )
-		io.emit( 'operators.online', identities )
-		events.emit( 'available', identities )
-	} )
-	.catch( ( e ) => debug( 'failed to query online', e, e.stack ) )
-}, 100 )
 
 const emitInChat = throttle( ( { io, chat } ) => {
 	debug( 'querying operators in chat', chat )
@@ -200,6 +185,7 @@ const join = ( { socket, events, user, io, selectIdentity } ) => {
 	} )
 
 	socket.on( 'chat.join', ( chat_id ) => {
+		debug( 'client requesting to join', chat_id )
 		events.emit( 'chat.join', chat_id, user )
 	} )
 
@@ -262,11 +248,9 @@ const leaveChat = ( { io, operator, chat, room, events } ) => {
 	const operator_room_name = `operators/${operator.id}`
 	operatorClients( { io, operator } )
 	.then( ( clients ) => new Promise( ( resolve, reject ) => {
-		parallel( map( clients, ( socket ) => ( callback ) => {
-			socket.leave( room, ( error ) => {
-				callback( error, socket )
-			} )
-		} ), ( e, results ) => {
+		parallel( map( clients, socket => callback => {
+			socket.leave( room, error => callback( error, socket ) )
+		} ), e => {
 			if ( e ) return reject( e )
 			io.in( operator_room_name ).emit( 'chat.leave', chat )
 			resolve( clients )
@@ -278,15 +262,15 @@ const leaveChat = ( { io, operator, chat, room, events } ) => {
 	} )
 }
 
-export default ( io ) => {
+export default io => {
 	const events = new EventEmitter()
 	const store = createStore( reducer() )
-	const emitOnline = throttle( ( users ) => {
+	const emitOnline = throttle( users => {
 		io.emit( 'operators.online', users )
 		events.emit( 'available', users )
 	}, 100 )
 
-	const selectIdentity = ( userId ) => selectUser( store.getState(), userId )
+	const selectIdentity = userId => selectUser( store.getState(), userId )
 
 	store.subscribe( () => emitOnline( selectIdentities( store.getState() ) ) )
 
@@ -353,6 +337,7 @@ export default ( io ) => {
 		assignChat( { io, operator, chat, room, events } )
 		.then( () => {
 			debug( 'operator joined chat', operator, chat )
+			events.emit( 'receive', chat, {} )
 		} )
 		.catch( ( e ) => {
 			debug( 'failed to join chat', e )
@@ -383,7 +368,9 @@ export default ( io ) => {
 
 	io.on( 'connection', ( socket ) => {
 		debug( 'operator connecting' )
-		onConnection( { socket, events } )( ( user ) => join( { socket, events, user, io, selectIdentity } ) )
+		onConnection( { socket, events } )(
+			user => join( { socket, events, user, io, selectIdentity } )
+		)
 	} )
 
 	return events
