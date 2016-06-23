@@ -199,7 +199,7 @@ const join = ( { socket, events, user, io, selectIdentity } ) => {
 
 	socket.on( 'chat.transfer', ( chat_id, user_id ) => {
 		const toUser = selectIdentity( user_id )
-		events.emit( 'chat.transfer', user, chat_id, toUser )
+		events.emit( 'chat.transfer', chat_id, user, toUser )
 	} )
 }
 
