@@ -15,7 +15,8 @@ import {
 	removeUserSocket,
 	selectIdentities,
 	selectSocketIdentity,
-	selectUser
+	selectUser,
+	updateUserStatus
 } from './store'
 import { createStore } from 'redux'
 
@@ -147,11 +148,16 @@ const join = ( { socket, events, user, io, selectIdentity } ) => {
 
 	socket.on( 'status', ( status, done ) => {
 		// TODO: if operator has multiple clients, move all of them?
+		const updateStatus = ( e ) => {
+			events.emit( 'status', user, status )
+			done( e )
+		}
+
 		if ( status === 'online' ) {
 			debug( 'joining room', 'online' )
-			socket.join( 'online', done )
+			socket.join( 'online', updateStatus )
 		} else {
-			socket.leave( 'online', done )
+			socket.leave( 'online', updateStatus )
 		}
 	} )
 
@@ -291,6 +297,10 @@ export default io => {
 	events.on( 'receive', ( { id }, message ) => {
 		const room_name = `customers/${ id }`
 		io.in( room_name ).emit( 'chat.message', { id }, message )
+	} )
+
+	events.on( 'status', ( user, status ) => {
+		store.dispatch( updateUserStatus( user, status ) )
 	} )
 
 	events.on( 'transfer', ( chat, operator, complete ) => {
