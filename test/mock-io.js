@@ -75,6 +75,14 @@ export default ( socketid ) => {
 			server.rooms = assign( {}, server.rooms, newSockets )
 			process.nextTick( complete )
 		}
+		socket.leave = ( room, complete ) => {
+			socket.rooms = reject( socket.rooms, room )
+			const newSockets = {}
+			newSockets[room] = reject( get( server.rooms, room, [] ), socket )
+			debug( 'room now at', room, newSockets[room].length )
+			server.rooms = assign( {}, server.rooms, newSockets )
+			process.nextTick( complete )
+		}
 		socket.close = () => {}
 		return { socket, client }
 	}

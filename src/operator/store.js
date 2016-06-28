@@ -17,6 +17,7 @@ export const selectUser = ( { identities }, userId ) => get( identities, userId 
 const UPDATE_IDENTITY = 'UPDATE_IDENTITY'
 const REMOVE_USER = 'REMOVE_USER'
 const REMOVE_USER_SOCKET = 'REMOVE_USER_SOCKET'
+const UPDATE_USER_STATUS = 'UPDATE_USER_STATUS'
 
 export const updateIdentity = ( socket, user ) => {
 	return { socket, user, type: UPDATE_IDENTITY }
@@ -28,6 +29,10 @@ export const removeUser = user => {
 
 export const removeUserSocket = ( socket, user ) => {
 	return { user, socket, type: REMOVE_USER_SOCKET }
+}
+
+export const updateUserStatus = ( user, status ) => {
+	return { user, status, type: UPDATE_USER_STATUS }
 }
 
 const user_sockets = ( state = {}, action ) => {
@@ -53,6 +58,10 @@ const identities = ( state = {}, action ) => {
 	switch ( action.type ) {
 		case UPDATE_IDENTITY:
 			return assign( {}, state, set( {}, user.id, user ) )
+		case UPDATE_USER_STATUS:
+			const { status } = action
+			const updated = assign( {}, get( state, user.id ), { status } )
+			return assign( {}, state, set( {}, user.id, updated ) );
 		case REMOVE_USER:
 			return omit( state, user.id )
 		default:
