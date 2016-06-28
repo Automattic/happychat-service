@@ -17,7 +17,7 @@ describe( 'Operators', () => {
 		useClient.on( 'identify', ( identify ) => identify( authUser ) )
 		operators.once( 'connection', ( _, callback ) => callback( null, authUser ) )
 		useClient.once( 'init', ( clientUser ) => {
-			useClient.emit( 'status', 'online', () => resolve( { user: clientUser, client: useClient, socket: useSocket } ) )
+			useClient.emit( 'status', clientUser.status || 'online', () => resolve( { user: clientUser, client: useClient, socket: useSocket } ) )
 		} )
 		server.connect( useSocket )
 	} )
@@ -142,7 +142,7 @@ describe( 'Operators', () => {
 					operators.once( 'chat.transfer', ( chat_id, opUser, toUser ) => {
 						equal( chat_id, chat.id )
 						deepEqual( opUser, op )
-						equal( toUser, userb )
+						deepEqual( toUser, userb )
 						resolve()
 					} )
 					client.emit( 'chat.transfer', chat.id, userb.id )
