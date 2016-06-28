@@ -139,7 +139,7 @@ describe( 'Operators', () => {
 				const connectionb = server.newClient()
 				return connectOperator( connectionb, userb )
 				.then( () => new Promise( resolve => {
-					operators.once( 'chat.transfer', ( opUser, chat_id, toUser ) => {
+					operators.once( 'chat.transfer', ( chat_id, opUser, toUser ) => {
 						equal( chat_id, chat.id )
 						deepEqual( opUser, op )
 						equal( toUser, userb )
