@@ -29,13 +29,14 @@ describe( 'Agent Service', () => {
   - `author_id`: the id of the author of the message
   - `author_type`: One of `customer`, `support`, `agent`
 		 */
-			server.on( 'message', ( { id, timestamp, text, session_id, author_id, author_type } ) => {
+			server.on( 'message', ( { id, timestamp, text, session_id, author_id, author_type, type } ) => {
 				equal( id, 'fake-message-id' )
 				ok( timestamp )
 				equal( text, 'hello' )
 				equal( session_id, 'fake-context' )
 				equal( author_id, 'fake-user-id' )
 				equal( author_type, 'customer' )
+				equal( type, 'message-type' )
 				done()
 			} )
 			service.emit( 'receive', {
@@ -44,7 +45,8 @@ describe( 'Agent Service', () => {
 				text: 'hello',
 				session_id: 'fake-context',
 				author_id: 'fake-user-id',
-				author_type: 'customer'
+				author_type: 'customer',
+				type: 'message-type'
 			} )
 		} )
 
