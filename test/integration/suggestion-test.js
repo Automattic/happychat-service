@@ -14,7 +14,7 @@ describe( 'Chat logs', () => {
 	}
 
 	const afterInit = ( { customer, operator, agent } ) => new Promise( ( resolve ) => {
-		operator.on( 'available', ( _, available ) => process.nextTick( () => available( { capacity: 1, load: 0 } ) ) )
+		operator.on( 'available', ( _, available ) => available( { capacity: 1, load: 0 } ) )
 		operator.on( 'identify', callback => callback( { id: 'operator' } ) )
 		customer.on( 'init', () => resolve( { customer, operator, agent } ) )
 	} )
@@ -46,17 +46,19 @@ describe( 'Chat logs', () => {
 	} )
 
 	const sendCustomerMessage = ( msg ) => ( clients ) => new Promise( resolve => {
-		process.nextTick( () => {
-			clients.customer.emit( 'message', { id: ( new Date() ).getTime(), text: msg } )
-		} )
+		clients.customer.emit( 'message', { id: ( new Date() ).getTime(), text: msg } )
 		resolve( clients )
 	} )
 
-	const listenForLog = clients => new Promise( resolve => {
+	const listenForSuggestion = clients => new Promise( resolve => {
 		// It could be in the log or received as the next message depending on
 		// how quickly the client connects
-		clients.operator.on( 'log', ( _, log ) => resolve( log ) )
-		clients.operator.on( 'chat.message', ( chat, message ) => resolve( [ message ] ) )
+
+		clients.operator.once( 'log', ( _, log ) => {
+			const suggestion = find( log, ( { type } ) => type === 'elfbot' )
+			if ( suggestion ) resolve( suggestion )
+		} )
+		clients.operator.once( 'chat.message', ( chat, message ) => resolve( message ) )
 	} )
 
 	beforeEach( () => {
@@ -72,10 +74,8 @@ describe( 'Chat logs', () => {
 			.then( replyToCustomerMessage )
 			.then( setOperatorOnline )
 			.then( sendCustomerMessage( 'hola mundo' ) )
-			.then( listenForLog )
-			.then( log => {
-				const suggestion = find( log, ( { type } ) => type === 'elfbot' )
-
+			.then( listenForSuggestion )
+			.then( suggestion => {
 				ok( suggestion )
 				deepEqual( suggestion.meta, meta )
 			} )
