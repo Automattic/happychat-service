@@ -134,6 +134,9 @@ export class ChatList extends EventEmitter {
 			.then( ( chat ) => {
 				const room_name = `customers/${ chat.id }`
 				operators.emit( 'close', chat, room_name, operator )
+				operators.emit( 'receive', chat, assign( makeEventMessage( 'chat closed' ), {
+					meta: { by: operator }
+				} ) )
 			} )
 			.catch( () => {
 				throw new Error( 'failed to find chat: ' + chat_id )
