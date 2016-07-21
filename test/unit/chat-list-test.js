@@ -203,6 +203,16 @@ describe( 'ChatList', () => {
 			operators.emit( 'chat.leave', chat.id, newOperator )
 		} )
 
+		it( 'should send a message when operator closes chat', done => {
+			operators.once( 'message', tick( ( _chat, { id }, message ) => {
+				equal( id, operator_id )
+				deepEqual( _chat, chat )
+				equal( message.type, 'event' )
+				equal( message.meta.by.id, operator_id )
+				done()
+			} ) )
+			operators.emit( 'chat.close', chat.id, { id: operator_id } )
+		} )
 	} )
 
 	describe( 'with abandoned chat', () => {
