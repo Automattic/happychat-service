@@ -81,7 +81,7 @@ export class ChatList extends EventEmitter {
 			.then( ( chat ) => {
 				const room_name = `customers/${ chat.id }`
 				operators.emit( 'open', chat, room_name, operator )
-				operators.emit( 'message', chat, assign( makeEventMessage( 'operator joined' ), {
+				operators.emit( 'message', chat, operator, assign( makeEventMessage( 'operator joined' ), {
 					meta: { operator }
 				} ) )
 			} )
@@ -101,7 +101,7 @@ export class ChatList extends EventEmitter {
 					}
 					return promiseTimeout( new Promise( ( resolve, reject ) => {
 						operators.emit( 'transfer', chat, to, asCallback( resolve, reject ) )
-						operators.emit( 'message', chat, assign( makeEventMessage( 'chat transferred' ), {
+						operators.emit( 'message', chat, from, assign( makeEventMessage( 'chat transferred' ), {
 							meta: { from, to }
 						} ) )
 					} ), this._timeout )
@@ -121,7 +121,7 @@ export class ChatList extends EventEmitter {
 			.then( ( chat ) => {
 				const room_name = `customers/${ chat.id }`
 				operators.emit( 'leave', chat, room_name, operator )
-				operators.emit( 'message', chat, assign( makeEventMessage( 'operator left'), {
+				operators.emit( 'message', chat, operator, assign( makeEventMessage( 'operator left'), {
 					meta: { operator }
 				} ) )
 			} )
