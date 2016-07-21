@@ -168,7 +168,7 @@ describe( 'ChatList', () => {
 
 		it( 'should log message when chat is transferred', done => {
 			const newOperator = { id: 'new-operator' }
-			operators.once( 'receive', tick( ( { id: chat_id }, message ) => {
+			operators.once( 'message', tick( ( { id: chat_id }, message ) => {
 				equal( chat_id, chat.id )
 				ok( message.id )
 				ok( message.timestamp )
@@ -183,7 +183,7 @@ describe( 'ChatList', () => {
 
 		it( 'should send message when operator joins', done => {
 			const newOperator = { id: 'joining-operator' }
-			operators.once( 'receive', tick( ( { id: chat_id }, message ) => {
+			operators.once( 'message', tick( ( { id: chat_id }, message ) => {
 				equal( chat_id, chat.id )
 				ok( message.id )
 				deepEqual( message.meta.operator, newOperator )
@@ -194,7 +194,7 @@ describe( 'ChatList', () => {
 
 		it( 'should send message when operator leaves', done => {
 			const newOperator = { id: 'leaving-operator' }
-			operators.once( 'receive', tick( ( { id: chat_id }, message ) => {
+			operators.once( 'message', tick( ( { id: chat_id }, message ) => {
 				equal( chat_id, chat.id )
 				deepEqual( message.meta.operator, newOperator )
 				ok( message )

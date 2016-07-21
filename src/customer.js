@@ -21,6 +21,7 @@ const init = ( { user, socket, events, io } ) => () => {
 
 	socket.on( 'message', ( { text, id, meta } ) => {
 		const message = { session_id: user.session_id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
+		debug( 'received customer message', message )
 		// all customer connections for this user receive the message
 		// io.to( user.id ).emit( 'message', message )
 		events.emit( 'message', user, message )
