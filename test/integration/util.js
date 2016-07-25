@@ -46,14 +46,14 @@ export const startClients = ( port ) => new Promise( ( resolve, reject ) => {
 
 const main = ( authenticators, port = 65115 ) => {
 	let server = createServer()
-	service( server, authenticators )
 	return {
 		start: () => startServer( server, port ),
 		stop: () => stopServer( server ),
 		startClients: () => startClients( port ),
 		startCustomer: () => startCustomer( port ),
 		startAgent: () => startAgent( port ),
-		startOperator: () => startOperator( port )
+		startOperator: () => startOperator( port ),
+		service: 	service( server, authenticators )
 	}
 }
 
