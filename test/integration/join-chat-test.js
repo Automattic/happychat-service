@@ -1,12 +1,15 @@
 import { ok, deepEqual } from 'assert'
 import util, { authenticators } from './util'
 
+const debug = require( 'debug' )( 'happychat:test:join-chat' )
+
 describe( 'Operator', () => {
 	let mockUser = {
 		id: 'fake-user-id',
 		displayName: 'Nasuicaä',
 		username: 'nausicaa',
-		avatarURL: 'http://example.com/nausicaa'
+		avatarURL: 'http://example.com/nausicaa',
+		session_id: 'session-id'
 	}
 	let opUser = {
 		id: 'operator-id',
@@ -15,20 +18,22 @@ describe( 'Operator', () => {
 		avatarURL: 'http://sample.com/ridley'
 	}
 
-	const service = util( authenticators( mockUser, opUser, {} ) )
+	let service;
 
 	const emitCustomerMessage = ( { customer, operator } ) => new Promise( ( resolve ) => {
 		customer.on( 'message', () => {
+			debug( 'customer received message?' )
 			resolve( { customer, operator } )
 		} )
 		customer.emit( 'message', { id: 'message', text: 'hello' } )
 	} )
 
 	const operatorJoinChat = ( { operator } ) => new Promise( ( resolve ) => {
+		debug( 'operator is joining chat' )
 		operator.on( 'chat.open', ( chat ) => {
 			resolve( chat )
 		} )
-		operator.emit( 'chat.join', 'fake-user-id' )
+		operator.emit( 'chat.join', mockUser.session_id )
 	} )
 
 	const leaveChat = ( client, chat_id ) => new Promise( ( resolve ) => {
@@ -36,7 +41,10 @@ describe( 'Operator', () => {
 		client.emit( 'chat.leave', chat_id )
 	} )
 
-	beforeEach( () => service.start() )
+	beforeEach( () => {
+		service = util( authenticators( mockUser, opUser, {} ) )
+		service.start() 
+	} )
 	afterEach( () => service.stop() )
 
 	it( 'should join chat', () => service.startClients()
@@ -57,9 +65,9 @@ describe( 'Operator', () => {
 			.then( operatorJoinChat )
 		)
 
-		it( 'should leave chat', () => leaveChat( operator, 'fake-user-id' )
+		it( 'should leave chat', () => leaveChat( operator, mockUser.session_id )
 			.then( ( { chat: { id } } ) => {
-				deepEqual( id, 'fake-user-id' )
+				deepEqual( id, mockUser.session_id )
 			} )
 		)
 	} )

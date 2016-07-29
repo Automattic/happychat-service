@@ -5,10 +5,11 @@ const debug = require( 'debug' )( 'happychat:test:integration' )
 
 describe( 'Abandoned service', () => {
 	let mockUser = {
-		id: 'fake-user-id',
+		id: 'mock-user-id',
 		displayName: 'Nasuicaä',
 		username: 'nausicaa',
-		avatarURL: 'http://example.com/nausicaa'
+		avatarURL: 'http://example.com/nausicaa',
+		session_id: 'mock-session-id'
 	}
 	let opUser = {
 		id: 'operator-id',
@@ -52,7 +53,7 @@ describe( 'Abandoned service', () => {
 	.then( assignOperator )
 	.then( reconnectOperator )
 	.then( ( chat ) => new Promise( ( resolve ) => {
-		equal( chat.id, 'fake-user-id' )
+		equal( chat.id, mockUser.session_id )
 		resolve()
 	} ) ) )
 } )

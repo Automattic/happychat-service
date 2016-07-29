@@ -17,35 +17,38 @@ const identityForUser = ( { id, displayName, avatarURL } ) => ( { id, displayNam
 
 const init = ( { user, socket, events, io } ) => () => {
 	const socketIdentifier = { id: user.id, socket_id: socket.id, session_id: user.session_id }
-	debug( 'user joined room', user.id )
+	const chat = { user_id: user.id, id: user.session_id }
+
+	debug( 'chat initialized', chat )
 
 	socket.on( 'message', ( { text, id, meta } ) => {
-		const message = { session_id: user.session_id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
+		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
 		debug( 'received customer message', message )
 		// all customer connections for this user receive the message
 		// io.to( user.id ).emit( 'message', message )
-		events.emit( 'message', user, message )
+		events.emit( 'message', chat, message )
 	} )
 
 	socket.on( 'disconnect', () => events.emit( 'leave', socketIdentifier ) )
 	socket.emit( 'init', user )
-	events.emit( 'join', socketIdentifier, user, socket )
+	events.emit( 'join', socketIdentifier, chat, socket )
 }
 
-const join = ( { events, io, user, socket } ) => {
-	debug( 'user joined', user.username, user.id )
+const customerRoom = ( { session_id } ) => `session/${ session_id }`
+const chatRoom = ( { id } ) => `session/${ id }`
 
-	// user joins room based on their identifier
-	socket.join( user.id, init( { user, socket, events, io } ) )
+const join = ( { events, io, user, socket } ) => {
+	debug( 'user joined', user )
+	socket.join( customerRoom( user ), init( { user, socket, events, io } ) )
 }
 
 export default ( io ) => {
 	const events = new EventEmitter()
 	events.io = io
 
-	events.on( 'receive', ( user, message ) => {
-		debug( 'sending message to customer', user, message )
-		io.to( user.id ).emit( 'message', message )
+	events.on( 'receive', ( chat, message ) => {
+		debug( 'sending message to customer', chat, message )
+		io.to( chatRoom( chat ) ).emit( 'message', message )
 	} )
 	io.on( 'connection', ( socket ) => {
 		debug( 'customer connecting' )

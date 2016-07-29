@@ -210,7 +210,7 @@ export class ChatList extends EventEmitter {
 			debug( 'chat already managed', chat.id )
 		} )
 		.catch( ( e ) => {
-			debug( 'chat has not been assigned, finding an operator', e, channelIdentity )
+			debug( 'chat has not been assigned, finding an operator', e, channelIdentity, room_name )
 			this._chats = set( this._chats, channelIdentity.id, [ STATUS_PENDING, channelIdentity ] )
 			this.emit( 'chat.status', 'pending', channelIdentity )
 
@@ -250,6 +250,7 @@ export class ChatList extends EventEmitter {
 	}
 
 	findChat( channelIdentity ) {
+		debug( 'searching for chat', channelIdentity )
 		return this.findChatById( channelIdentity.id )
 	}
 

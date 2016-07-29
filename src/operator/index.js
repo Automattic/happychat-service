@@ -130,12 +130,13 @@ const reduceUniqueOperators = ( operators ) => values( reduce( operators, ( uniq
 }, {} ) )
 
 const emitInChat = throttle( ( { io, chat } ) => {
-	debug( 'querying operators in chat', chat )
 	const room = `customers/${chat.id}`
+	debug( 'querying operators in chat', chat, room )
 	queryClients( io, room )
 	.then( identifyClients( io ) )
 	.then( ( operators ) => Promise.resolve( reduceUniqueOperators( operators ) ) )
 	.then( ( identities ) => {
+		debug( 'sending chat.online', chat, identities )
 		io.in( room ).emit( 'chat.online', chat.id, identities )
 	} )
 } )
@@ -222,7 +223,7 @@ const openChatForClients = ( { io, events, operator, room, chat } ) => ( clients
 	parallel( map( clients, ( socket ) => ( complete ) => {
 		socket.join( room, ( error ) => {
 			// a socket has joined
-			debug( 'chat was opened' )
+			debug( 'chat was opened', room )
 			events.emit( 'join', chat, operator, socket )
 			complete( error )
 			socket.on( 'disconnect', () => emitInChat( { io, events, chat } ) )

@@ -58,7 +58,7 @@ describe( 'Chat logs', () => {
 	} )
 
 	beforeEach( () => {
-		service = util( authenticators( { id: 'customer' }, { id: 'operator' }, {} ) )
+		service = util( authenticators( { id: 'customer-a', session_id: '12345' }, { id: 'operator-1' }, {} ) )
 		return service.start()
 	} )
 	afterEach( () => service.stop() )
