@@ -17,7 +17,13 @@ const identityForUser = ( { id, displayName, avatarURL } ) => ( { id, displayNam
 
 const init = ( { user, socket, events, io } ) => () => {
 	const socketIdentifier = { id: user.id, socket_id: socket.id, session_id: user.session_id }
-	const chat = { user_id: user.id, id: user.session_id }
+	const chat = {
+		user_id: user.id,
+		id: user.session_id,
+		username: user.username,
+		displayName: user.displayName,
+		avatarURL: user.avatarURL
+	}
 
 	debug( 'chat initialized', chat )
 
