@@ -10,8 +10,8 @@ const identityForUser = ( { id, displayName, avatarURL } ) => ( { id, displayNam
   - `user`: (**required**) a JSON key/value object containing:
     - `id`: (**required**) the unique identifier for this user in the *Support Provider*'s system
     - `username`: (**required**) an account name for the user
-    - `displayName`: (**required**) name to use in application UI
-    - `avatarURL`: (**required**) URL to image to display as user's avatar
+    - `name`: (**required**) name to use in application UI
+    - `picture`: (**required**) URL to image to display as user's avatar
     - `tags`: Array of strings to identify the user (example: `['premium', 'expired']`)
  */
 
@@ -21,8 +21,8 @@ const init = ( { user, socket, events, io } ) => () => {
 		user_id: user.id,
 		id: user.session_id,
 		username: user.username,
-		displayName: user.displayName,
-		avatarURL: user.avatarURL
+		name: user.name,
+		picture: user.picture
 	}
 
 	debug( 'chat initialized', chat )
