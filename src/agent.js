@@ -17,7 +17,7 @@ const onAuthorized = ( { socket, events } ) => ( agent ) => {
 	 */
 	socket.on( 'message', ( message ) => {
 		// TODO: validate message
-		debug( 'received message' )
+		debug( 'received message', message )
 		events.emit( 'message', message )
 	} )
 	socket.on( 'role.add', ( role, done ) => {

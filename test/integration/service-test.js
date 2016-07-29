@@ -3,12 +3,17 @@ import util, { authenticators } from './util'
 
 const debug = require( 'debug' )( 'happychat:test:service' )
 
+const tick = ( fn ) => ( ... args ) => {
+	process.nextTick( () => fn( ... args ) )
+}
+
 describe( 'Service', () => {
 	let mockUser = {
 		id: 'fake-user-id',
 		displayName: 'Nasuicaä',
 		username: 'nausicaa',
-		avatarURL: 'http://example.com/nausicaa'
+		avatarURL: 'http://example.com/nausicaa',
+		session_id: 'session-id'
 	}
 	let botUser = {
 		id: 'imperator',
@@ -25,11 +30,12 @@ describe( 'Service', () => {
 	it( 'should allow agent to communicate with user', () => service.startClients().then(
 		( { customer, agent } ) => new Promise( ( resolve ) => {
 			debug( 'time to test customer' )
-			agent.once( 'message', ( { session_id, text, id } ) => {
+			agent.once( 'message', tick( ( { session_id, text, id } ) => {
+				debug( 'received message', { session_id, text, id } )
 				equal( id, 'message-1' )
 				agent.emit( 'message', { id: 'message-2', session_id, text: `re: ${text}`, user: botUser, meta: agent_meta } )
-			} )
-			customer.once( 'message', ( { id } ) => {
+			} ) )
+			customer.once( 'message', tick( ( { id } ) => {
 				equal( id, 'message-1' )
 				customer.once( 'message', ( { id: next_id, text, meta } ) => {
 					equal( next_id, 'message-2' )
@@ -39,7 +45,7 @@ describe( 'Service', () => {
 					agent.close()
 					resolve()
 				} )
-			} )
+			} ) )
 			customer.emit( 'message', { text: 'hello', id: 'message-1' } )
 		} )
 	) )

@@ -6,7 +6,13 @@ const debug = require( 'debug' )( 'happychat:test:customer' )
 
 describe( 'Customer Service', () => {
 	let server, socket, client, customerEvents
-	const mockUser = { id: 'abdefgh', username: 'ridley', displayName: 'Ridley', avatarURL: 'http://example.com/image', session_id: 'abdefgh-chat' }
+	const mockUser = {
+		id: 'abdefgh',
+		username: 'ridley',
+		displayName: 'Ridley',
+		avatarURL: 'http://example.com/image',
+		session_id: 'abdefgh-chat'
+	}
 	let auth
 	beforeEach( () => {
 		( { server, socket, client } = mockIO() )
@@ -27,7 +33,8 @@ describe( 'Customer Service', () => {
 
 		it( 'should receive message and broadcast it', ( done ) => {
 			customerEvents.once( 'message', ( chat, { id, text, timestamp, user, meta, session_id } ) => {
-				equal( chat.id, mockUser.id )
+				equal( chat.id, mockUser.session_id )
+				equal( chat.user_id, mockUser.id )
 				equal( session_id, mockUser.session_id )
 				equal( id, 'message-id' )
 				equal( text, 'hello world' )
@@ -48,7 +55,7 @@ describe( 'Customer Service', () => {
 				equal( message.text, 'hello' )
 				done()
 			} )
-			customerEvents.emit( 'receive', { id: mockUser.id }, { context: mockUser.id, text: 'hello', user: mockUser } )
+			customerEvents.emit( 'receive', { id: mockUser.session_id }, { text: 'hello', user: mockUser } )
 		} )
 	} )
 
@@ -72,12 +79,12 @@ describe( 'Customer Service', () => {
 
 	it( 'should authenticate and init client', ( done ) => {
 		customer( server ).once( 'connection', ( _socket, authUser ) => {
-			authUser( null, { id: 'user1', username: 'user1' } )
+			authUser( null, { id: 'user1', username: 'user1', session_id: 'session' } )
 		} )
 
 		client.once( 'init', () => {
 			debug( 'socket rooms', socket.rooms )
-			contains( socket.rooms, 'user1' )
+			contains( socket.rooms, 'session/session' )
 			done()
 		} )
 

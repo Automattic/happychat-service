@@ -18,7 +18,7 @@ describe( 'Operators in chat', () => {
 
 	var operatorClients;
 
-	let customer = { id: 'customer', displayName: 'Customer' }
+	let customer = { id: 'customer', displayName: 'Customer', session_id: 'session' }
 
 	const service = util( {
 		operatorAuthenticator: ( ( users ) => ( socket, callback ) => {
@@ -69,7 +69,10 @@ describe( 'Operators in chat', () => {
 
 	const waitForChatOperatorList = ( client ) => new Promise( ( resolve ) => {
 		debug( 'waiting for list' )
-		client.once( 'chat.online', ( chat, list ) => resolve( list ) )
+		client.once( 'chat.online', ( chat, list ) => {
+			debug( 'received list of operators', list )
+			resolve( list )
+		} )
 	} )
 
 	const joinChat = ( client, chat_id ) => new Promise( ( resolve ) => {
@@ -103,7 +106,7 @@ describe( 'Operators in chat', () => {
 		.then( ( list ) => {
 			equal( list.length, 1 )
 			const client = operatorClients.slice( -1 )[0]
-			return joinChat( client, 'customer' )
+			return joinChat( client, customer.session_id )
 			.then( () => waitForChatOperatorList( client ) )
 		} )
 		// when an operator joins a chat, updated operator list should be sent
@@ -112,14 +115,14 @@ describe( 'Operators in chat', () => {
 			const client = operatorClients.slice( -1 )[0]
 
 			debug( 'listen for operator leaving' )
-			return leaveChat( client, 'customer' )
+			return leaveChat( client, customer.session_id )
 			.then( () => waitForChatOperatorList( operatorClients[0] ) )
 		} )
 		// when an operator leaves a chat, updated operator list should be sent
 		.then( ( list ) => {
 			deepEqual( map( list, prop( 'id' ) ), map( operators.slice( 0, 1 ), prop( 'id' ) ) )
 		} )
-		.then( () => joinChat( operatorClients[1], 'customer' ) )
+		.then( () => joinChat( operatorClients[1], customer.session_id ) )
 		.then( () => waitForChatOperatorList( operatorClients[1] ) )
 		.then( () => disconnectClient( operatorClients[1] ) )
 		.then( () => waitForChatOperatorList( operatorClients[0] ) )
