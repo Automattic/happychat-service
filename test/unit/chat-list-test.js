@@ -208,6 +208,7 @@ describe( 'ChatList', () => {
 				equal( id, operator_id )
 				deepEqual( _chat, chat )
 				equal( message.type, 'event' )
+				equal( message.meta.event_type, 'close' )
 				equal( message.meta.by.id, operator_id )
 				equal( message.meta.event_type, 'close' )
 				done()
