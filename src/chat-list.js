@@ -135,7 +135,7 @@ export class ChatList extends EventEmitter {
 				const room_name = `customers/${ chat.id }`
 				operators.emit( 'close', chat, room_name, operator )
 				operators.emit( 'message', chat, operator, assign( makeEventMessage( 'chat closed' ), {
-					meta: { by: operator }
+					meta: { event_type: 'close', by: operator }
 				} ) )
 			} )
 			.catch( () => {
