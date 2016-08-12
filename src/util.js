@@ -23,9 +23,10 @@ export const timestamp = () => (
 
 export const onConnection = ( { events, socket } ) => ( success ) => connect( { events, socket } ).then( success, rejectAndClose( socket ) )
 
-export const makeEventMessage = ( text ) => ( {
+export const makeEventMessage = ( text, session_id ) => ( {
 	type: 'event',
 	id: uuid(),
 	timestamp: timestamp(),
+	session_id: session_id,
 	text
 } )
