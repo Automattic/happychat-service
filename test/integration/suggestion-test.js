@@ -58,7 +58,11 @@ describe( 'Chat logs', () => {
 			const suggestion = find( log, ( { type } ) => type === 'elfbot' )
 			if ( suggestion ) resolve( suggestion )
 		} )
-		clients.operator.once( 'chat.message', ( chat, message ) => resolve( message ) )
+		clients.operator.once( 'chat.message', ( chat, message ) => {
+			if ( message.type === 'elfbot' ) {
+				resolve( message )
+			}
+		} )
 	} )
 
 	beforeEach( () => {

@@ -63,7 +63,7 @@ describe( 'Operator Transfer', () => {
 			} ) )
 			.then( () => {
 				// check to make sure the transfer event message is in the log
-				let transfer = find( messages, ( { type } ) => type === 'event' )
+				let transfer = find( messages, ( { type, meta } ) => type === 'event' && meta.event_type === 'transfer' )
 				ok( transfer )
 				deepEqual( transfer.meta.from, operators[0] )
 				deepEqual( transfer.meta.to, operators[1] )
