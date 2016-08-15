@@ -54,7 +54,7 @@ describe( 'ChatList', () => {
 		emitCustomerMessage()
 	} )
 
-	it( 'should move chat to active when operator found', ( done ) => {
+	it( 'should move chat to active when operator found', done => {
 		operators.on( 'assign', tick( ( { id }, name, callback ) => {
 			callback( null, { id: 'operator-id', socket: new EventEmitter() } )
 		} ) )
