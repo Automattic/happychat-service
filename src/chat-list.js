@@ -212,13 +212,18 @@ export class ChatList extends EventEmitter {
 		.catch( ( e ) => {
 			debug( 'chat has not been assigned, finding an operator', e, channelIdentity, room_name )
 			this._chats = set( this._chats, channelIdentity.id, [ STATUS_PENDING, channelIdentity ] )
-			this.emit( 'chat.status', 'pending', channelIdentity )
+			let chat = this.insertPendingChat( channelIdentity )
+			this.emit( 'chat.status', 'pending', chat )
 
-			this.queryClientAssignment( channelIdentity, room_name )
-			.then( ( operator ) => this.setChatAsAssigned( channelIdentity, operator ) )
-			.then( ( operator ) => {
-				this.emit( 'chat.status', 'found', channelIdentity, operator )
-				this.emit( 'found', channelIdentity, operator )
+			this.queryClientAssignment( chat, room_name )
+			.then( operator => this.setChatAsAssigned( chat, operator ) )
+			.then( operator => {
+				this.emit( 'chat.status', 'found', chat, operator )
+				this.emit( 'found', chat, operator )
+				// TODO: Send a message to the chat that an operator was found/opened
+				this.operators.emit( 'message', chat, operator, assign( makeEventMessage( 'operator assigned' ), {
+					meta: { operator, event_type: 'assigned' }
+				} ) )
 			} )
 			.catch( ( assignmentError ) => {
 				debug( 'failed to find operator', assignmentError )
@@ -275,6 +280,11 @@ export class ChatList extends EventEmitter {
 		return new Promise( ( resolve ) => {
 			resolve( map( filter( values( this._chats ), ( [ , , op ] ) => op.id === operator.id ), ( [, chat] ) => chat ) )
 		} )
+	}
+
+	insertPendingChat( channelIdentity ) {
+		this._chats = set( this._chats, channelIdentity.id, [ STATUS_PENDING, channelIdentity ] )
+		return channelIdentity
 	}
 
 	attemptAssignMissed() {

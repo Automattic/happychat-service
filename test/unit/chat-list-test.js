@@ -21,6 +21,12 @@ describe( 'ChatList', () => {
 		customers.emit( 'message', { id }, { text } )
 	}
 
+	const autoAssign = operators => {
+		operators.on( 'assign', ( { id }, name, callback ) => {
+			callback( null, { id: 'operator-id', socket: new EventEmitter() } )
+		} )
+	}
+
 	beforeEach( () => {
 		operators = mockServer()
 		customers = mockServer()
@@ -57,6 +63,16 @@ describe( 'ChatList', () => {
 			equal( operator.id, 'operator-id' )
 			equal( chatlist._chats[id][0], 'assigned' )
 			deepEqual( chatlist._chats[id][2], operator )
+			done()
+		} ) )
+		emitCustomerMessage()
+	} )
+
+	it( 'should send chat event message when operator is found', done => {
+		autoAssign( operators )
+		operators.on( 'message', tick( ( { id: chat_id }, operator, message ) => {
+			equal( message.meta.event_type, 'assigned' )
+			deepEqual( message.meta.operator.id, 'operator-id' )
 			done()
 		} ) )
 		emitCustomerMessage()
