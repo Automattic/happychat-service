@@ -144,9 +144,6 @@ const emitInChat = throttle( ( { io, chat } ) => {
 const join = ( { socket, events, user, io, selectIdentity } ) => {
 	debug( 'initialize the operator', user )
 	const user_room = `operators/${user.id}`
-
-	// emitOnline( { io, events } )
-
 	socket.on( 'status', ( status, done ) => {
 		// TODO: if operator has multiple clients, move all of them?
 		const updateStatus = ( e ) => {
@@ -185,7 +182,7 @@ const join = ( { socket, events, user, io, selectIdentity } ) => {
 	socket.on( 'message', ( chat_id, { id, text } ) => {
 		const meta = {}
 		const userIdentity = identityForUser( user )
-		const message = { id: id, session_id: chat_id, text,timestamp: timestamp(), user: userIdentity, meta }
+		const message = { id: id, session_id: chat_id, text, timestamp: timestamp(), user: userIdentity, meta }
 		// all customer connections for this user receive the message
 		debug( 'broadcasting message', user.id, id, message )
 		events.emit( 'message', { id: chat_id }, user, message )

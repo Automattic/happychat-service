@@ -106,14 +106,14 @@ export class ChatList extends EventEmitter {
 						} ) )
 					} ), this._timeout )
 				} )
-				.then( ( op ) => this.setChatAsAssigned( chat, op ) )
-				.then( ( op ) => this.emit( 'transfer', chat, op ) )
-				.catch( ( e ) => {
+				.then( op => this.setChatAsAssigned( chat, op ) )
+				.then( op => this.emit( 'transfer', chat, op ) )
+				.catch( e => {
 					debug( 'failed to transfer chat', e, chat )
 					this.setChatAsMissed( chat, e )
 				} )
 			} )
-			.catch( ( e ) => debug( 'chat does not exist', e ) )
+			.catch( e => debug( 'chat does not exist', e ) )
 		} )
 
 		operators.on( 'chat.leave', ( chat_id, operator ) => {
@@ -125,7 +125,7 @@ export class ChatList extends EventEmitter {
 					meta: { operator, event_type: 'leave' }
 				} ) )
 			} )
-			.catch( ( e ) => debug( 'Chat does not exist', chat_id, e ) )
+			.catch( e => debug( 'Chat does not exist', chat_id, e ) )
 		} )
 
 		operators.on( 'chat.close', ( chat_id, operator ) => {
@@ -192,7 +192,7 @@ export class ChatList extends EventEmitter {
 		const { id } = channelIdentity
 		const room_name = `customers/${ id }`
 		this.findChat( channelIdentity )
-		.then( ( chat ) => new Promise( ( resolve, reject ) => {
+		.then( chat => new Promise( ( resolve, reject ) => {
 			// are there any operators in the room?
 			this.operators.io.in( room_name ).clients( ( e, clients ) => {
 				if ( e ) {
@@ -239,7 +239,7 @@ export class ChatList extends EventEmitter {
 
 	findChatById( id ) {
 		return this.findAllOpenChats()
-		.then( ( chats ) => new Promise( ( resolve, reject ) => {
+		.then( chats => new Promise( ( resolve, reject ) => {
 			const chat = find( chats, ( { id: chat_id } ) => chat_id === id )
 			if ( chat ) {
 				return resolve( chat )
