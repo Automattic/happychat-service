@@ -192,6 +192,7 @@ describe( 'ChatList', () => {
 				equal( message.text, 'chat transferred' )
 				deepEqual( message.meta.to, newOperator )
 				deepEqual( message.meta.from, { id: operator_id } )
+				equal( message.meta.event_type, 'transfer' )
 				done()
 			} ) )
 			operators.emit( 'chat.transfer', chat.id, { id: operator_id }, newOperator )
@@ -203,6 +204,7 @@ describe( 'ChatList', () => {
 				equal( chat_id, chat.id )
 				ok( message.id )
 				deepEqual( message.meta.operator, newOperator )
+				equal( message.meta.event_type, 'join' )
 				done()
 			} ) )
 			operators.emit( 'chat.join', chat.id, newOperator )
@@ -213,6 +215,7 @@ describe( 'ChatList', () => {
 			operators.once( 'message', tick( ( { id: chat_id }, operator, message ) => {
 				equal( chat_id, chat.id )
 				deepEqual( message.meta.operator, newOperator )
+				equal( message.meta.event_type, 'leave' )
 				ok( message )
 				done()
 			} ) )
