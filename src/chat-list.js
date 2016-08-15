@@ -226,7 +226,7 @@ export class ChatList extends EventEmitter {
 				} ) )
 			} )
 			.catch( ( assignmentError ) => {
-				debug( 'failed to find operator', assignmentError )
+				debug( 'failed to find operator', assignmentError, channelIdentity )
 				this.setChatAsMissed( channelIdentity, assignmentError )
 			} )
 		} )
