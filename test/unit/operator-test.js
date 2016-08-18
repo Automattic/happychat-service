@@ -66,6 +66,17 @@ describe( 'Operators', () => {
 			client.emit( 'message', 'chat-id', { id: 'message-id', text: 'message' } )
 		} )
 
+		it( 'should handle `chat.typing` from client and pass to events', ( done ) => {
+			operators.on( 'typing', ( chat, user, text ) => {
+				equal( chat.id, 'chat-id' )
+				equal( user.id, op.id )
+				equal( text, 'typing a message...' )
+				done()
+			} )
+
+			client.emit( 'chat.typing', 'chat-id', 'typing a message...' );
+		} )
+
 		it( 'should emit when user wants to join a chat', ( done ) => {
 			operators.on( 'chat.join', ( chat_id, clientUser ) => {
 				equal( chat_id, 'chat-id' )
