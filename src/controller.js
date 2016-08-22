@@ -107,6 +107,15 @@ export default ( { customers, agents, operators } ) => {
 		} )
 	} )
 
+	customers.on( 'typing', ( chat, user, text ) => {
+		operators.emit( 'receive.typing', chat, user, text )
+	} )
+
+	operators.on( 'typing', ( chat, user, text ) => {
+		operators.emit( 'receive.typing', chat, user, text )
+		customers.emit( 'receive.typing', chat, user, text )
+	} )
+
 	customers.on( 'message', ( chat, message ) => {
 		// broadcast the message to
 		debug( 'customer message', chat.id, message.id )
@@ -176,4 +185,3 @@ export default ( { customers, agents, operators } ) => {
 
 	return external
 }
-

@@ -37,6 +37,8 @@ const identityForUser = ( { id, displayName, avatarURL } ) => (
 	{ id, displayName, avatarURL }
 )
 
+const customerRoom = id => `customers/${ id }`
+
 const queryClients = ( io, room ) => new Promise( ( resolve, reject ) => {
 	const onClients = ( error, clients ) => {
 		if ( error ) {
@@ -188,6 +190,13 @@ const join = ( { socket, events, user, io, selectIdentity } ) => {
 		events.emit( 'message', { id: chat_id }, user, message )
 	} )
 
+	socket.on( 'chat.typing', ( chat_id, text ) => {
+		const userIdentity = identityForUser( user )
+		debug( 'received operator `typing` event', userIdentity.id, chat_id, text );
+
+		events.emit( 'typing', { id: chat_id }, userIdentity, text );
+	} )
+
 	socket.on( 'chat.join', ( chat_id ) => {
 		debug( 'client requesting to join', chat_id )
 		events.emit( 'chat.join', chat_id, user )
@@ -293,8 +302,12 @@ export default io => {
 	} )
 
 	events.on( 'receive', ( { id }, message ) => {
-		const room_name = `customers/${ id }`
-		io.in( room_name ).emit( 'chat.message', { id }, message )
+		io.in( customerRoom( id ) ).emit( 'chat.message', { id }, message )
+	} )
+
+	events.on( 'receive.typing', ( chat, user, text ) => {
+		const { id } = chat
+		io.in( customerRoom( id ) ).emit( 'chat.typing', chat, user, text )
 	} )
 
 	events.on( 'status', ( user, status ) => {

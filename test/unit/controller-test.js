@@ -150,4 +150,41 @@ describe( 'Controller', () => {
 			operators.emit( 'message', { id: 'chat-id' }, mockUser, { id: 'message-id', user: mockUser, timestamp: 12345 } )
 		} )
 	} )
+
+	describe( 'customer `typing`', () => {
+		it( 'should notify operators', ( done ) => {
+			operators.on( 'receive.typing', ( chat, user, text ) => {
+				equal( chat.id, 'chat-id' )
+				equal( user.id, 'user-id' )
+				equal( text, 'typing a message...' )
+				done()
+			} )
+
+			customers.emit( 'typing', { id: 'chat-id' }, { id: 'user-id' }, 'typing a message...' )
+		} )
+	} )
+
+	describe( 'operator `typing`', () => {
+		it( 'should notify operators', ( done ) => {
+			operators.on( 'receive.typing', ( chat, user, text ) => {
+				equal( chat.id, 'chat-id' )
+				equal( user.id, 'user-id' )
+				equal( text, 'typing a message...' )
+				done()
+			} )
+
+			operators.emit( 'typing', { id: 'chat-id' }, { id: 'user-id' }, 'typing a message...' )
+		} )
+
+		it( 'should notify customers', ( done ) => {
+			customers.on( 'receive.typing', ( chat, user, text ) => {
+				equal( chat.id, 'chat-id' )
+				equal( user.id, 'user-id' )
+				equal( text, 'typing a message...' )
+				done()
+			} )
+
+			operators.emit( 'typing', { id: 'chat-id' }, { id: 'user-id' }, 'typing a message...' )
+		} )
+	} )
 } )

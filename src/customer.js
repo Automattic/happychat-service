@@ -35,6 +35,11 @@ const init = ( { user, socket, events, io } ) => () => {
 		events.emit( 'message', chat, message )
 	} )
 
+	socket.on( 'typing', ( text ) => {
+		debug( 'received customer typing', user.id, text );
+		events.emit( 'typing', chat, user, text );
+	} )
+
 	socket.on( 'disconnect', () => events.emit( 'leave', socketIdentifier ) )
 	socket.emit( 'init', user )
 	events.emit( 'join', socketIdentifier, chat, socket )
@@ -56,6 +61,13 @@ export default ( io ) => {
 		debug( 'sending message to customer', chat, message )
 		io.to( chatRoom( chat ) ).emit( 'message', message )
 	} )
+
+	events.on( 'receive.typing', ( chat, user, text ) => {
+		// customers shouldn't know who is typing or what they're typing
+		const isTyping = typeof text === 'string' && text.length > 0 ? true : false
+		io.to( chatRoom( chat ) ).emit( 'typing', isTyping )
+	} )
+
 	io.on( 'connection', ( socket ) => {
 		debug( 'customer connecting' )
 		onConnection( { socket, events } )( ( user ) => join( { socket, events, user, io } ) )

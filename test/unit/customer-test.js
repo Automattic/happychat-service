@@ -57,6 +57,35 @@ describe( 'Customer Service', () => {
 			} )
 			customerEvents.emit( 'receive', { id: mockUser.session_id }, { text: 'hello', user: mockUser } )
 		} )
+
+		it( 'should handle `typing` from client and pass to events', ( done ) => {
+			customerEvents.once( 'typing', ( chat, user, text ) => {
+				equal( chat.id, mockUser.session_id )
+				equal( user.id, mockUser.id )
+				equal( text, 'This is a message...' )
+				done()
+			} )
+
+			client.emit( 'typing', 'This is a message...' )
+		} )
+
+		it( 'should handle `receive.typing` from events (with text)', ( done ) => {
+			client.once( 'typing', ( isTyping ) => {
+				equal( isTyping, true )
+				done()
+			} )
+
+			customerEvents.emit( 'receive.typing', { id: mockUser.session_id }, mockUser, 'typing' )
+		} )
+
+		it( 'should handle `receive.typing` from events (with no text)', ( done ) => {
+			client.once( 'typing', ( isTyping ) => {
+				equal( isTyping, false )
+				done()
+			} )
+
+			customerEvents.emit( 'receive.typing', { id: mockUser.session_id }, mockUser, false )
+		} )
 	} )
 
 	it( 'should allow connections', () => {
