@@ -108,4 +108,21 @@ describe( 'Controller middleware', () => {
 			{ context: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
 		)
 	} )
+
+	it( 'should prevent message from sending by returning falsey message', ( done ) => {
+		const failOnEmit = ( ... args ) => {
+			done( new Error( 'message emitted: ' + JSON.stringify( args, null, '\t' ) ) )
+		}
+		controller.middleware( () => false )
+
+		// if any of the namespaces send the message, fail the test
+		customers.on( 'receive', failOnEmit )
+		operators.on( 'receive', failOnEmit )
+		agents.on( 'receive', failOnEmit )
+
+		// kind of hacky, the end result is that nothing happens due to the middleware preventing the message from being sent
+		setTimeout( done, 100 )
+
+		customers.emit( 'message', { id: 'user-id', session_id: '1' }, { context: 'user-id', id: 'message-id', text: 'hello', timestamp: 1 } )
+	} )
 } )
