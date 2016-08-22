@@ -129,15 +129,16 @@ describe( 'Controller', () => {
 		} )
 
 		it( 'should notify agents', ( done ) => {
-			agents.on( 'receive', ( { author_type, id, session_id, timestamp, author_id } ) => {
+			agents.on( 'receive', ( { author_type, id, session_id, timestamp, author_id, type } ) => {
 				equal( author_type, 'operator' )
 				equal( author_id, 'user-id' )
 				equal( id, 'message-id' )
 				equal( session_id, 'chat-id' )
 				equal( timestamp, 12345 )
+				equal( type, 'type' )
 				done()
 			} )
-			operators.emit( 'message', { id: 'chat-id' }, mockUser, { id: 'message-id', user: mockUser, timestamp: 12345 } )
+			operators.emit( 'message', { id: 'chat-id' }, mockUser, { id: 'message-id', user: mockUser, timestamp: 12345, type: 'type' } )
 		} )
 
 		it( 'should notify customers', ( done ) => {
