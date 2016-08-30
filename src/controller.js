@@ -4,6 +4,7 @@ import assign from 'lodash/assign'
 
 import { ChatList } from './chat-list'
 import { ChatLog } from './chat-log'
+import { makeEventMessage } from './util'
 
 const debug = require( 'debug' )( 'happychat:controller' )
 
@@ -77,8 +78,23 @@ export default ( { customers, agents, operators } ) => {
 	} )
 
 	chats
-	.on( 'miss', ( e, { id } ) => {
-		debug( 'failed to find operator', e, id, e.stack )
+	.on( 'miss', ( e, chat ) => {
+		debug( 'failed to find operator', e, chat, e.stack )
+		const meta = {}
+		const { id: chat_id } = chat;
+		const user = {
+			id: -1,
+			displayName: 'Agent W',
+			avatarURL: 'https://www.example.com/'
+		};
+		const message = makeEventMessage(
+			"No agents are currently available to chat. If you'd like to become available as an agent, log in at https://happychat.io",
+			chat_id
+		);
+		message.type = 'message';
+		debug( 'sending message', { id: chat_id }, user, message );
+		operators.emit( 'message', { id: chat_id }, user, message );
+		customers.emit( 'chat.unavailable', chat );
 	} )
 	.on( 'open', ( { id } ) => {
 		debug( 'looking for operator', id )
