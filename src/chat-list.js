@@ -211,7 +211,6 @@ export class ChatList extends EventEmitter {
 		} )
 		.catch( ( e ) => {
 			debug( 'chat has not been assigned, finding an operator', e, channelIdentity, room_name )
-			this._chats = set( this._chats, channelIdentity.id, [ STATUS_PENDING, channelIdentity ] )
 			let chat = this.insertPendingChat( channelIdentity )
 			this.emit( 'chat.status', 'pending', chat )
 
@@ -233,8 +232,12 @@ export class ChatList extends EventEmitter {
 	}
 
 	setChatAsMissed( chat, error ) {
+		debug( 'setChatAsMissed', chat,	 get( this._chats, chat.id ) );
+		const [ status ] = get( this._chats, chat.id, [] );
 		this._chats = set( this._chats, chat.id, [ STATUS_MISSED, chat ] )
-		this.emit( 'miss', error, chat )
+		if ( status !== STATUS_MISSED ) {
+			this.emit( 'miss', error, chat )
+		}
 	}
 
 	findChatById( id ) {
@@ -283,7 +286,12 @@ export class ChatList extends EventEmitter {
 	}
 
 	insertPendingChat( channelIdentity ) {
-		this._chats = set( this._chats, channelIdentity.id, [ STATUS_PENDING, channelIdentity ] )
+		debug( 'insertPendingChat',channelIdentity );
+		const [ status ] = get( this._chats, channelIdentity.id, [] );
+		if ( !status ) {
+			this._chats = set( this._chats, channelIdentity.id, [ STATUS_PENDING, channelIdentity ] )
+		}
+
 		return channelIdentity
 	}
 

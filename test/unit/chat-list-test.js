@@ -87,6 +87,16 @@ describe( 'ChatList', () => {
 		emitCustomerMessage()
 	} ) )
 
+	it( 'should timeout if no operator provided', ( done ) => {
+		chatlist.on( 'miss', tick( ( error, { id } ) => {
+			equal( error.message, 'timeout' )
+			equal( id, 'chat-id' )
+			done()
+		} ) )
+		emitCustomerMessage()
+		emitCustomerMessage()
+	} )
+
 	const assignOperator = ( operator_id, socket = new EventEmitter() ) => new Promise( ( resolve ) => {
 		operators.once( 'assign', ( chat, room, callback ) => callback( null, { id: operator_id, socket } ) )
 		chatlist.once( 'found', () => resolve() )
