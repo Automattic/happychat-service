@@ -4,7 +4,7 @@ import { onConnection, timestamp } from './util'
 const debug = require( 'debug' )( 'happychat:customer' )
 
 // limit the information for the user
-const identityForUser = ( { id, displayName, avatarURL } ) => ( { id, displayName, avatarURL } )
+const identityForUser = ( { id, name, username, picture } ) => ( { id, name, username, picture } )
 
 /**
   - `user`: (**required**) a JSON key/value object containing:
