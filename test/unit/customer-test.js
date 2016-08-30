@@ -9,8 +9,8 @@ describe( 'Customer Service', () => {
 	const mockUser = {
 		id: 'abdefgh',
 		username: 'ridley',
-		displayName: 'Ridley',
-		avatarURL: 'http://example.com/image',
+		name: 'Ridley',
+		picture: 'http://example.com/image',
 		session_id: 'abdefgh-chat'
 	}
 	let auth
@@ -42,8 +42,9 @@ describe( 'Customer Service', () => {
 				ok( meta )
 				deepEqual( user, {
 					id: mockUser.id,
-					displayName: mockUser.displayName,
-					avatarURL: mockUser.avatarURL
+					name: mockUser.name,
+					username: mockUser.username,
+					picture: mockUser.picture
 				} )
 				done()
 			} )
