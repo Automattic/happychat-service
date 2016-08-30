@@ -85,13 +85,14 @@ export default ( { customers, agents, operators } ) => {
 		const user = {
 			id: -1,
 			displayName: 'Agent W',
-			avatarURL: 'https://www.example.com/'
+			avatarURL: 'https://wapuuclub.files.wordpress.com/2015/12/original_wapuu.png'
 		};
 		const message = makeEventMessage(
 			"No agents are currently available to chat. If you'd like to become available as an agent, log in at https://happychat.io",
 			chat_id
 		);
 		message.type = 'message';
+		message.user = user;
 		debug( 'sending message', { id: chat_id }, user, message );
 		operators.emit( 'message', { id: chat_id }, user, message );
 		customers.emit( 'chat.unavailable', chat );

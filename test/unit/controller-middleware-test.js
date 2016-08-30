@@ -98,7 +98,7 @@ describe( 'Controller middleware', () => {
 		} )
 		.middleware( ( { message } ) => assign( {}, message, { text: message.text + ' world' } ) )
 
-		operators.on( 'receive', ( chat, { text } ) => {
+		operators.once( 'receive', ( chat, { text } ) => {
 			equal( text, 'goodbye world' )
 			done()
 		} )
