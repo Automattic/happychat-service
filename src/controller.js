@@ -31,6 +31,8 @@ const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
 	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
 }
 
+export const NO_OPS_AVAILABLE_MSG = "No agents are currently available to chat. If you'd like to become available as an agent, log in at https://happychat.io";
+
 export default ( { customers, agents, operators } ) => {
 	const middlewares = []
 	const toAgents = forward( agents )
@@ -87,10 +89,7 @@ export default ( { customers, agents, operators } ) => {
 			displayName: 'Agent W',
 			avatarURL: 'https://wapuuclub.files.wordpress.com/2015/12/original_wapuu.png'
 		};
-		const message = makeEventMessage(
-			"No agents are currently available to chat. If you'd like to become available as an agent, log in at https://happychat.io",
-			chat_id
-		);
+		const message = makeEventMessage( NO_OPS_AVAILABLE_MSG, chat_id );
 		message.type = 'message';
 		message.user = user;
 		debug( 'sending message', { id: chat_id }, user, message );

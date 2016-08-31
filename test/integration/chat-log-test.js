@@ -1,5 +1,6 @@
 import { equal, deepEqual } from 'assert'
 import util, { authenticators } from './util'
+import { NO_OPS_AVAILABLE_MSG } from '../../src/controller'
 import { map, reduce } from 'lodash/collection'
 
 const debug = require( 'debug' )( 'happychat:test:chat-logs' )
@@ -8,7 +9,6 @@ describe( 'Chat logs', () => {
 	var service
 
 	const mockMessages = [ 'hello', 'i need some help', 'can you help me?' ]
-	const awayMessage = "No agents are currently available to chat. If you'd like to become available as an agent, log in at https://happychat.io";
 
 	const afterInit = ( { customer, operator } ) => new Promise( ( resolve ) => {
 		operator.on( 'available', ( _, available ) => available( { capacity: 0, load: 0 } ) )
@@ -73,7 +73,7 @@ describe( 'Chat logs', () => {
 		.then( listenForLog )
 		.then( ( [ log ] ) => {
 			equal( log.length, 4 )
-			deepEqual( map( log, ( { text } ) => text ), [ ...mockMessages, awayMessage ] )
+			deepEqual( map( log, ( { text } ) => text ), [ ...mockMessages, NO_OPS_AVAILABLE_MSG ] )
 		} )
 	} )
 
@@ -87,7 +87,7 @@ describe( 'Chat logs', () => {
 		.then( listenForLog )
 		.then( ( [ , messages ] ) => {
 			equal( messages.length, 4 )
-			deepEqual( map( messages, ( { text } ) => text ), [ ...mockMessages, awayMessage ] )
+			deepEqual( map( messages, ( { text } ) => text ), [ ...mockMessages, NO_OPS_AVAILABLE_MSG ] )
 		} )
 	} )
 } )
