@@ -1,6 +1,6 @@
 import { equal, deepEqual } from 'assert'
 import util, { authenticators } from './util'
-import { NO_OPS_AVAILABLE_MSG } from '../../src/controller'
+import { NO_OPS_AVAILABLE_MSG } from 'controller'
 import { map, reduce } from 'lodash/collection'
 
 const debug = require( 'debug' )( 'happychat:test:chat-logs' )
@@ -72,7 +72,6 @@ describe( 'Chat logs', () => {
 		.then( connect )
 		.then( listenForLog )
 		.then( ( [ log ] ) => {
-			equal( log.length, 4 )
 			deepEqual( map( log, ( { text } ) => text ), [ ...mockMessages, NO_OPS_AVAILABLE_MSG ] )
 		} )
 	} )

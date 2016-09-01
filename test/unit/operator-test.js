@@ -1,5 +1,5 @@
 import { ok, equal, deepEqual } from 'assert'
-import operator from '../../src/operator'
+import operator from 'operator'
 import mockio from '../mock-io'
 import { tick } from '../tick'
 import { parallel } from 'async'

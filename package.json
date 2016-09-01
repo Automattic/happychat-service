@@ -4,7 +4,7 @@
   "description": "Socket.IO based chat server for happychat.",
   "main": "index.js",
   "scripts": {
-    "test": "`npm bin`/mocha --compilers js:babel-register --recursive",
+    "test": "NODE_PATH=./src `npm bin`/mocha --compilers js:babel-register --recursive",
     "build": "`npm bin`/babel -d lib ./src/",
     "prepublish": "npm run build"
   },
