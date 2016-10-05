@@ -77,20 +77,14 @@ const queryAvailability = ( chat, clients, io ) => new Promise( ( resolve, rejec
 } )
 
 const pickAvailable = ( selectIdentity ) => ( availability ) => new Promise( ( resolve, reject ) => {
-	const operator = availability
+	const [ operator ] = availability
 	.filter( ( op ) => op.capacity - op.load > 0 )
 	.sort( ( a, b ) => {
-		const a_open = a.capacity - a.load
-		const b_open = b.capacity - b.load
-		if ( a_open === b_open ) return 0
-		return ( a_open > b_open ? -1 : 1 )
+		const a_weight = ( a.capacity - a.load ) / a.capacity
+		const b_weight = ( b.capacity - b.load ) / b.capacity
+		if ( a_weight === b_weight ) return 0
+		return ( a_weight > b_weight ? -1 : 1 )
 	} )
-	.sort( ( a, b ) => {
-		if ( a.load === b.load ) {
-			return 0
-		}
-		return a.load < b.load ? -1 : 1
-	} )[0]
 
 	if ( !operator ) {
 		return reject( new Error( 'no operators available' ) )
