@@ -1,6 +1,6 @@
 import { equal, deepEqual } from 'assert'
 import util, { authenticators } from './util'
-import { NO_OPS_AVAILABLE_MSG } from '../../src/controller'
+import { NO_OPS_AVAILABLE_MSG } from 'controller'
 import { map, reduce } from 'lodash/collection'
 
 const debug = require( 'debug' )( 'happychat:test:chat-logs' )

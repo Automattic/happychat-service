@@ -3,7 +3,7 @@ import { EventEmitter } from 'events'
 import { isFunction, isArray } from 'lodash/lang'
 import { map } from 'lodash/collection'
 
-import { ChatList } from '../../src/chat-list'
+import { ChatList } from 'chat-list'
 import { tick } from '../tick'
 import io from '../mock-io'
 

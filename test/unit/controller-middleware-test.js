@@ -1,5 +1,5 @@
 import { equal } from 'assert'
-import makeController from '../../src/controller'
+import makeController from 'controller'
 import { EventEmitter } from 'events'
 import assign from 'lodash/assign'
 

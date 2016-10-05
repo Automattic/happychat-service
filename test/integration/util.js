@@ -1,5 +1,5 @@
 import { createServer } from 'http'
-import service from '../../src/service'
+import service from 'service'
 import { assign } from 'lodash/object'
 
 import IO from 'socket.io-client'

@@ -1,5 +1,5 @@
 import { equal, ok } from 'assert'
-import { ChatLog } from '../../src/chat-log'
+import { ChatLog } from 'chat-log'
 import { reduce } from 'lodash/collection'
 
 describe( 'ChatLog', () => {
