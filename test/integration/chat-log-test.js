@@ -72,7 +72,6 @@ describe( 'Chat logs', () => {
 		.then( connect )
 		.then( listenForLog )
 		.then( ( [ log ] ) => {
-			equal( log.length, 4 )
 			deepEqual( map( log, ( { text } ) => text ), [ ...mockMessages, NO_OPS_AVAILABLE_MSG ] )
 		} )
 	} )
