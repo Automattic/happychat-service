@@ -14,4 +14,4 @@ In progress implementation of [Happychat Service][].
 3. `npm install`
 4. `npm test`
 
-Make sure all tests pass before developing.
+Make sure all tests pass before deploying.
