@@ -220,7 +220,7 @@ export class ChatList extends EventEmitter {
 				this.emit( 'chat.status', 'found', chat, operator )
 				this.emit( 'found', chat, operator )
 				// TODO: Send a message to the chat that an operator was found/opened
-				this.operators.emit( 'message', chat, operator, assign( makeEventMessage( 'operator assigned' ), {
+				this.operators.emit( 'message', chat, operator, assign( makeEventMessage( 'operator assigned', chat.id ), {
 					meta: { operator, event_type: 'assigned' }
 				} ) )
 			} )

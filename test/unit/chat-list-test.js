@@ -71,7 +71,7 @@ describe( 'ChatList', () => {
 	it( 'should send chat event message when operator is found', done => {
 		autoAssign( operators )
 		operators.on( 'message', tick( ( { id: chat_id }, operator, message ) => {
-			equal( message.session_id, 'session-id' )
+			equal( message.session_id, 'chat-id' )
 			equal( message.meta.event_type, 'assigned' )
 			deepEqual( message.meta.operator.id, 'operator-id' )
 			done()
