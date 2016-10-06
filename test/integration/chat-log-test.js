@@ -58,6 +58,10 @@ describe( 'Chat logs', () => {
 		resolve( client )
 	} )
 
+	const wait = ( ms ) => ( thing ) => new Promise( ( resolve, reject ) => {
+		setTimeout( () => resolve( thing ), ms )
+	} )
+
 	beforeEach( () => {
 		service = util( authenticators( { id: 'customer-a', session_id: '12345' }, { id: 'operator-1' }, {} ) )
 		return service.start()
@@ -69,6 +73,7 @@ describe( 'Chat logs', () => {
 		.then( afterInit )
 		.then( sendMessages( mockMessages ) )
 		.then( disconnect )
+		.then( wait( 100 ) )
 		.then( connect )
 		.then( listenForLog )
 		.then( ( [ log ] ) => {
