@@ -4,8 +4,8 @@ machine:
 test:
   override:
     - npm run test:coverage -- --reporter mocha-junit-reporter:
-      environment:
-        MOCHA_FILE: $CIRCLE_TEST_REPORTS/junit/test-results.xml
+        environment:
+          MOCHA_FILE: $CIRCLE_TEST_REPORTS/junit/test-results.xml
 general:
   artifacts:
     - "coverage"
