@@ -9,6 +9,7 @@ import { combineReducers } from 'redux'
 
 const debug = require( 'debug' )( 'happychat:operator:store' )
 
+// Selectors
 export const selectIdentities = ( { identities } ) => values( identities )
 export const selectSocketIdentity = ( { sockets, identities }, socket ) => get(
 	identities,
@@ -16,12 +17,14 @@ export const selectSocketIdentity = ( { sockets, identities }, socket ) => get(
 )
 export const selectUser = ( { identities }, userId ) => get( identities, userId )
 
+// Types
 const UPDATE_IDENTITY = 'UPDATE_IDENTITY'
 const REMOVE_USER = 'REMOVE_USER'
 const REMOVE_USER_SOCKET = 'REMOVE_USER_SOCKET'
 const UPDATE_USER_STATUS = 'UPDATE_USER_STATUS'
-const UPDATE_USER_MAX_CONCURRENCY = 'UPDATE_USER_MAX_CONCURRENCY'
+const UPDATE_USER_CAPACITY = 'UPDATE_USER_CAPACITY'
 
+// Actions
 export const updateIdentity = ( socket, user ) => {
 	return { socket, user, type: UPDATE_IDENTITY }
 }
@@ -38,10 +41,11 @@ export const updateUserStatus = ( user, status ) => {
 	return { user, status, type: UPDATE_USER_STATUS }
 }
 
-export const updateMaxConcurrency = ( user, maxConcurrency ) => {
-	return { user, maxConcurrency, type: UPDATE_USER_MAX_CONCURRENCY }
+export const updateCapacity = ( user, capacity ) => {
+	return { user, capacity, type: UPDATE_USER_CAPACITY }
 }
 
+// Reducers
 const user_sockets = ( state = {}, action ) => {
 	const { user, socket } = action
 	switch ( action.type ) {
@@ -59,12 +63,15 @@ const user_sockets = ( state = {}, action ) => {
 	}
 }
 
-// const updateUserProp = ( prop, action, state ) => {
-// 	const val = get( action, prop );
-// 	const { user } = action;
-// 	const updated = assign( {}, get( state, user.id ), { prop: val } )
-// 	return assign( {}, state, set( {}, user.id, updated ) );
-// }
+const userPropUpdater = prop => ( action, state ) => {
+	const val = get( action, prop );
+	const { user } = action;
+	const newProp = set( {}, prop, val );
+	const updatedUser = assign( {}, get( state, user.id ), newProp );
+	return assign( {}, state, set( {}, user.id, updatedUser ) );
+}
+const setStatus = userPropUpdater( 'status' );
+const setCapacity = userPropUpdater( 'capacity' );
 
 const identities = ( state = {}, action ) => {
 	const { user } = action
@@ -72,16 +79,9 @@ const identities = ( state = {}, action ) => {
 		case UPDATE_IDENTITY:
 			return assign( {}, state, set( {}, user.id, user ) )
 		case UPDATE_USER_STATUS:
-			// return updateUserProp( 'status', action, state );
-			const { status } = action
-			const updated = assign( {}, get( state, user.id ), { status } )
-			return assign( {}, state, set( {}, user.id, updated ) );
-		case UPDATE_USER_MAX_CONCURRENCY:
-			// return updateUserProp( 'maxConcurrency', action, state );
-			const { maxConcurrency } = action;
-			debug( `setting maxConcurrency for ${user.id} to ${maxConcurrency}` );
-			const updated2 = assign( {}, get( state, user.id ), { maxConcurrency } )
-			return assign( {}, state, set( {}, user.id, updated2 ) );
+			return setStatus( action, state );
+		case UPDATE_USER_CAPACITY:
+			return setCapacity( action, state );
 		case REMOVE_USER:
 			return omit( state, user.id )
 		default:

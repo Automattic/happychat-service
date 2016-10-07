@@ -17,7 +17,7 @@ import {
 	selectSocketIdentity,
 	selectUser,
 	updateUserStatus,
-	updateMaxConcurrency
+	updateCapacity
 } from './store'
 import { createStore } from 'redux'
 
@@ -156,9 +156,9 @@ const join = ( { socket, events, user, io, selectIdentity } ) => {
 		}
 	} )
 
-	socket.on( 'maxConcurrency', ( maxConcurrency, done ) => {
-		events.emit( 'maxConcurrency', user, maxConcurrency );
-		done( maxConcurrency );
+	socket.on( 'capacity', ( capacity, done ) => {
+		events.emit( 'capacity', user, capacity );
+		done( capacity );
 	} )
 
 	socket.on( 'disconnect', () => {
@@ -314,8 +314,8 @@ export default io => {
 		store.dispatch( updateUserStatus( user, status ) )
 	} )
 
-	events.on( 'maxConcurrency', ( user, maxConcurrency ) => {
-		store.dispatch( updateMaxConcurrency( user, maxConcurrency ) )
+	events.on( 'capacity', ( user, capacity ) => {
+		store.dispatch( updateCapacity( user, capacity ) )
 	} )
 
 	events.on( 'transfer', ( chat, operator, complete ) => {
