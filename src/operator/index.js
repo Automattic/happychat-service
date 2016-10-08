@@ -8,6 +8,7 @@ import values from 'lodash/values'
 import throttle from 'lodash/throttle'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
+
 import {
 	default as reducer,
 	updateIdentity,
@@ -17,7 +18,8 @@ import {
 	selectSocketIdentity,
 	selectUser,
 	updateUserStatus,
-	updateCapacity
+	updateCapacity,
+	updateAvailability
 } from './store'
 import { createStore } from 'redux'
 
@@ -76,6 +78,11 @@ const queryAvailability = ( chat, clients, io ) => new Promise( ( resolve, rejec
 		resolve( results )
 	} )
 } )
+
+const cacheAvailability = ( store ) => ( availability ) => {
+	store.dispatch( updateAvailability( availability ) )
+	return availability;
+}
 
 const pickAvailable = ( selectIdentity ) => ( availability ) => new Promise( ( resolve, reject ) => {
 	const [ operator ] = availability
@@ -371,10 +378,16 @@ export default io => {
 
 	events.on( 'close', ( chat, room, operator ) => {
 		io.in( room ).emit( 'chat.close', chat, operator )
+		allClients( io )
+		.then( clients => queryAvailability( chat, clients, io ) )
+		.then( cacheAvailability( store ) )
 	} )
 
 	events.on( 'leave', ( chat, room, operator ) => {
 		leaveChat( { io, operator, chat, room, events } )
+		allClients( io )
+		.then( clients => queryAvailability( chat, clients, io ) )
+		.then( cacheAvailability( store ) )
 	} )
 
 	events.on( 'assign', ( chat, room, callback ) => {
@@ -382,6 +395,7 @@ export default io => {
 		debug( 'find an operator for', chat.id )
 		allClients( io )
 		.then( clients => queryAvailability( chat, clients, io ) )
+		.then( cacheAvailability( store ) )
 		.then( pickAvailable( socket => selectSocketIdentity( store.getState(), socket ) ) )
 		.then( operator => assignChat( { io, operator, chat, room, events } ) )
 		.then( operator => callback( null, operator ) )

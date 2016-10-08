@@ -23,6 +23,7 @@ const REMOVE_USER = 'REMOVE_USER'
 const REMOVE_USER_SOCKET = 'REMOVE_USER_SOCKET'
 const UPDATE_USER_STATUS = 'UPDATE_USER_STATUS'
 const UPDATE_USER_CAPACITY = 'UPDATE_USER_CAPACITY'
+const UPDATE_AVAILABILITY = 'UPDATE_AVAILABILITY';
 
 // Actions
 export const updateIdentity = ( socket, user ) => {
@@ -44,6 +45,14 @@ export const updateUserStatus = ( user, status ) => {
 export const updateCapacity = ( user, capacity ) => {
 	return { user, capacity, type: UPDATE_USER_CAPACITY }
 }
+
+export const updateAvailability = ( availability ) => {
+	return {
+		type: UPDATE_AVAILABILITY,
+		availability
+	}
+}
+
 
 // Reducers
 const user_sockets = ( state = {}, action ) => {
@@ -73,6 +82,16 @@ const userPropUpdater = prop => ( action, state ) => {
 const setStatus = userPropUpdater( 'status' );
 const setCapacity = userPropUpdater( 'capacity' );
 
+const updateLoad = ( availability, state ) => {
+	return availability.reduce( ( collection, { id, load } ) => {
+		if ( !id ) {
+			return collection;
+		}
+		const updatedUser = assign( {}, get( state, id ), { load } )
+		return assign( {}, collection, set( {}, id, updatedUser ) )
+	}, state );
+}
+
 const identities = ( state = {}, action ) => {
 	const { user } = action
 	switch ( action.type ) {
@@ -84,6 +103,8 @@ const identities = ( state = {}, action ) => {
 			return setCapacity( action, state );
 		case REMOVE_USER:
 			return omit( state, user.id )
+		case UPDATE_AVAILABILITY:
+			return updateLoad( action.availability, state );
 		default:
 			return state
 	}
