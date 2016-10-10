@@ -94,7 +94,7 @@ const setCapacity = userPropUpdater( 'capacity' );
 const setLoad = userPropUpdater( 'load' );
 const getLoad = ( user, state ) => get( state, `${user.id}.load`, 0 )
 
-const updateAvailability = ( opsStatuses, state ) => {
+const setOpAvailability = ( opsStatuses, state ) => {
 	return opsStatuses.reduce( ( collection, { id, load, capacity } ) => {
 		if ( !id ) {
 			return collection;
@@ -117,7 +117,7 @@ const identities = ( state = {}, action ) => {
 		case REMOVE_USER:
 			return omit( state, user.id )
 		case UPDATE_AVAILABILITY:
-			return updateAvailability( action.availability, state );
+			return setOpAvailability( action.availability, state );
 		case INCREMENT_USER_LOAD:
 			const incrementedLoad = getLoad( user, state ) + 1;
 			return setLoad( { user, load: incrementedLoad }, state );
