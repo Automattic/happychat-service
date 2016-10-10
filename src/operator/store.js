@@ -1,6 +1,7 @@
 import assign from 'lodash/assign'
 import set from 'lodash/set'
 import get from 'lodash/get'
+import defaults from 'lodash/defaults'
 import concat from 'lodash/concat'
 import values from 'lodash/values'
 import reject from 'lodash/reject'
@@ -22,7 +23,9 @@ const UPDATE_IDENTITY = 'UPDATE_IDENTITY'
 const REMOVE_USER = 'REMOVE_USER'
 const REMOVE_USER_SOCKET = 'REMOVE_USER_SOCKET'
 const UPDATE_USER_STATUS = 'UPDATE_USER_STATUS'
-const UPDATE_USER_CAPACITY = 'UPDATE_USER_CAPACITY'
+const UPDATE_USER_CAPACITY = 'UPDATE_USER_CAPACITY';
+const INCREMENT_USER_LOAD = 'INCREMENT_USER_LOAD';
+const DECREMENT_USER_LOAD = 'DECREMENT_USER_LOAD';
 const UPDATE_AVAILABILITY = 'UPDATE_AVAILABILITY';
 
 // Actions
@@ -46,13 +49,20 @@ export const updateCapacity = ( user, capacity ) => {
 	return { user, capacity, type: UPDATE_USER_CAPACITY }
 }
 
+export const incrementLoad = ( user ) => {
+	return { user, type: INCREMENT_USER_LOAD }
+}
+
+export const decrementLoad = ( user ) => {
+	return { user, type: DECREMENT_USER_LOAD }
+}
+
 export const updateAvailability = ( availability ) => {
 	return {
 		type: UPDATE_AVAILABILITY,
 		availability
 	}
 }
-
 
 // Reducers
 const user_sockets = ( state = {}, action ) => {
@@ -81,13 +91,15 @@ const userPropUpdater = prop => ( action, state ) => {
 }
 const setStatus = userPropUpdater( 'status' );
 const setCapacity = userPropUpdater( 'capacity' );
+const setLoad = userPropUpdater( 'load' );
+const getLoad = ( user, state ) => get( state, `${user.id}.load`, 0 )
 
-const updateLoad = ( availability, state ) => {
-	return availability.reduce( ( collection, { id, load } ) => {
+const updateAvailability = ( opsStatuses, state ) => {
+	return opsStatuses.reduce( ( collection, { id, load, capacity } ) => {
 		if ( !id ) {
 			return collection;
 		}
-		const updatedUser = assign( {}, get( state, id ), { load } )
+		const updatedUser = assign( {}, get( state, id ), { load, capacity } )
 		return assign( {}, collection, set( {}, id, updatedUser ) )
 	}, state );
 }
@@ -96,7 +108,8 @@ const identities = ( state = {}, action ) => {
 	const { user } = action
 	switch ( action.type ) {
 		case UPDATE_IDENTITY:
-			return assign( {}, state, set( {}, user.id, user ) )
+			const userWithDefaults = defaults( user, { load: 0, capacity: 0 } );
+			return assign( {}, state, set( {}, user.id, userWithDefaults ) );
 		case UPDATE_USER_STATUS:
 			return setStatus( action, state );
 		case UPDATE_USER_CAPACITY:
@@ -104,7 +117,13 @@ const identities = ( state = {}, action ) => {
 		case REMOVE_USER:
 			return omit( state, user.id )
 		case UPDATE_AVAILABILITY:
-			return updateLoad( action.availability, state );
+			return updateAvailability( action.availability, state );
+		case INCREMENT_USER_LOAD:
+			const incrementedLoad = getLoad( user, state ) + 1;
+			return setLoad( { user, load: incrementedLoad }, state );
+		case DECREMENT_USER_LOAD:
+			const decrementCurrentLoad = getLoad( user, state ) - 1;
+			return setLoad( { user, load: decrementCurrentLoad }, state );
 		default:
 			return state
 	}

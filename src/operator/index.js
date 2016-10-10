@@ -19,7 +19,9 @@ import {
 	selectUser,
 	updateUserStatus,
 	updateCapacity,
-	updateAvailability
+	updateAvailability,
+	incrementLoad,
+	decrementLoad
 } from './store'
 import { createStore } from 'redux'
 
@@ -378,18 +380,18 @@ export default io => {
 
 	events.on( 'close', ( chat, room, operator ) => {
 		io.in( room ).emit( 'chat.close', chat, operator )
-		allClients( io )
-		.then( clients => queryAvailability( chat, clients, io ) )
-		.then( cacheAvailability( store ) )
+		store.dispatch( decrementLoad( operator ) )
+	} )
+
+	events.on( 'join', ( chat, operator, socket ) => {
+		store.dispatch( incrementLoad( operator ) )
 	} )
 
 	events.on( 'leave', ( chat, room, operator ) => {
 		leaveChat( { io, operator, chat, room, events } )
-		allClients( io )
-		.then( clients => queryAvailability( chat, clients, io ) )
-		.then( cacheAvailability( store ) )
 	} )
 
+	// Assigning a new chat to an available operator
 	events.on( 'assign', ( chat, room, callback ) => {
 		// find an operator
 		debug( 'find an operator for', chat.id )
