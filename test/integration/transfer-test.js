@@ -9,8 +9,8 @@ const debug = require( 'debug' )( 'happychat:test:transfer' )
 
 describe( 'Operator Transfer', () => {
 	const operators = [
-		{ id: 'a', capacity: 2 },
-		{ id: 'b', capacity: 1 }
+		{ id: 'a', capacity: 2, load: 0 },
+		{ id: 'b', capacity: 1, load: 0 }
 	]
 	const customer = { id: 'customer-id', username: 'customer', session_id: 'customer-session' }
 
