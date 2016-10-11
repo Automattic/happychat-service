@@ -1,7 +1,9 @@
-import { equal, deepEqual } from 'assert'
+import { deepEqual } from 'assert'
 import util, { authenticators } from './util'
 import { NO_OPS_AVAILABLE_MSG } from 'controller'
-import { map, reduce } from 'lodash/collection'
+import map from 'lodash/map'
+import reduce from 'lodash/reduce'
+import assign from 'lodash/assign'
 
 const debug = require( 'debug' )( 'happychat:test:chat-logs' )
 
@@ -58,12 +60,18 @@ describe( 'Chat logs', () => {
 		resolve( client )
 	} )
 
-	const wait = ( ms ) => ( thing ) => new Promise( ( resolve, reject ) => {
+	const wait = ( ms ) => thing => new Promise( resolve => {
 		setTimeout( () => resolve( thing ), ms )
 	} )
 
 	beforeEach( () => {
 		service = util( authenticators( { id: 'customer-a', session_id: '12345' }, { id: 'operator-1' }, {} ) )
+		service.service.controller.middleware( ( { destination, message } ) => {
+			if ( destination === 'customer' ) {
+				return assign( {}, message, { text: 'test: ' + message.text } )
+			}
+			return message
+		} )
 		return service.start()
 	} )
 	afterEach( () => service.stop() )
@@ -77,7 +85,10 @@ describe( 'Chat logs', () => {
 		.then( connect )
 		.then( listenForLog )
 		.then( ( [ log ] ) => {
-			deepEqual( map( log, ( { text } ) => text ), [ ...mockMessages, NO_OPS_AVAILABLE_MSG ] )
+			deepEqual(
+				map( log, ( { text } ) => text ),
+				map( [ ...mockMessages, NO_OPS_AVAILABLE_MSG ], m => 'test: ' + m )
+			)
 		} )
 	} )
 
@@ -90,7 +101,6 @@ describe( 'Chat logs', () => {
 		.then( setOperatorOnline )
 		.then( listenForLog )
 		.then( ( [ , messages ] ) => {
-			equal( messages.length, 4 )
 			deepEqual( map( messages, ( { text } ) => text ), [ ...mockMessages, NO_OPS_AVAILABLE_MSG ] )
 		} )
 	} )

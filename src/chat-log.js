@@ -11,7 +11,7 @@ export class ChatLog {
 
 	append( id, message ) {
 		return new Promise( ( resolve ) => {
-			set( this.chats, id, get( this.chats, id, []).concat( message ).slice( - this.maxMessages ) )
+			set( this.chats, id, get( this.chats, id, [] ).concat( message ).slice( - this.maxMessages ) )
 			resolve()
 		} )
 	}

@@ -31,13 +31,13 @@ const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
 	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
 }
 
-export const NO_OPS_AVAILABLE_MSG = "No agents are currently available to chat, please try again later.";
+export const NO_OPS_AVAILABLE_MSG = 'No agents are currently available to chat, please try again later.';
 
 export default ( { customers, agents, operators } ) => {
 	const middlewares = []
 	const toAgents = forward( agents )
 	const chats = new ChatList( { customers, operators } )
-	const log = new ChatLog()
+	const log = { operator: new ChatLog(), customer: new ChatLog() }
 
 	const runMiddleware = ( { origin, destination, chat, user, message } ) => new Promise( ( resolveMiddleware ) => {
 		new Promise( middlewareComplete => {
@@ -82,7 +82,6 @@ export default ( { customers, agents, operators } ) => {
 	chats
 	.on( 'miss', ( e, chat ) => {
 		debug( 'failed to find operator', e, chat, e.stack )
-		const meta = {}
 		const { id: chat_id } = chat;
 		const user = {
 			id: -1,
@@ -111,13 +110,13 @@ export default ( { customers, agents, operators } ) => {
 
 	customers.on( 'join', ( socketIdentifier, user, socket ) => {
 		debug( 'emitting chat log' )
-		log.findLog( user.id )
+		log.customer.findLog( user.id )
 		.then( ( messages ) => socket.emit( 'log', messages ) )
 	} )
 
 	operators.on( 'join', ( chat, operator, socket ) => {
 		debug( 'emitting chat log to operator', operator.id )
-		log.findLog( chat.id )
+		log.operator.findLog( chat.id )
 		.then( ( messages ) => {
 			socket.emit( 'log', chat, messages )
 		} )
@@ -134,57 +133,72 @@ export default ( { customers, agents, operators } ) => {
 
 	customers.on( 'message', ( chat, message ) => {
 		// broadcast the message to
-		debug( 'customer message', chat.id, message.id )
-		log.recordCustomerMessage( chat, message )
-		.then( () => {
-			const origin = 'customer'
-			runMiddleware( { origin, destination: 'customer', chat, message } )
-			.then( m => customers.emit( 'receive', chat, m ) )
-			.catch( () => debug( 'what the hell? ' ) )
+		debug( 'customer message', chat.id, message.id, message )
+		const origin = 'customer'
+		runMiddleware( { origin, destination: 'customer', chat, message } )
+		.then( m => new Promise( ( resolve, reject ) => {
+			log.customer.recordCustomerMessage( chat, m )
+			.then( () => resolve( m ), reject )
+		} ) )
+		.then( m => customers.emit( 'receive', chat, m ) )
+		.catch( e => debug( 'middleware failed ', e ) )
 
-			runMiddleware( { origin, destination: 'agent', chat, message } )
-			.then( m => agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, m ) ) )
-			.catch( () => debug( 'what the hell? ' ) )
+		runMiddleware( { origin, destination: 'agent', chat, message } )
+		.then( m => agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, m ) ) )
+		.catch( e => debug( 'middleware failed', e ) )
 
-			runMiddleware( { origin, destination: 'operator', chat, message } )
-			.then( m => operators.emit( 'receive', chat, m ) )
-			.catch( () => debug( 'what the hell? ' ) )
-		} )
+		runMiddleware( { origin, destination: 'operator', chat, message } )
+		.then( m => new Promise( ( resolve, reject ) => {
+			log.operator.recordCustomerMessage( chat, m )
+			.then( () => resolve( m ), reject )
+		} ) )
+		.then( m => operators.emit( 'receive', chat, m ) )
+		.catch( e => debug( 'middleware failed', e ) )
 	} )
 
 	operators.on( 'message', ( chat, operator, message ) => {
 		debug( 'operator message', chat, message )
-		log.recordOperatorMessage( chat, operator, message )
-		.then( () => {
-			const origin = 'operator'
+		const origin = 'operator'
 
-			runMiddleware( { origin, destination: 'agent', chat, message, user: operator } )
-			.then( m => agents.emit( 'receive', formatAgentMessage( 'operator', message.user.id, chat.id, m ) ) )
+		runMiddleware( { origin, destination: 'agent', chat, message, user: operator } )
+		.then( m => agents.emit( 'receive', formatAgentMessage( 'operator', message.user.id, chat.id, m ) ) )
 
-			runMiddleware( { origin, destination: 'operator', chat, message, user: operator } )
-			.then( m => operators.emit( 'receive', chat, m ) )
+		runMiddleware( { origin, destination: 'operator', chat, message, user: operator } )
+		.then( m => new Promise( ( resolve, reject ) => {
+			log.operator.recordOperatorMessage( chat, operator, m )
+			.then( () => resolve( m ), reject )
+		} ) )
+		.then( m => operators.emit( 'receive', chat, m ) )
 
-			runMiddleware( { origin, destination: 'customer', chat, message, user: operator } )
-			.then( m => customers.emit( 'receive', chat, m ) )
-		} )
+		runMiddleware( { origin, destination: 'customer', chat, message, user: operator } )
+		.then( m => new Promise( ( resolve, reject ) => {
+			log.customer.recordOperatorMessage( chat, operator, m )
+			.then( () => resolve( m ), reject )
+		} ) )
+		.then( m => customers.emit( 'receive', chat, m ) )
 	} )
 
 	agents.on( 'message', ( message ) => {
 		const chat = { id: message.session_id }
 		const format = ( m ) => assign( {}, { author_type: 'agent' }, m )
-		log.recordAgentMessage( chat, message )
-		.then( () => {
-			const origin = 'agent'
+		const origin = 'agent'
 
-			runMiddleware( { origin, destination: 'agent', chat, message } )
-			.then( m => agents.emit( 'receive', assign( {}, { author_type: 'agent' }, m ) ) )
+		runMiddleware( { origin, destination: 'agent', chat, message } )
+		.then( m => agents.emit( 'receive', assign( {}, { author_type: 'agent' }, m ) ) )
 
-			runMiddleware( { origin, destination: 'operator', chat, message } )
-			.then( m => operators.emit( 'receive', chat, format( m ) ) )
+		runMiddleware( { origin, destination: 'operator', chat, message } )
+		.then( m => new Promise( ( resolve, reject ) => {
+			log.operator.recordAgentMessage( chat, m )
+			.then( () => resolve( m ), reject )
+		} ) )
+		.then( m => operators.emit( 'receive', chat, format( m ) ) )
 
-			runMiddleware( { origin, destination: 'customer', chat, message } )
-			.then( m => customers.emit( 'receive', chat, format( m ) ) )
-		} )
+		runMiddleware( { origin, destination: 'customer', chat, message } )
+		.then( m => new Promise( ( resolve, reject ) => {
+			log.customer.recordAgentMessage( chat, message )
+			.then( () => resolve( m ), reject )
+		} ) )
+		.then( m => customers.emit( 'receive', chat, format( m ) ) )
 	} )
 
 	const external = {
