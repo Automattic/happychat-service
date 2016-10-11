@@ -46,8 +46,8 @@ export const startClients = ( port ) => new Promise( ( resolve, reject ) => {
 
 const main = ( authenticators, port = 65115 ) => {
 	let server = createServer()
-	service( server, authenticators )
 	return {
+		service: service( server, authenticators ),
 		start: () => startServer( server, port ),
 		stop: () => stopServer( server ),
 		startClients: () => startClients( port ),
