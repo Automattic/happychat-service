@@ -69,9 +69,9 @@ describe( 'Operators', () => {
 		} )
 
 		it( 'should handle `chat.typing` from client and pass to events', ( done ) => {
-			operators.on( 'typing', ( chat, user, text ) => {
+			operators.on( 'typing', ( chat, typingUser, text ) => {
 				equal( chat.id, 'chat-id' )
-				equal( user.id, op.id )
+				equal( typingUser.id, op.id )
 				equal( text, 'typing a message...' )
 				done()
 			} )
