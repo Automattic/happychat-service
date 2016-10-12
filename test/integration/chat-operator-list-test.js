@@ -11,9 +11,9 @@ const prop = ( name, fallback = undefined ) => ( obj ) => get( obj, name, fallba
 const noop = () => {}
 describe( 'Operators in chat', () => {
 	let operators = [
-		{ id: 'operator-1' },
-		{ id: 'operator-2' },
-		{ id: 'operator-3' }
+		{ id: 'operator-1', capacity: 5 },
+		{ id: 'operator-2', capacity: 4 },
+		{ id: 'operator-3', capacity: 3 }
 	]
 
 	var operatorClients;
@@ -46,7 +46,7 @@ describe( 'Operators in chat', () => {
 			.then( ( client ) => {
 				client.on( 'identify', ( identify ) => identify( operator ) )
 				client.on( 'available', ( chat, available ) => {
-					available( { capacity: 1, load: 0 } )
+					available( { capacity: operator.capacity, load: 0 } )
 				} )
 				callback( null, client )
 			} )

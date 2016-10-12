@@ -3,7 +3,9 @@ import operator from 'operator'
 import mockio from '../mock-io'
 import { tick } from '../tick'
 import { parallel } from 'async'
-import { map, includes } from 'lodash/collection'
+import map from 'lodash/map'
+import includes from 'lodash/includes'
+import reduce from 'lodash/reduce'
 
 const debug = require( 'debug' )( 'happychat:test:operators' )
 
@@ -67,9 +69,9 @@ describe( 'Operators', () => {
 		} )
 
 		it( 'should handle `chat.typing` from client and pass to events', ( done ) => {
-			operators.on( 'typing', ( chat, user, text ) => {
+			operators.on( 'typing', ( chat, typingUser, text ) => {
 				equal( chat.id, 'chat-id' )
-				equal( user.id, op.id )
+				equal( typingUser.id, op.id )
 				equal( text, 'typing a message...' )
 				done()
 			} )
@@ -275,5 +277,88 @@ describe( 'Operators', () => {
 				equal( messages.length, 2 )
 			} )
 		} )
+	} )
+
+	describe( 'with multiple operators', () => {
+		let ops = [
+			{ id: 'hermione', displayName: 'Hermione', avatarURL: 'url', status: 'online', capacity: 4, load: 1 },
+			{ id: 'ripley', displayName: 'Ripley', avatarURL: 'url', status: 'online', capacity: 1, load: 1 },
+			{ id: 'nausica', displayName: 'Nausica', avatarURL: 'url', status: 'online', capacity: 1, load: 0 },
+			{ id: 'furiosa', displayName: 'Furiosa', avatarURL: 'url', status: 'online', capacity: 5, load: 0 },
+			{ id: 'river', displayName: 'River Tam', capacity: 6, load: 3 }
+		]
+		let clients
+
+		const assign = ( chat_id ) => new Promise( ( resolve, reject ) => operators.emit(
+			'assign',
+			{ id: chat_id },
+			`customer/${chat_id}`,
+			( error, assigned ) => {
+				if ( error ) {
+					return reject( error )
+				}
+				resolve( assigned )
+			}
+		) )
+
+		beforeEach( () => {
+			clients = []
+			return reduce( ops, ( promise, op ) => promise.then( () => new Promise( resolve => {
+				let io = server.newClient( op.id )
+				let record = { socket: io.socket, client: io.client, operator: op, load: op.load, capacity: op.capacity }
+				clients.push( record )
+				io.client.once( 'identify', identify => identify( op ) )
+				io.client.once( 'init', () => io.client.emit( 'status', 'online', () => resolve() ) )
+				io.client.on( 'available', ( chat, callback ) => {
+					callback( { load: record.load, capacity: record.capacity, id: op.id } )
+				} )
+				io.client.on( 'chat.open', () => {
+					record.load += 1
+				} )
+				operators.once( 'connection', ( _, callback ) => callback( null, op ) )
+				server.connect( io.socket )
+			} ), e => debug( 'failed', e ) ), Promise.resolve() )
+		} )
+
+		const collectPromises = ( ... promises ) => new Promise( ( resolve, reject ) => {
+			let results = []
+			reduce( promises, ( promise, nextPromise ) => {
+				return promise.then( result => {
+					if ( result !== undefined ) {
+						results.push( result )
+					}
+					return nextPromise()
+				} )
+			}, Promise.resolve() )
+			.then( result => {
+				resolve( results.concat( [ result ] ) )
+			}, reject );
+		} )
+
+		const assignChats = ( total = 10 ) => {
+			let promises = []
+			for ( let i = 0; i < total; i++ ) {
+				promises.push( () => assign( 'chat-' + i ) )
+			}
+			return collectPromises( ... promises )
+		}
+
+		it( 'should assign operators in correct order', () => assignChats( 9 ).then( results => {
+			deepEqual(
+				map( results, ( { id } ) => id ),
+				[
+					'furiosa',  // 0/5 => 1/5
+					'nausica',  // 0/1 => 1/1
+					'furiosa',  // 1/5 => 2/5
+					'hermione', // 1/4 => 2/4
+					'furiosa',  // 2/5 => 3/5
+					'river',    // 3/6 => 4/6
+					'hermione',  // 2/4 => 3/4
+					'furiosa', // 3/5 => 4/5
+					'river',    // 4/6 => 5/6
+				]
+			)
+		} )
+		)
 	} )
 } )
