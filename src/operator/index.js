@@ -82,7 +82,7 @@ const pickAvailable = ( selectIdentity ) => ( availability ) => new Promise( ( r
 	.sort( ( a, b ) => {
 		const a_weight = ( a.capacity - a.load ) / a.capacity
 		const b_weight = ( b.capacity - b.load ) / b.capacity
-		if ( a_weight === b_weight ) return 0
+		if ( a_weight === b_weight ) return a.capacity > b.capacity ? -1 : 1
 		return ( a_weight > b_weight ? -1 : 1 )
 	} )
 
