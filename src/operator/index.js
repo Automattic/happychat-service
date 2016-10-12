@@ -249,6 +249,7 @@ const openChatForClients = ( { io, events, operator, room, chat } ) => ( clients
 		}
 		debug( 'Assigning chat: (chat.open)', chat, operator_room_name )
 		io.in( operator_room_name ).emit( 'chat.open', chat )
+		events.emit( 'join.success', operator );
 		resolve( clients )
 	} )
 } )
@@ -383,7 +384,7 @@ export default io => {
 		store.dispatch( decrementLoad( operator ) )
 	} )
 
-	events.on( 'join', ( chat, operator, socket ) => {
+	events.on( 'join.success', ( operator ) => {
 		store.dispatch( incrementLoad( operator ) )
 	} )
 
