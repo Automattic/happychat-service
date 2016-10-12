@@ -76,7 +76,7 @@ export class ChatList extends EventEmitter {
 		} )
 
 		operators.on( 'chat.join', ( chat_id, operator ) => {
-			debug( 'find chat', chat_id )
+			debug( 'operator joining chat', chat_id, operator )
 			this.findChatById( chat_id )
 			.then( ( chat ) => {
 				const room_name = `customers/${ chat.id }`
@@ -286,7 +286,7 @@ export class ChatList extends EventEmitter {
 	}
 
 	insertPendingChat( channelIdentity ) {
-		debug( 'insertPendingChat',channelIdentity );
+		debug( 'insertPendingChat', channelIdentity );
 		const [ status ] = get( this._chats, channelIdentity.id, [] );
 		if ( !status ) {
 			this._chats = set( this._chats, channelIdentity.id, [ STATUS_PENDING, channelIdentity ] )
