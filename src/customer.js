@@ -9,6 +9,20 @@ const identityForUser = ( { id, name, username, picture } ) => ( { id, name, use
 const customerRoom = ( { session_id } ) => `session/${ session_id }`
 const chatRoom = ( { id } ) => `session/${ id }`
 
+const whenNoClients = ( io, room ) => new Promise( ( resolve, reject ) => {
+	io.in( room ).clients( ( error, clients ) => {
+		if ( error ) {
+			return reject( error )
+		}
+
+		if ( clients.length > 0 ) {
+			return reject( new Error( 'Have other connected clients' ) )
+		}
+
+		resolve()
+	} )
+} )
+
 /**
   - `user`: (**required**) a JSON key/value object containing:
     - `id`: (**required**) the unique identifier for this user in the *Support Provider*'s system
@@ -45,20 +59,12 @@ const init = ( { user, socket, events, io } ) => () => {
 	socket.on( 'disconnect', () => {
 		debug( 'socket.on.disconnect', user.id, socketIdentifier );
 
-		events.emit( 'disconnect-socket', { user, chat, socket } )
+		events.emit( 'disconnect-socket', { socketIdentifier, user, chat, socket } )
 
-		io.in( chatRoom( chat ) ).clients( ( error, clients ) => {
-			if ( error ) {
-				debug( 'failed to query customer clients', chat, error )
-				return;
-			}
-
-			if ( clients.length > 0 ) {
-				return;
-			}
-
-			events.emit( 'disconnect', chat, user )
-		} )
+		whenNoClients( io, chatRoom( chat ) )
+			.then( () => {
+				events.emit( 'disconnect', chat, user )
+			} )
 	} )
 
 	socket.emit( 'init', user )
