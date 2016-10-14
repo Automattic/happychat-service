@@ -28,14 +28,13 @@ describe( 'Controller', () => {
 		} )
 
 		it( 'notifies agent when user disconnects', ( done ) => {
-			agents.on( 'customer.leave', ( { id, socketId }, { id: user_id, displayName } ) => {
-				equal( id, 'user-id' )
-				equal( socketId, 'user-id' )
+			agents.on( 'customer.disconnect', ( { id: chat_id }, { id: user_id, displayName } ) => {
+				equal( chat_id, 'chat-id' )
 				equal( user_id, 'user-id' )
 				equal( displayName, 'Furiosa' )
 				done()
 			} )
-			customers.emit( 'leave', socketIdentifier, mockUser )
+			customers.emit( 'disconnect', { id: 'chat-id' }, mockUser )
 		} )
 	} )
 
