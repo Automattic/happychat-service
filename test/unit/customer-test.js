@@ -154,13 +154,13 @@ describe( 'Customer Service', () => {
 
 	describe( 'with multiple connections', () => {
 		let events, connection2;
-		beforeEach( () => {
-			events = auth()
-			connection2 = server.connectNewClient( 'socket-id2' )
+		beforeEach( ( next ) => {
+			events = auth( () => {
+				connection2 = server.connectNewClient( undefined, () => next() )
+			} )
 		} )
 
 		it( 'should not fire disconnect until all clients leave', ( done ) => {
-			const { socket: socket2, client: client2 } = connection2
 			events.once( 'disconnect', () => {
 				server.in( `session/${ mockUser.session_id }` ).clients( ( e, clients ) => {
 					equal( clients.length, 0 )
@@ -171,8 +171,9 @@ describe( 'Customer Service', () => {
 			events.once( 'join', () => {
 				server.in( `session/${ mockUser.session_id }` ).clients( ( e, clients ) => {
 					equal( clients.length, 2 )
+
 					server.disconnect( { client, socket } )
-					server.disconnect( { client: client2, socket: socket2 } )
+					server.disconnect( { client: connection2.client, socket: connection2.socket } )
 				} )
 			} )
 		} )
