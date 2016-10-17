@@ -113,11 +113,12 @@ describe( 'Operators', () => {
 
 				client.on( 'available', ( chat, callback ) => {
 					equal( chat.id, 'chat-id' )
-					callback( { load: 5, capacity: 6, id: user.id } )
+					callback( { load: 0, capacity: 6, id: user.id } )
 				} )
 				clientb.on( 'available', ( chat, callback ) => {
-					callback( { load: 5, capacity: 5, id: userb.id } )
+					callback( { load: 0, capacity: 5, id: userb.id } )
 				} )
+
 				operators.emit( 'assign', { id: 'chat-id' }, 'customer/room-name', tick( ( error, assigned ) => {
 					ok( ! error )
 					ok( a_open )
@@ -148,7 +149,7 @@ describe( 'Operators', () => {
 			} )
 
 			it( 'should emit transfer request', () => {
-				const userb = { id: 'a-user', displayName: 'Jem', status: 'online' }
+				const userb = { id: 'a-user', displayName: 'Jem', status: 'online', load: 2, capacity: 4 }
 				const connectionb = server.newClient()
 				return connectOperator( connectionb, userb )
 				.then( () => new Promise( resolve => {
@@ -161,6 +162,14 @@ describe( 'Operators', () => {
 					client.emit( 'chat.transfer', chat.id, userb.id )
 				} ) )
 			} )
+
+			it( 'should increment the operator load', ( done ) => {
+				server.once( 'operators.online', tick( ( identities ) => {
+					const expectedLoad = op.load + 1;
+					equal( expectedLoad, identities[0].load );
+					done();
+				} ) )
+			} );
 
 			describe( 'with multiple operators', () => {
 				const users = [
