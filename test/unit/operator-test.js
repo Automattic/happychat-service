@@ -30,7 +30,7 @@ describe( 'Operators', () => {
 	} )
 
 	describe( 'when authenticated and online', () => {
-		let op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var', status: 'online' }
+		let op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var', status: 'online', load: 1, capacity: 3 }
 		beforeEach( ( done ) => {
 			connectOperator( { socket, client }, op )
 			.then( ( { user: operatorUser } ) => {
@@ -188,12 +188,14 @@ describe( 'Operators', () => {
 		} )
 
 		it( 'should notify with updated operator list when operator joins', ( done ) => {
-			const userb = { id: 'a-user', displayName: 'Jem', status: 'online' }
-			const userc = { id: 'abcdefg', displayName: 'other', status: 'away' }
+			const userb = { id: 'a-user', displayName: 'Jem', status: 'online', load: 1, capacity: 2 }
+			const userc = { id: 'abcdefg', displayName: 'other', status: 'away', load: 3, capacity: 5 }
 			server.on( 'operators.online', tick( ( identities ) => {
 				equal( identities.length, 3 )
 				deepEqual( map( identities, ( { displayName } ) => displayName ), [ 'furiosa', 'Jem', 'other' ] )
 				deepEqual( map( identities, ( { status } ) => status ), [ 'online', 'online', 'away' ] )
+				deepEqual( map( identities, ( { load } ) => load ), [ 1, 1, 3 ] );
+				deepEqual( map( identities, ( { capacity } ) => capacity ), [ 3, 2, 5 ] );
 				done()
 			} ) )
 
