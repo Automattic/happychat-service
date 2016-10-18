@@ -30,7 +30,7 @@ describe( 'Operators', () => {
 	} )
 
 	describe( 'when authenticated and online', () => {
-		let op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var', status: 'online' }
+		let op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var', status: 'online', load: 1, capacity: 3 }
 		beforeEach( ( done ) => {
 			connectOperator( { socket, client }, op )
 			.then( ( { user: operatorUser } ) => {
@@ -113,11 +113,12 @@ describe( 'Operators', () => {
 
 				client.on( 'available', ( chat, callback ) => {
 					equal( chat.id, 'chat-id' )
-					callback( { load: 5, capacity: 6, id: user.id } )
+					callback( { load: 0, capacity: 6, id: user.id } )
 				} )
 				clientb.on( 'available', ( chat, callback ) => {
-					callback( { load: 5, capacity: 5, id: userb.id } )
+					callback( { load: 0, capacity: 5, id: userb.id } )
 				} )
+
 				operators.emit( 'assign', { id: 'chat-id' }, 'customer/room-name', tick( ( error, assigned ) => {
 					ok( ! error )
 					ok( a_open )
@@ -148,7 +149,7 @@ describe( 'Operators', () => {
 			} )
 
 			it( 'should emit transfer request', () => {
-				const userb = { id: 'a-user', displayName: 'Jem', status: 'online' }
+				const userb = { id: 'a-user', displayName: 'Jem', status: 'online', load: 2, capacity: 4 }
 				const connectionb = server.newClient()
 				return connectOperator( connectionb, userb )
 				.then( () => new Promise( resolve => {
@@ -161,6 +162,14 @@ describe( 'Operators', () => {
 					client.emit( 'chat.transfer', chat.id, userb.id )
 				} ) )
 			} )
+
+			it( 'should increment the operator load', ( done ) => {
+				server.once( 'operators.online', tick( ( identities ) => {
+					const expectedLoad = op.load + 1;
+					equal( expectedLoad, identities[0].load );
+					done();
+				} ) )
+			} );
 
 			describe( 'with multiple operators', () => {
 				const users = [
@@ -188,12 +197,14 @@ describe( 'Operators', () => {
 		} )
 
 		it( 'should notify with updated operator list when operator joins', ( done ) => {
-			const userb = { id: 'a-user', displayName: 'Jem', status: 'online' }
-			const userc = { id: 'abcdefg', displayName: 'other', status: 'away' }
+			const userb = { id: 'a-user', displayName: 'Jem', status: 'online', load: 1, capacity: 2 }
+			const userc = { id: 'abcdefg', displayName: 'other', status: 'away', load: 3, capacity: 5 }
 			server.on( 'operators.online', tick( ( identities ) => {
 				equal( identities.length, 3 )
 				deepEqual( map( identities, ( { displayName } ) => displayName ), [ 'furiosa', 'Jem', 'other' ] )
 				deepEqual( map( identities, ( { status } ) => status ), [ 'online', 'online', 'away' ] )
+				deepEqual( map( identities, ( { load } ) => load ), [ 1, 1, 3 ] );
+				deepEqual( map( identities, ( { capacity } ) => capacity ), [ 3, 2, 5 ] );
 				done()
 			} ) )
 

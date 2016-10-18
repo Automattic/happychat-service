@@ -8,6 +8,7 @@ import values from 'lodash/values'
 import throttle from 'lodash/throttle'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
+
 import {
 	default as reducer,
 	updateIdentity,
@@ -16,7 +17,11 @@ import {
 	selectIdentities,
 	selectSocketIdentity,
 	selectUser,
-	updateUserStatus
+	updateUserStatus,
+	updateCapacity,
+	updateAvailability,
+	incrementLoad,
+	decrementLoad
 } from './store'
 import { createStore } from 'redux'
 
@@ -75,6 +80,11 @@ const queryAvailability = ( chat, clients, io ) => new Promise( ( resolve, rejec
 		resolve( results )
 	} )
 } )
+
+const cacheAvailability = ( store ) => ( availability ) => {
+	store.dispatch( updateAvailability( availability ) )
+	return availability;
+}
 
 const pickAvailable = ( selectIdentity ) => ( availability ) => new Promise( ( resolve, reject ) => {
 	const [ operator ] = availability
@@ -153,6 +163,11 @@ const join = ( { socket, events, user, io, selectIdentity } ) => {
 		} else {
 			socket.leave( 'online', updateStatus )
 		}
+	} )
+
+	socket.on( 'capacity', ( capacity, done ) => {
+		events.emit( 'capacity', user, capacity );
+		done( capacity );
 	} )
 
 	socket.on( 'disconnect', () => {
@@ -234,6 +249,7 @@ const openChatForClients = ( { io, events, operator, room, chat } ) => ( clients
 		}
 		debug( 'Assigning chat: (chat.open)', chat, operator_room_name )
 		io.in( operator_room_name ).emit( 'chat.open', chat )
+		events.emit( 'join.success', operator );
 		resolve( clients )
 	} )
 } )
@@ -308,6 +324,10 @@ export default io => {
 		store.dispatch( updateUserStatus( user, status ) )
 	} )
 
+	events.on( 'capacity', ( user, capacity ) => {
+		store.dispatch( updateCapacity( user, capacity ) )
+	} )
+
 	events.on( 'transfer', ( chat, operator, complete ) => {
 		const user = selectUser( store.getState(), operator.id )
 		const room = `customers/${ chat.id }`
@@ -361,17 +381,24 @@ export default io => {
 
 	events.on( 'close', ( chat, room, operator ) => {
 		io.in( room ).emit( 'chat.close', chat, operator )
+		store.dispatch( decrementLoad( operator ) )
+	} )
+
+	events.on( 'join.success', ( operator ) => {
+		store.dispatch( incrementLoad( operator ) )
 	} )
 
 	events.on( 'leave', ( chat, room, operator ) => {
 		leaveChat( { io, operator, chat, room, events } )
 	} )
 
+	// Assigning a new chat to an available operator
 	events.on( 'assign', ( chat, room, callback ) => {
 		// find an operator
 		debug( 'find an operator for', chat.id )
 		allClients( io )
 		.then( clients => queryAvailability( chat, clients, io ) )
+		.then( cacheAvailability( store ) )
 		.then( pickAvailable( socket => selectSocketIdentity( store.getState(), socket ) ) )
 		.then( operator => assignChat( { io, operator, chat, room, events } ) )
 		.then( operator => callback( null, operator ) )
