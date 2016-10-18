@@ -113,10 +113,10 @@ describe( 'Operators', () => {
 
 				client.on( 'available', ( chat, callback ) => {
 					equal( chat.id, 'chat-id' )
-					callback( { load: 0, status: 'available',capacity: 6, id: user.id } )
+					callback( { load: 0, status: 'available', capacity: 6, id: user.id } )
 				} )
 				clientb.on( 'available', ( chat, callback ) => {
-					callback( { load: 0, status: 'available',capacity: 5, id: userb.id } )
+					callback( { load: 0, status: 'available', capacity: 5, id: userb.id } )
 				} )
 
 				operators.emit( 'assign', { id: 'chat-id' }, 'customer/room-name', tick( ( error, assigned ) => {
