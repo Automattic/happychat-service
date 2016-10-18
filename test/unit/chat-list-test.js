@@ -98,14 +98,14 @@ describe( 'ChatList', () => {
 	it( 'should ask operators for status when customer joins', ( done ) => {
 		const socket = new EventEmitter();
 
-		operators.on( 'status', tick( ( chat, callback ) => {
+		operators.on( 'accept', tick( ( chat, callback ) => {
 			equal( chat.id, 'session-id' )
 			equal( typeof callback, 'function' )
 			// report that there is capacity
 			callback( null, true )
 		} ) )
 
-		customers.on( 'status', tick( ( chat, status ) => {
+		customers.on( 'accept', tick( ( chat, status ) => {
 			equal( chat.id, 'session-id' )
 			ok( status )
 			done()
@@ -115,11 +115,11 @@ describe( 'ChatList', () => {
 	} )
 
 	it( 'should fail status check if callback throws an error', done => {
-		operators.on( 'status', () => {
+		operators.on( 'accept', () => {
 			throw new Error( 'oops' )
 		} )
 
-		customers.on( 'status', tick( ( chat, status ) => {
+		customers.on( 'accept', tick( ( chat, status ) => {
 			equal( chat.id, 'session-id' )
 			ok( ! status )
 			done()
@@ -129,7 +129,7 @@ describe( 'ChatList', () => {
 	} )
 
 	it( 'should fail status check if callback times out', done => {
-		customers.on( 'status', tick( ( chat, status ) => {
+		customers.on( 'accept', tick( ( chat, status ) => {
 			equal( chat.id, 'session-id' )
 			ok( ! status )
 			done()

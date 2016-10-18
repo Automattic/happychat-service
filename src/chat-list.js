@@ -224,7 +224,7 @@ export class ChatList extends EventEmitter {
 
 	onCustomerJoin( socketIdentifier, chat ) {
 		// find the chat
-		const notifyStatus = status => this.customers.emit( 'status', chat, status )
+		const notifyStatus = status => this.customers.emit( 'accept', chat, status )
 		this.findChat( chat )
 		.then(
 			() => {
@@ -235,7 +235,7 @@ export class ChatList extends EventEmitter {
 			() => {
 				debug( 'no chat for', chat )
 				promiseTimeout( new Promise( ( resolve, reject ) => {
-					this.operators.emit( 'status', chat, asCallback( resolve, reject ) )
+					this.operators.emit( 'accept', chat, asCallback( resolve, reject ) )
 				} ), this._timeout )
 				.then(
 					status => notifyStatus( status ),
