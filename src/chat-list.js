@@ -26,7 +26,7 @@ const promiseTimeout = ( promise, ms = 1000 ) => new Promise( ( resolve, reject 
 		clear()
 		resolve( value )
 	}, ( error ) => {
-		clearTimeout( id )
+		clear()
 		reject( error );
 	} )
 } )
