@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events'
+import isEmpty from 'lodash/isEmpty'
 import { onConnection, timestamp } from './util'
 
 const debug = require( 'debug' )( 'happychat:customer' )
@@ -89,6 +90,10 @@ export default ( io ) => {
 		// customers shouldn't know who is typing or what they're typing
 		const isTyping = typeof text === 'string' && text.length > 0 ? true : false
 		io.to( chatRoom( chat ) ).emit( 'typing', isTyping )
+	} )
+
+	events.on( 'accept', ( chat, accepted ) => {
+		io.to( chatRoom( chat ) ).emit( 'accept', accepted )
 	} )
 
 	io.on( 'connection', ( socket ) => {

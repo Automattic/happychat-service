@@ -87,6 +87,15 @@ describe( 'Customer Service', () => {
 
 			customerEvents.emit( 'receive.typing', { id: mockUser.session_id }, mockUser, false )
 		} )
+
+		it( 'should handle accept event', done => {
+			client.once( 'accept', ( accepted ) => {
+				ok( !accepted )
+				done()
+			} )
+			customerEvents.emit( 'accept', { id: mockUser.session_id }, false )
+		})
+
 	} )
 
 	it( 'should allow connections', () => {
