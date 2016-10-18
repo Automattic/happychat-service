@@ -18,10 +18,10 @@ export const selectSocketIdentity = ( { sockets, identities }, socket ) => get(
 	get( sockets, socket.id )
 )
 export const selectUser = ( { identities }, userId ) => get( identities, userId )
-export const selectTotalCapacity = ( { identities } ) => reduce( identities,
-	( { load, capacity }, identity ) => ( {
-		load: load + identity.load,
-		capacity: capacity + identity.capacity
+export const selectTotalCapacity = ( { identities }, matchingStatus ) => reduce( identities,
+	( { load: totalLoad, capacity: totalCapacity }, { load, capacity, status } ) => ( {
+		load: totalLoad + ( status === matchingStatus ? load : 0 ),
+		capacity: totalCapacity + ( status === matchingStatus ? capacity : 0 )
 	} ),
 	{ load: 0, capacity: 0 }
 )

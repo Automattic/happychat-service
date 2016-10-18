@@ -416,7 +416,7 @@ export default io => {
 
 	// respond if operators are willing to handle new customer connection
 	events.on( 'accept', ( chat, callback ) => {
-		const { load, capacity } = 	selectTotalCapacity( store.getState() )
+		const { load, capacity } = selectTotalCapacity( store.getState(), STATUS_AVAILABLE )
 		callback( null, capacity > load )
 	} )
 
