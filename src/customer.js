@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events'
-import isEmpty from 'lodash/isEmpty'
 import { onConnection, timestamp } from './util'
 
 const debug = require( 'debug' )( 'happychat:customer' )
