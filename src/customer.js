@@ -6,6 +6,23 @@ const debug = require( 'debug' )( 'happychat:customer' )
 // limit the information for the user
 const identityForUser = ( { id, name, username, picture } ) => ( { id, name, username, picture } )
 
+const customerRoom = ( { session_id } ) => `session/${ session_id }`
+const chatRoom = ( { id } ) => `session/${ id }`
+
+const whenNoClients = ( io, room ) => new Promise( ( resolve, reject ) => {
+	io.in( room ).clients( ( error, clients ) => {
+		if ( error ) {
+			return reject( error )
+		}
+
+		if ( clients.length > 0 ) {
+			return reject( new Error( 'Have other connected clients' ) )
+		}
+
+		resolve()
+	} )
+} )
+
 /**
   - `user`: (**required**) a JSON key/value object containing:
     - `id`: (**required**) the unique identifier for this user in the *Support Provider*'s system
@@ -13,7 +30,7 @@ const identityForUser = ( { id, name, username, picture } ) => ( { id, name, use
     - `name`: (**required**) name to use in application UI
     - `picture`: (**required**) URL to image to display as user's avatar
     - `tags`: Array of strings to identify the user (example: `['premium', 'expired']`)
- */
+*/
 
 const init = ( { user, socket, events, io } ) => () => {
 	const socketIdentifier = { id: user.id, socket_id: socket.id, session_id: user.session_id }
@@ -36,17 +53,23 @@ const init = ( { user, socket, events, io } ) => () => {
 	} )
 
 	socket.on( 'typing', ( text ) => {
-		debug( 'received customer typing', user.id, text );
 		events.emit( 'typing', chat, user, text );
 	} )
 
-	socket.on( 'disconnect', () => events.emit( 'leave', socketIdentifier ) )
+	socket.on( 'disconnect', () => {
+		debug( 'socket.on.disconnect', user.id, socketIdentifier );
+
+		events.emit( 'disconnect-socket', { socketIdentifier, user, chat, socket } )
+
+		whenNoClients( io, chatRoom( chat ) )
+			.then( () => {
+				events.emit( 'disconnect', chat, user )
+			} )
+	} )
+
 	socket.emit( 'init', user )
 	events.emit( 'join', socketIdentifier, chat, socket )
 }
-
-const customerRoom = ( { session_id } ) => `session/${ session_id }`
-const chatRoom = ( { id } ) => `session/${ id }`
 
 const join = ( { events, io, user, socket } ) => {
 	debug( 'user joined', user )

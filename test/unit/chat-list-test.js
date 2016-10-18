@@ -13,6 +13,8 @@ const mockServer = () => {
 	return server
 }
 
+const TIMEOUT = 10
+
 describe( 'ChatList', () => {
 	let chatlist
 	let operators
@@ -30,7 +32,12 @@ describe( 'ChatList', () => {
 	beforeEach( () => {
 		operators = mockServer()
 		customers = mockServer()
-		chatlist = new ChatList( { operators, customers, timeout: 30 } )
+		chatlist = new ChatList( {
+			operators,
+			customers,
+			timeout: TIMEOUT,
+			customerDisconnectTimeout: TIMEOUT
+		} )
 	} )
 
 	it( 'should notify when new chat has started', ( done ) => {
@@ -238,7 +245,6 @@ describe( 'ChatList', () => {
 				equal( id, operator_id )
 				deepEqual( _chat, chat )
 				equal( message.type, 'event' )
-				equal( message.meta.event_type, 'close' )
 				equal( message.meta.by.id, operator_id )
 				equal( message.meta.event_type, 'close' )
 				done()
@@ -266,6 +272,57 @@ describe( 'ChatList', () => {
 				done()
 			} ) )
 			operators.emit( 'init', { user: { id: operator_id }, socket } )
+		} )
+	} )
+
+	describe( 'with customer disconnect', () => {
+		const operator_id = 'operator-id'
+		const chat_id = 'chat-id'
+		const user = { id: 'user-id' }
+		const chat = { id: chat_id }
+		const operator = { id: operator_id }
+
+		beforeEach( () => {
+			chatlist._chats = { [ chat_id ]: [ 'assigned', chat, operator ] }
+		} )
+
+		it( 'should send a message when customer disconnects', ( done ) => {
+			operators.once( 'message', tick( ( _chat, _operator, message ) => {
+				deepEqual( chatlist._chats[ chat_id ], [ 'customer-disconnect', _chat, _operator ] )
+
+				equal( operator.id, operator_id )
+				deepEqual( _chat, chat )
+				equal( message.type, 'event' )
+				equal( message.meta.event_type, 'customer-leave' )
+
+				done()
+			} ) )
+
+			customers.emit( 'disconnect', chat, user )
+		} )
+
+		it( 'should revert back to assigned when customer disconnects and returns', ( done ) => {
+			chatlist.once( 'chat.status', tick( ( status, _chat ) => {
+				equal( status, 'customer-disconnect' )
+				deepEqual( chat, _chat )
+
+				chatlist.once( 'chat.status', tick( ( __status, __chat ) => {
+					equal( __status, 'assigned' )
+					deepEqual( chat, __chat )
+				} ) )
+
+				operators.once( 'message', tick( () => {
+					throw new Error( 'operator should not be sent a message' )
+				} ) )
+
+				const socket = new EventEmitter()
+				customers.emit( 'join', { id: user.id, socket_id: 'socket-id', session_id: 'session-id' }, chat, socket )
+
+				// call done() after timeout to verify that operator message isn't sent
+				setTimeout( () => done(), TIMEOUT + 1 )
+			} ) )
+
+			customers.emit( 'disconnect', chat, user )
 		} )
 	} )
 } )

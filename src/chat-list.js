@@ -15,6 +15,7 @@ const STATUS_PENDING = 'pending'
 const STATUS_MISSED = 'missed'
 const STATUS_ASSIGNED = 'assigned'
 const STATUS_ABANDONED = 'abandoned'
+const STATUS_CUSTOMER_DISCONNECT = 'customer-disconnect'
 
 const debug = require( 'debug' )( 'happychat:chat-list' )
 
@@ -37,7 +38,7 @@ const asCallback = ( resolve, reject ) => ( e, value ) => {
 
 export class ChatList extends EventEmitter {
 
-	constructor( { customers, operators, timeout = 1000 } ) {
+	constructor( { customers, operators, timeout = 1000, customerDisconnectTimeout = 90000 } ) {
 		super()
 
 		// A single store of chats including:
@@ -48,14 +49,46 @@ export class ChatList extends EventEmitter {
 
 		// Default timeout for querying operator clients for information
 		this._timeout = timeout
+		this._customerDisconnectTimeout = customerDisconnectTimeout
 
 		// event and io for customer and operator connections
 		this.customers = customers
 		this.operators = operators
 
+		customers.on( 'join', ( socketIdentifier, chat ) => {
+			const status = this.getChatStatus( chat )
+			if ( status === STATUS_CUSTOMER_DISCONNECT ) {
+				this.setChatStatus( chat, STATUS_ASSIGNED )
+			}
+		} )
+
 		customers.on( 'message', ( ... args ) => {
 			this.onCustomerMessage( ... args )
 		} )
+
+		customers.on( 'disconnect', ( chat ) => {
+			this.setChatStatus( chat, STATUS_CUSTOMER_DISCONNECT )
+
+			setTimeout( () => {
+				const status = this.getChatStatus( chat )
+				if ( status !== STATUS_CUSTOMER_DISCONNECT ) {
+					return
+				}
+
+				this.findChatOperator( chat.id )
+					.then( ( operator ) => {
+						operators.emit( 'message', chat, operator,
+							assign( makeEventMessage( 'customer left', chat.id ), {
+								meta: { event_type: 'customer-leave' }
+							} )
+						)
+					} )
+					.catch( e => {
+						debug( 'failed to message op about customer disconnect', e, chat )
+					} )
+			}, this._customerDisconnectTimeout )
+		} )
+
 		operators.on( 'init', ( operator ) => {
 			this.onOperatorConnected( operator )
 		} )
@@ -315,6 +348,17 @@ export class ChatList extends EventEmitter {
 			set( this, '_chats', omit( get( this, '_chats', {} ), chat.id ) )
 			resolve( chat )
 		} )
+	}
+
+	getChatStatus( chat ) {
+		const [ status ] = get( this._chats, chat.id, [] )
+		return status
+	}
+
+	setChatStatus( chat, status ) {
+		const [ , ...chatData ] = get( this._chats, chat.id, [] )
+		this._chats = set( this._chats, chat.id, [ status, ...chatData ] )
+		this.emit( 'chat.status', status, chat )
 	}
 
 }

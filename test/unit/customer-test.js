@@ -124,16 +124,25 @@ describe( 'Customer Service', () => {
 	it( 'should notify user join and leave', ( done ) => {
 		socket.id = 'socket-id'
 		let events = auth()
+
+		events.on( 'disconnect-socket', ( { socketIdentifier, chat, user } ) => {
+			equal( socketIdentifier.id, mockUser.id )
+			equal( socketIdentifier.socket_id, 'socket-id' )
+			equal( chat.user_id, mockUser.id )
+			equal( user.id, mockUser.id )
+		} )
+
+		events.on( 'disconnect', ( chat, user ) => {
+			equal( chat.user_id, mockUser.id )
+			equal( user.id, mockUser.id )
+			done()
+		} )
+
 		events.on( 'join', ( { id, socket_id } ) => {
 			equal( id, mockUser.id )
 			equal( socket_id, 'socket-id' )
 
-			events.on( 'leave', ( { id: left_id, socket_id: left_socket_id } ) => {
-				equal( left_id, mockUser.id )
-				equal( left_socket_id, 'socket-id' )
-				done()
-			} )
-			client.emit( 'disconnect' )
+			server.disconnect( { client, socket } )
 		} )
 	} )
 
@@ -141,5 +150,32 @@ describe( 'Customer Service', () => {
 		customer( server ).once( 'connection', ( _socket, authorize ) => authorize( new Error( 'nope' ) ) )
 		client.on( 'unauthorized', () => done() )
 		server.emit( 'connection', socket )
+	} )
+
+	describe( 'with multiple connections', () => {
+		let events, connection2;
+		beforeEach( ( next ) => {
+			events = auth( () => {
+				connection2 = server.connectNewClient( undefined, () => next() )
+			} )
+		} )
+
+		it( 'should not fire disconnect until all clients leave', ( done ) => {
+			events.once( 'disconnect', () => {
+				server.in( `session/${ mockUser.session_id }` ).clients( ( e, clients ) => {
+					equal( clients.length, 0 )
+					done()
+				} )
+			} )
+
+			events.once( 'join', () => {
+				server.in( `session/${ mockUser.session_id }` ).clients( ( e, clients ) => {
+					equal( clients.length, 2 )
+
+					server.disconnect( { client, socket } )
+					server.disconnect( { client: connection2.client, socket: connection2.socket } )
+				} )
+			} )
+		} )
 	} )
 } )
