@@ -23,8 +23,8 @@ describe( 'ChatList', () => {
 		customers.emit( 'message', { id }, { text } )
 	}
 
-	const autoAssign = operators => {
-		operators.on( 'assign', ( { id }, name, callback ) => {
+	const autoAssign = ops => {
+		ops.on( 'assign', ( { id }, name, callback ) => {
 			callback( null, { id: 'operator-id', socket: new EventEmitter() } )
 		} )
 	}
@@ -86,7 +86,7 @@ describe( 'ChatList', () => {
 		emitCustomerMessage()
 	} )
 
-	it( 'should timeout if no operator provided', () => new Promise( ( resolve ) => {
+	it( 'should timeout if no operator provided', () => new Promise( resolve => {
 		chatlist.on( 'miss', tick( ( error, { id } ) => {
 			equal( error.message, 'timeout' )
 			equal( id, 'chat-id' )
