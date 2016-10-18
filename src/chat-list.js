@@ -228,7 +228,13 @@ export class ChatList extends EventEmitter {
 		this.findChat( chat )
 		.then(
 			() => {
-				debug( 'already chatting', chat )
+				const status = this.getChatStatus( chat )
+				// user connected and their chat missed
+				if ( status !== STATUS_ASSIGNED ) {
+					notifyStatus( false )
+				} else {
+					debug( 'already chatting', chat )
+				}
 			},
 			// if there is no existing chat for this user
 			// query how many operators are available

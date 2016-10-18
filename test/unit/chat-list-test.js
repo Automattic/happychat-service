@@ -138,6 +138,16 @@ describe( 'ChatList', () => {
 		customers.emit( 'join', { session_id: 'session-id' }, { id: 'session-id' } )
 	} )
 
+	it( 'should fail status check if existing chat is not assigned', ( done ) => {
+		chatlist._chats = { 'assigned-id': [ 'missed', { id: 'assigned-id' } ] }
+		customers.on( 'accept', tick( ( chat, status ) => {
+			equal( chat.id, 'assigned-id' )
+			ok( ! status )
+			done()
+		} ) )
+		customers.emit( 'join', { session_id: 'assigned-id' }, { id: 'assigned-id' } )
+	} )
+
 	const assignOperator = ( operator_id, socket = new EventEmitter() ) => new Promise( ( resolve ) => {
 		operators.once( 'assign', ( chat, room, callback ) => callback( null, { id: operator_id, socket } ) )
 		chatlist.once( 'found', () => resolve() )
