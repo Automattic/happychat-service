@@ -29,6 +29,13 @@ describe( 'Operators', () => {
 		operators = operator( server )
 	} )
 
+	it( 'should report false status when no operators connected', done => {
+		operators.emit( 'accept', { id: 'session-id' }, ( e, status ) => {
+			ok( !status )
+			done()
+		} )
+	} )
+
 	describe( 'when authenticated and online', () => {
 		let op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var', status: 'online', load: 1, capacity: 3 }
 		beforeEach( ( done ) => {
@@ -290,7 +297,7 @@ describe( 'Operators', () => {
 		} )
 	} )
 
-	describe( 'with multiple operators', () => {
+	describe( 'with multiple connected users', () => {
 		let ops = [
 			{ id: 'hermione', displayName: 'Hermione', avatarURL: 'url', status: 'available', capacity: 4, load: 1 },
 			{ id: 'ripley', displayName: 'Ripley', avatarURL: 'url', status: 'available', capacity: 1, load: 1 },
@@ -320,7 +327,7 @@ describe( 'Operators', () => {
 				let record = { socket: io.socket, client: io.client, operator: op, load: op.load, capacity: op.capacity, status: 'available' }
 				clients.push( record )
 				io.client.once( 'identify', identify => identify( op ) )
-				io.client.once( 'init', () => io.client.emit( 'status', 'online', () => resolve() ) )
+				io.client.once( 'init', () => io.client.emit( 'status', op.status, () => resolve() ) )
 				io.client.on( 'available', ( chat, callback ) => {
 					callback( { load: record.load, capacity: record.capacity, id: op.id, status: op.status } )
 				} )
@@ -370,7 +377,13 @@ describe( 'Operators', () => {
 					'river',    // 4/6 => 5/6
 				]
 			)
+		} ) )
+
+		it( 'should report accepting customers', done => {
+			operators.emit( 'accept', { id: 'session-id' }, ( e, status ) => {
+				ok( status )
+				done();
+			} )
 		} )
-		)
 	} )
 } )

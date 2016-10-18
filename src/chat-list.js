@@ -26,7 +26,7 @@ const promiseTimeout = ( promise, ms = 1000 ) => new Promise( ( resolve, reject 
 		clear()
 		resolve( value )
 	}, ( error ) => {
-		clearTimeout( id )
+		clear()
 		reject( error );
 	} )
 } )
@@ -65,6 +65,8 @@ export class ChatList extends EventEmitter {
 		customers.on( 'message', ( ... args ) => {
 			this.onCustomerMessage( ... args )
 		} )
+
+		customers.on( 'join', ( ... args ) => this.onCustomerJoin( ... args ) )
 
 		customers.on( 'disconnect', ( chat ) => {
 			this.setChatStatus( chat, STATUS_CUSTOMER_DISCONNECT )
@@ -218,6 +220,32 @@ export class ChatList extends EventEmitter {
 	setChatAsAssigned( chat, operator ) {
 		this._chats = set( this._chats, chat.id, [ STATUS_ASSIGNED, chat, operator ] )
 		return Promise.resolve( operator )
+	}
+
+	onCustomerJoin( socketIdentifier, chat ) {
+		// find the chat
+		const notifyStatus = status => this.customers.emit( 'accept', chat, status )
+		this.findChat( chat )
+		.then(
+			() => {
+				debug( 'already chatting', chat )
+			},
+			// if there is no existing chat for this user
+			// query how many operators are available
+			() => {
+				debug( 'no chat for', chat )
+				promiseTimeout( new Promise( ( resolve, reject ) => {
+					this.operators.emit( 'accept', chat, asCallback( resolve, reject ) )
+				} ), this._timeout )
+				.then(
+					status => notifyStatus( status ),
+					e => {
+						debug( 'failed to query status', e )
+						notifyStatus( false )
+					}
+				)
+			}
+		)
 	}
 
 	onCustomerMessage( channelIdentity ) {

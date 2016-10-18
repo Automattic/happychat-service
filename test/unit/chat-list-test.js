@@ -23,8 +23,8 @@ describe( 'ChatList', () => {
 		customers.emit( 'message', { id }, { text } )
 	}
 
-	const autoAssign = operators => {
-		operators.on( 'assign', ( { id }, name, callback ) => {
+	const autoAssign = ops => {
+		ops.on( 'assign', ( { id }, name, callback ) => {
 			callback( null, { id: 'operator-id', socket: new EventEmitter() } )
 		} )
 	}
@@ -86,7 +86,7 @@ describe( 'ChatList', () => {
 		emitCustomerMessage()
 	} )
 
-	it( 'should timeout if no operator provided', () => new Promise( ( resolve ) => {
+	it( 'should timeout if no operator provided', () => new Promise( resolve => {
 		chatlist.on( 'miss', tick( ( error, { id } ) => {
 			equal( error.message, 'timeout' )
 			equal( id, 'chat-id' )
@@ -95,14 +95,47 @@ describe( 'ChatList', () => {
 		emitCustomerMessage()
 	} ) )
 
-	it( 'should timeout if no operator provided', ( done ) => {
-		chatlist.on( 'miss', tick( ( error, { id } ) => {
-			equal( error.message, 'timeout' )
-			equal( id, 'chat-id' )
+	it( 'should ask operators for status when customer joins', ( done ) => {
+		const socket = new EventEmitter();
+
+		operators.on( 'accept', tick( ( chat, callback ) => {
+			equal( chat.id, 'session-id' )
+			equal( typeof callback, 'function' )
+			// report that there is capacity
+			callback( null, true )
+		} ) )
+
+		customers.on( 'accept', tick( ( chat, status ) => {
+			equal( chat.id, 'session-id' )
+			ok( status )
 			done()
 		} ) )
-		emitCustomerMessage()
-		emitCustomerMessage()
+
+		customers.emit( 'join', { session_id: 'session-id' }, { id: 'session-id' }, socket )
+	} )
+
+	it( 'should fail status check if callback throws an error', done => {
+		operators.on( 'accept', () => {
+			throw new Error( 'oops' )
+		} )
+
+		customers.on( 'accept', tick( ( chat, status ) => {
+			equal( chat.id, 'session-id' )
+			ok( ! status )
+			done()
+		} ) )
+
+		customers.emit( 'join', { session_id: 'session-id' }, { id: 'session-id' } )
+	} )
+
+	it( 'should fail status check if callback times out', done => {
+		customers.on( 'accept', tick( ( chat, status ) => {
+			equal( chat.id, 'session-id' )
+			ok( ! status )
+			done()
+		} ) )
+
+		customers.emit( 'join', { session_id: 'session-id' }, { id: 'session-id' } )
 	} )
 
 	const assignOperator = ( operator_id, socket = new EventEmitter() ) => new Promise( ( resolve ) => {

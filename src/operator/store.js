@@ -6,6 +6,7 @@ import concat from 'lodash/concat'
 import values from 'lodash/values'
 import reject from 'lodash/reject'
 import omit from 'lodash/omit'
+import reduce from 'lodash/reduce'
 import { combineReducers } from 'redux'
 
 const debug = require( 'debug' )( 'happychat:operator:store' )
@@ -17,6 +18,13 @@ export const selectSocketIdentity = ( { sockets, identities }, socket ) => get(
 	get( sockets, socket.id )
 )
 export const selectUser = ( { identities }, userId ) => get( identities, userId )
+export const selectTotalCapacity = ( { identities }, matchingStatus ) => reduce( identities,
+	( { load: totalLoad, capacity: totalCapacity }, { load, capacity, status } ) => ( {
+		load: totalLoad + ( status === matchingStatus ? load : 0 ),
+		capacity: totalCapacity + ( status === matchingStatus ? capacity : 0 )
+	} ),
+	{ load: 0, capacity: 0 }
+)
 
 // Types
 const UPDATE_IDENTITY = 'UPDATE_IDENTITY'

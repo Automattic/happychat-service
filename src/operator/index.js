@@ -9,13 +9,13 @@ import throttle from 'lodash/throttle'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
 
-import {
-	default as reducer,
+import reducer, {
 	updateIdentity,
 	removeUser,
 	removeUserSocket,
 	selectIdentities,
 	selectSocketIdentity,
+	selectTotalCapacity,
 	selectUser,
 	updateUserStatus,
 	updateCapacity,
@@ -412,6 +412,12 @@ export default io => {
 			debug( 'failed to find operator', e )
 			callback( e )
 		} )
+	} )
+
+	// respond if operators are willing to handle new customer connection
+	events.on( 'accept', ( chat, callback ) => {
+		const { load, capacity } = selectTotalCapacity( store.getState(), STATUS_AVAILABLE )
+		callback( null, capacity > load )
 	} )
 
 	io.on( 'connection', ( socket ) => {
