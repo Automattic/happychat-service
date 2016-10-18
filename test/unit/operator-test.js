@@ -29,6 +29,13 @@ describe( 'Operators', () => {
 		operators = operator( server )
 	} )
 
+	it( 'should report false status when no operators connected', done => {
+		operators.emit( 'accept', { id: 'session-id' }, ( e, status ) => {
+			ok( !status )
+			done()
+		} )
+	} )
+
 	describe( 'when authenticated and online', () => {
 		let op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var', status: 'online', load: 1, capacity: 3 }
 		beforeEach( ( done ) => {
@@ -370,7 +377,13 @@ describe( 'Operators', () => {
 					'river',    // 4/6 => 5/6
 				]
 			)
+		} ) )
+
+		it( 'should report operators accept customers', done => {
+			operators.emit( 'accept', { id: 'session-id' }, ( e, status ) => {
+				ok( status )
+				done();
+			} )
 		} )
-		)
 	} )
 } )
