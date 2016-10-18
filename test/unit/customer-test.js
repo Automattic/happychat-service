@@ -70,13 +70,22 @@ describe( 'Customer Service', () => {
 			client.emit( 'typing', 'This is a message...' )
 		} )
 
-		it( 'should handle `receive.typing` from events (with text)', ( done ) => {
+		it( 'should handle `receive.typing` from events (with string literal)', ( done ) => {
 			client.once( 'typing', ( isTyping ) => {
 				equal( isTyping, true )
 				done()
 			} )
 
 			customerEvents.emit( 'receive.typing', { id: mockUser.session_id }, mockUser, 'typing' )
+		} )
+
+		it( 'should handle `receive.typing` from events (with String object)', ( done ) => {
+			client.once( 'typing', ( isTyping ) => {
+				equal( isTyping, true )
+				done()
+			} )
+
+			customerEvents.emit( 'receive.typing', { id: mockUser.session_id }, mockUser, new String( 'typing' ) )
 		} )
 
 		it( 'should handle `receive.typing` from events (with no text)', ( done ) => {
