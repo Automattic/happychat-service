@@ -95,14 +95,47 @@ describe( 'ChatList', () => {
 		emitCustomerMessage()
 	} ) )
 
-	it( 'should timeout if no operator provided', ( done ) => {
-		chatlist.on( 'miss', tick( ( error, { id } ) => {
-			equal( error.message, 'timeout' )
-			equal( id, 'chat-id' )
+	it( 'should ask operators for status when customer joins', ( done ) => {
+		const socket = new EventEmitter();
+
+		operators.on( 'status', tick( ( chat, callback ) => {
+			equal( chat.id, 'session-id' )
+			equal( typeof callback, 'function' )
+			// report that there is capacity
+			callback( null, true )
+		} ) )
+
+		customers.on( 'status', tick( ( chat, status ) => {
+			equal( chat.id, 'session-id' )
+			ok( status )
 			done()
 		} ) )
-		emitCustomerMessage()
-		emitCustomerMessage()
+
+		customers.emit( 'join', { session_id: 'session-id' }, { id: 'session-id' }, socket )
+	} )
+
+	it( 'should fail status check if callback throws an error', done => {
+		operators.on( 'status', () => {
+			throw new Error( 'oops' )
+		} )
+
+		customers.on( 'status', tick( ( chat, status ) => {
+			equal( chat.id, 'session-id' )
+			ok( ! status )
+			done()
+		} ) )
+
+		customers.emit( 'join', { session_id: 'session-id' }, { id: 'session-id' } )
+	} )
+
+	it( 'should fail status check if callback times out', done => {
+		customers.on( 'status', tick( ( chat, status ) => {
+			equal( chat.id, 'session-id' )
+			ok( ! status )
+			done()
+		} ) )
+
+		customers.emit( 'join', { session_id: 'session-id' }, { id: 'session-id' } )
 	} )
 
 	const assignOperator = ( operator_id, socket = new EventEmitter() ) => new Promise( ( resolve ) => {
