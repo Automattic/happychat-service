@@ -296,7 +296,8 @@ describe( 'Operators', () => {
 			{ id: 'ripley', displayName: 'Ripley', avatarURL: 'url', status: 'available', capacity: 1, load: 1 },
 			{ id: 'nausica', displayName: 'Nausica', avatarURL: 'url', status: 'available', capacity: 1, load: 0 },
 			{ id: 'furiosa', displayName: 'Furiosa', avatarURL: 'url', status: 'available', capacity: 5, load: 0 },
-			{ id: 'river', displayName: 'River Tam', status: 'available', capacity: 6, load: 3 }
+			{ id: 'river', displayName: 'River Tam', status: 'available', capacity: 6, load: 3 },
+			{ id: 'buffy', displayName: 'Buffy', status: 'offline', capacity: 20, load: 0 }
 		]
 		let clients
 
