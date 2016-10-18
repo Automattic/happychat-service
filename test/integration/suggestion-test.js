@@ -18,7 +18,7 @@ describe( 'Chat logs', () => {
 
 	const afterInit = ( { customer, operator, agent } ) => new Promise( ( resolve ) => {
 		debug( 'setting up listeners after init' )
-		operator.on( 'available', ( _, available ) => available( { capacity: 1, load: 0 } ) )
+		operator.on( 'available', ( _, available ) => available( { status: 'available', capacity: 1, load: 0 } ) )
 		operator.on( 'identify', callback => callback( { id: 'operator' } ) )
 		const ready = { customer: false, operator: false, agent: false }
 		const resolveIfReady = () => {

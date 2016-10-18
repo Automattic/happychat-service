@@ -26,6 +26,7 @@ import {
 import { createStore } from 'redux'
 
 const DEFAULT_TIMEOUT = 1000
+const STATUS_AVAILABLE = 'available';
 
 const debug = require( 'debug' )( 'happychat:operator' )
 const throwTimeout = () => {
@@ -88,7 +89,12 @@ const cacheAvailability = ( store ) => ( availability ) => {
 
 const pickAvailable = ( selectIdentity ) => ( availability ) => new Promise( ( resolve, reject ) => {
 	const [ operator ] = availability
-	.filter( ( op ) => op.capacity - op.load > 0 )
+	.filter( ( op ) => {
+		if ( op.status !== STATUS_AVAILABLE ) {
+			return false;
+		}
+		return op.capacity - op.load > 0
+	} )
 	.sort( ( a, b ) => {
 		const a_weight = ( a.capacity - a.load ) / a.capacity
 		const b_weight = ( b.capacity - b.load ) / b.capacity

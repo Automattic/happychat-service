@@ -113,10 +113,10 @@ describe( 'Operators', () => {
 
 				client.on( 'available', ( chat, callback ) => {
 					equal( chat.id, 'chat-id' )
-					callback( { load: 0, capacity: 6, id: user.id } )
+					callback( { load: 0, status: 'available',capacity: 6, id: user.id } )
 				} )
 				clientb.on( 'available', ( chat, callback ) => {
-					callback( { load: 0, capacity: 5, id: userb.id } )
+					callback( { load: 0, status: 'available',capacity: 5, id: userb.id } )
 				} )
 
 				operators.emit( 'assign', { id: 'chat-id' }, 'customer/room-name', tick( ( error, assigned ) => {
@@ -133,7 +133,7 @@ describe( 'Operators', () => {
 		describe( 'with assigned chat', () => {
 			var chat = { id: 'chat-id' }
 			beforeEach( () => new Promise( ( resolve, reject ) => {
-				client.once( 'available', ( pendingChat, available ) => available( { load: 0, capacity: 1 } ) )
+				client.once( 'available', ( pendingChat, available ) => available( { status: 'available', load: 0, capacity: 1 } ) )
 				client.once( 'chat.open', () => resolve() )
 				operators.emit( 'assign', chat, 'room-name', error => {
 					if ( error ) return reject( error )
@@ -292,11 +292,11 @@ describe( 'Operators', () => {
 
 	describe( 'with multiple operators', () => {
 		let ops = [
-			{ id: 'hermione', displayName: 'Hermione', avatarURL: 'url', status: 'online', capacity: 4, load: 1 },
-			{ id: 'ripley', displayName: 'Ripley', avatarURL: 'url', status: 'online', capacity: 1, load: 1 },
-			{ id: 'nausica', displayName: 'Nausica', avatarURL: 'url', status: 'online', capacity: 1, load: 0 },
-			{ id: 'furiosa', displayName: 'Furiosa', avatarURL: 'url', status: 'online', capacity: 5, load: 0 },
-			{ id: 'river', displayName: 'River Tam', capacity: 6, load: 3 }
+			{ id: 'hermione', displayName: 'Hermione', avatarURL: 'url', status: 'available', capacity: 4, load: 1 },
+			{ id: 'ripley', displayName: 'Ripley', avatarURL: 'url', status: 'available', capacity: 1, load: 1 },
+			{ id: 'nausica', displayName: 'Nausica', avatarURL: 'url', status: 'available', capacity: 1, load: 0 },
+			{ id: 'furiosa', displayName: 'Furiosa', avatarURL: 'url', status: 'available', capacity: 5, load: 0 },
+			{ id: 'river', displayName: 'River Tam', status: 'available', capacity: 6, load: 3 }
 		]
 		let clients
 
@@ -316,12 +316,12 @@ describe( 'Operators', () => {
 			clients = []
 			return reduce( ops, ( promise, op ) => promise.then( () => new Promise( resolve => {
 				let io = server.newClient( op.id )
-				let record = { socket: io.socket, client: io.client, operator: op, load: op.load, capacity: op.capacity }
+				let record = { socket: io.socket, client: io.client, operator: op, load: op.load, capacity: op.capacity, status: 'available' }
 				clients.push( record )
 				io.client.once( 'identify', identify => identify( op ) )
 				io.client.once( 'init', () => io.client.emit( 'status', 'online', () => resolve() ) )
 				io.client.on( 'available', ( chat, callback ) => {
-					callback( { load: record.load, capacity: record.capacity, id: op.id } )
+					callback( { load: record.load, capacity: record.capacity, id: op.id, status: op.status } )
 				} )
 				io.client.on( 'chat.open', () => {
 					record.load += 1
@@ -364,8 +364,8 @@ describe( 'Operators', () => {
 					'hermione', // 1/4 => 2/4
 					'furiosa',  // 2/5 => 3/5
 					'river',    // 3/6 => 4/6
-					'hermione',  // 2/4 => 3/4
-					'furiosa', // 3/5 => 4/5
+					'hermione', // 2/4 => 3/4
+					'furiosa',  // 3/5 => 4/5
 					'river',    // 4/6 => 5/6
 				]
 			)

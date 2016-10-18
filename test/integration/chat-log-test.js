@@ -55,7 +55,7 @@ describe( 'Chat logs', () => {
 		} )
 		client.on( 'available', ( chat, available ) => {
 			debug( 'reporting as available' )
-			available( { capacity: 1, load: 0 } )
+			available( { capacity: 1, status: 'available', load: 0 } )
 		} )
 		resolve( client )
 	} )

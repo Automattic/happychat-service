@@ -29,7 +29,7 @@ describe( 'Abandoned service', () => {
 
 	const assignOperator = ( { customer, operator } ) => new Promise( ( resolve ) => {
 		operator.once( 'available', ( chat, callback ) => {
-			callback( { capacity: 1, load: 0 } )
+			callback( { capacity: 1, status: 'available', load: 0 } )
 		} )
 		operator.once( 'chat.open', ( chat ) => {
 			resolve( { customer, operator, chat } )
