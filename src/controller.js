@@ -91,6 +91,8 @@ export default ( { customers, agents, operators } ) => {
 		const message = makeEventMessage( NO_OPS_AVAILABLE_MSG, chat_id );
 		message.type = 'message';
 		message.user = user;
+		message.meta = {};
+		message.meta.skiptranscript = true;
 		debug( 'sending message', { id: chat_id }, user, message );
 		operators.emit( 'message', { id: chat_id }, user, message );
 		customers.emit( 'chat.unavailable', chat );
