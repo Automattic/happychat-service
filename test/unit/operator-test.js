@@ -385,5 +385,13 @@ describe( 'Operators', () => {
 				done();
 			} )
 		} )
+
+		it( 'should handle identities event', done => {
+			operators.emit( 'identities', identities => {
+				equal( identities.length, 6 )
+				equal( identities[0].id, 'hermione' )
+				done()
+			} )
+		} )
 	} )
 } )

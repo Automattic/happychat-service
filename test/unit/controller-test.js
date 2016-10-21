@@ -1,4 +1,4 @@
-import { equal, ok } from 'assert'
+import { equal, deepEqual, ok } from 'assert'
 import { EventEmitter } from 'events'
 import makeController from 'controller'
 
@@ -194,6 +194,18 @@ describe( 'Controller', () => {
 			} )
 
 			operators.emit( 'typing', { id: 'chat-id' }, { id: 'user-id' }, 'typing a message...' )
+		} )
+	} )
+
+	describe( 'agents system.info', () => {
+		it( 'should handle system.info event', done => {
+			operators.once( 'identities', cb => cb( [ 'operator' ] ) )
+
+			agents.emit( 'system.info', data => {
+				deepEqual( data.chats, [] )
+				deepEqual( data.operators, [ 'operator' ] )
+				done()
+			} )
 		} )
 	} )
 } )

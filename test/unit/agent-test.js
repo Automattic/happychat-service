@@ -72,6 +72,17 @@ describe( 'Agent Service', () => {
 				}
 			} )
 		} )
+
+		it( 'should handle system.info event', ( done ) => {
+			service.once( 'system.info', ( callback ) => {
+				callback( { foo: 'bar' } )
+			} )
+
+			client.emit( 'system.info', ( data ) => {
+				equal( data.foo, 'bar' )
+				done()
+			} )
+		} )
 	} )
 
 	it( 'should initilize service', ( done ) => {

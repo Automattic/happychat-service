@@ -107,6 +107,21 @@ export default ( { customers, agents, operators } ) => {
 		debug( 'chats status changed', status, chat.id )
 	} )
 
+	agents.on( 'system.info', done => {
+		Promise.all( [
+			new Promise( ( resolve ) => operators.emit( 'identities', resolve ) ),
+			chats.findAllOpenChats(),
+		] ).then( values => {
+			debug( 'system.info, got values', values );
+
+			const [ _operators, _chats ] = values
+			done( {
+				chats: _chats,
+				operators: _operators,
+			} )
+		} ).catch( err => debug( 'failed system.info', err ) )
+	} )
+
 	toAgents( customers, 'join', 'customer.join' )
 	toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 
