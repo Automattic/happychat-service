@@ -20,10 +20,17 @@ const onAuthorized = ( { socket, events } ) => ( agent ) => {
 		debug( 'received message', message )
 		events.emit( 'message', message )
 	} )
+
+	socket.on( 'system.info', done => {
+		events.emit( 'system.info', data => done( data ) )
+	} )
+
 	socket.on( 'role.add', ( role, done ) => {
 		debug( 'agent joining role', role )
+		events.emit( 'role.add', role )
 		socket.join( role, done )
 	} )
+
 	socket.emit( 'init', agent )
 }
 

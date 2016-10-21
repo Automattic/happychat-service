@@ -300,8 +300,9 @@ export default io => {
 	}, 100 )
 
 	const selectIdentity = userId => selectUser( store.getState(), userId )
+	const getIdentities = () => selectIdentities( store.getState() )
 
-	store.subscribe( () => emitOnline( selectIdentities( store.getState() ) ) )
+	store.subscribe( () => emitOnline( getIdentities() ) )
 
 	events.io = io
 
@@ -418,6 +419,11 @@ export default io => {
 	events.on( 'accept', ( chat, callback ) => {
 		const { load, capacity } = selectTotalCapacity( store.getState(), STATUS_AVAILABLE )
 		callback( null, capacity > load )
+	} )
+
+	events.on( 'identities', ( callback ) => {
+		debug( 'on.identities' )
+		callback( getIdentities() )
 	} )
 
 	io.on( 'connection', ( socket ) => {
