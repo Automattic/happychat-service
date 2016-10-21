@@ -255,7 +255,6 @@ const openChatForClients = ( { io, events, operator, room, chat } ) => ( clients
 		}
 		debug( 'Assigning chat: (chat.open)', chat, operator_room_name )
 		io.in( operator_room_name ).emit( 'chat.open', chat )
-		events.emit( 'join.success', operator );
 		resolve( clients )
 	} )
 } )
@@ -340,7 +339,10 @@ export default io => {
 		const room = `customers/${ chat.id }`
 		// TODO: test for user availability
 		assignChat( { io, operator: user, chat, room, events } )
-		.then( () => complete( null, user.id ) )
+		.then( () => {
+			store.dispatch( incrementLoad( user ) );
+			return complete( null, user.id )
+		} )
 	} )
 
 	// additional operator socket came online
@@ -369,6 +371,7 @@ export default io => {
 				debug( 'failed to recover chats', e )
 				return
 			}
+			store.dispatch( incrementLoad( user ) )
 			callback()
 		} )
 	} )
@@ -391,10 +394,6 @@ export default io => {
 		store.dispatch( decrementLoad( operator ) )
 	} )
 
-	events.on( 'join.success', ( operator ) => {
-		store.dispatch( incrementLoad( operator ) )
-	} )
-
 	events.on( 'leave', ( chat, room, operator ) => {
 		leaveChat( { io, operator, chat, room, events } )
 	} )
@@ -407,7 +406,11 @@ export default io => {
 		.then( clients => queryAvailability( chat, clients, io ) )
 		.then( cacheAvailability( store ) )
 		.then( pickAvailable( socket => selectSocketIdentity( store.getState(), socket ) ) )
-		.then( operator => assignChat( { io, operator, chat, room, events } ) )
+		.then( operator => {
+			debug( 'assigning chat to ', operator )
+			store.dispatch( incrementLoad( operator ) );
+			return assignChat( { io, operator, chat, room, events } )
+		} )
 		.then( operator => callback( null, operator ) )
 		.catch( e => {
 			debug( 'failed to find operator', e )
