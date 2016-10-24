@@ -277,7 +277,7 @@ export class ChatList extends EventEmitter {
 			debug( 'chat already managed', chat.id )
 		} )
 		.catch( ( e ) => {
-			debug( 'chat has not been assigned, finding an operator', e, channelIdentity, room_name )
+			debug( 'chat has not been assigned, finding an operator', e, e.stack, channelIdentity, room_name )
 			let chat = this.insertPendingChat( channelIdentity )
 			this.emit( 'chat.status', 'pending', chat )
 
