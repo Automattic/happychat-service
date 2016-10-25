@@ -192,7 +192,7 @@ describe( 'Operators', () => {
 
 				it( 'should transfer to user', ( done ) => {
 					operators.once( 'chat.transfer', ( id, from, to ) => {
-						operators.emit( 'transfer', chat, to, () => {} )
+						operators.emit( 'transfer', chat, from, to, () => {} )
 					} )
 					connections[0].client.once( 'chat.open', ( _chat ) => {
 						deepEqual( _chat, chat )

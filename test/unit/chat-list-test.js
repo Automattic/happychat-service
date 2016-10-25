@@ -211,9 +211,10 @@ describe( 'ChatList', () => {
 
 		it( 'should request chat transfer', ( done ) => {
 			const newOperator = { id: 'new-operator' }
-			operators.once( 'transfer', ( _chat, operator, complete ) => {
+			operators.once( 'transfer', ( _chat, from, to, complete ) => {
 				deepEqual( _chat, chat )
-				deepEqual( operator, newOperator )
+				equal( from.id, operator_id )
+				deepEqual( to, newOperator )
 				ok( isFunction( complete ) )
 				done()
 			} )
@@ -232,7 +233,8 @@ describe( 'ChatList', () => {
 
 		it( 'should transfer chat to new operator', ( done ) => {
 			const newOperator = { id: 'new-operator' }
-			operators.once( 'transfer', ( _chat, op, success ) => {
+			operators.once( 'transfer', ( _chat, from, op, success ) => {
+				equal( from.id, operator_id )
 				success( null, newOperator.id )
 			} )
 			chatlist.once( 'transfer', ( _chat, op ) => {
