@@ -334,14 +334,17 @@ export default io => {
 		store.dispatch( updateCapacity( user, capacity ) )
 	} )
 
-	events.on( 'transfer', ( chat, operator, complete ) => {
-		const user = selectUser( store.getState(), operator.id )
+	events.on( 'transfer', ( chat, from, to, complete ) => {
+		debug( 'transferring', chat, from, to );
+		const fromUser = selectUser( store.getState(), from.id )
+		const toUser = selectUser( store.getState(), to.id )
 		const room = `customers/${ chat.id }`
 		// TODO: test for user availability
-		assignChat( { io, operator: user, chat, room, events } )
+		assignChat( { io, operator: toUser, chat, room, events } )
 		.then( () => {
-			store.dispatch( incrementLoad( user ) );
-			return complete( null, user.id )
+			store.dispatch( incrementLoad( toUser ) );
+			store.dispatch( decrementLoad( fromUser ) );
+			return complete( null, toUser.id )
 		} )
 	} )
 
@@ -396,6 +399,7 @@ export default io => {
 
 	events.on( 'leave', ( chat, room, operator ) => {
 		leaveChat( { io, operator, chat, room, events } )
+		store.dispatch( decrementLoad( operator ) )
 	} )
 
 	// Assigning a new chat to an available operator

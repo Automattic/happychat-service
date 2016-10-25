@@ -135,7 +135,7 @@ export class ChatList extends EventEmitter {
 						throw new Error( 'Assigning operator does not match assigned operator' )
 					}
 					return promiseTimeout( new Promise( ( resolve, reject ) => {
-						operators.emit( 'transfer', chat, to, asCallback( resolve, reject ) )
+						operators.emit( 'transfer', chat, op, to, asCallback( resolve, reject ) )
 						operators.emit( 'message', chat, from, assign( makeEventMessage( 'chat transferred', chat.id ), {
 							meta: { from, to, event_type: 'transfer' }
 						} ) )
