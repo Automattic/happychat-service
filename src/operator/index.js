@@ -113,9 +113,23 @@ const pickAvailable = ( selectIdentity ) => ( availability ) => new Promise( ( r
 	resolve( selectIdentity( operator.socket ) )
 } )
 
+const once = fn => {
+	let result = null
+	let called = false
+	return ( ... args ) => {
+		if ( called ) {
+			return result
+		}
+		called = true
+		result = fn( ... args )
+		return result
+	}
+}
+
 const identifyClients = ( io, timeout ) => ( clients ) => new Promise( ( resolve, reject ) => {
-	parallel( map( clients, ( client_id ) => ( complete ) => {
+	parallel( map( clients, ( client_id ) => ( callback ) => {
 		const client = io.connected[client_id]
+		const complete = once( callback )
 		withTimeout( ( cancel ) => {
 			if ( !client ) {
 				cancel()
