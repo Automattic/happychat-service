@@ -399,6 +399,7 @@ export default io => {
 
 	events.on( 'leave', ( chat, room, operator ) => {
 		leaveChat( { io, operator, chat, room, events } )
+		store.dispatch( decrementLoad( operator ) )
 	} )
 
 	// Assigning a new chat to an available operator
