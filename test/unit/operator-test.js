@@ -1,4 +1,4 @@
-import { ok, equal, deepEqual } from 'assert'
+import { ok, equal, deepEqual, doesNotThrow } from 'assert'
 import operator from 'operator'
 import mockio from '../mock-io'
 import { tick } from '../tick'
@@ -93,6 +93,18 @@ describe( 'Operators', () => {
 				done()
 			} )
 			client.emit( 'chat.join', 'chat-id' )
+		} )
+
+		it( 'should update operator list when chat is joined', done => {
+			// chat room operator
+			client.removeAllListeners( 'identify' )
+			client.on( 'identify', tick( ( identify ) => {
+				doesNotThrow( () => {
+					identify( { id: 'user-id', displayName: 'fred' } )
+					identify( { id: 'user-id', displayName: 'sam' } )
+				} )
+			} ) )
+			operators.emit( 'open', { id: 'chat-id' }, 'customers/chat-id', { id: 'user-id' } )
 		} )
 
 		it( 'should emit when user wants to leave a chat', ( done ) => {
