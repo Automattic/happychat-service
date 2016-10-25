@@ -102,6 +102,7 @@ describe( 'Operators', () => {
 				doesNotThrow( () => {
 					identify( { id: 'user-id', displayName: 'fred' } )
 					identify( { id: 'user-id', displayName: 'sam' } )
+					done()
 				} )
 			} ) )
 			operators.emit( 'open', { id: 'chat-id' }, 'customers/chat-id', { id: 'user-id' } )
