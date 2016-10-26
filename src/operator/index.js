@@ -377,7 +377,7 @@ export default io => {
 				debug( 'failed to recover chats', e )
 				return
 			}
-			store.dispatch( incrementLoad( user ) )
+			store.dispatch( incrementLoad( user, chats.length ) )
 			callback()
 		} )
 	} )

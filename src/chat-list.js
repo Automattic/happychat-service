@@ -352,9 +352,13 @@ export class ChatList extends EventEmitter {
 	}
 
 	findOperatorChats( operator ) {
-		return new Promise( ( resolve ) => {
-			resolve( map( filter( values( this._chats ), ( [ , , op ] ) => op.id === operator.id ), ( [, chat] ) => chat ) )
-		} )
+		debug( 'search for chats matching operator', this._chats )
+		return Promise.resolve(
+			map(
+				filter( values( this._chats ), ( [ , , op ] ) => op.id === operator.id ),
+				( [, chat] ) => chat
+			)
+		)
 	}
 
 	insertPendingChat( channelIdentity ) {

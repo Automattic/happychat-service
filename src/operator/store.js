@@ -57,8 +57,8 @@ export const updateCapacity = ( user, capacity ) => {
 	return { user, capacity, type: UPDATE_USER_CAPACITY }
 }
 
-export const incrementLoad = ( user ) => {
-	return { user, type: INCREMENT_USER_LOAD }
+export const incrementLoad = ( user, amount = 1 ) => {
+	return { user, type: INCREMENT_USER_LOAD, amount }
 }
 
 export const decrementLoad = ( user ) => {
@@ -127,7 +127,7 @@ const identities = ( state = {}, action ) => {
 		case UPDATE_AVAILABILITY:
 			return setOpAvailability( action.availability, state );
 		case INCREMENT_USER_LOAD:
-			const incrementedLoad = getLoad( user, state ) + 1;
+			const incrementedLoad = getLoad( user, state ) + action.amount;
 			return setLoad( { user, load: incrementedLoad }, state );
 		case DECREMENT_USER_LOAD:
 			const decrementCurrentLoad = getLoad( user, state ) - 1;
