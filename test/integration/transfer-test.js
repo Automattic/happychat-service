@@ -59,16 +59,25 @@ describe( 'Operator Transfer', () => {
 				// have operator a transfer to operator b
 				debug( 'a opened chat', chat )
 				a.emit( 'chat.transfer', chat.id, 'b' )
-				b.once( 'chat.open', () => resolve( b ) )
+				b.once( 'chat.open', () => resolve( [a, b] ) )
 			} ) )
-			.then( () => {
+			.then( ( [a] ) => new Promise( resolve => {
 				// check to make sure the transfer event message is in the log
 				let transfer = find( messages, ( { type, meta } ) => type === 'event' && meta.event_type === 'transfer' )
 				ok( transfer )
-				const expectedTo = Object.assign( {}, operators[1], { load: 1 } )
+				const expectedTo = Object.assign( {}, operators[1], { load: 0 } )
 				deepEqual( transfer.meta.from, operators[0] )
 				deepEqual( transfer.meta.to, expectedTo )
-			} )
+
+				// clients should receive updated operator load status
+				a.once( 'operators.online', ( status ) => {
+					deepEqual(
+						status,
+						[operators[0], Object.assign( {}, operators[1], { load: 1 } )]
+					)
+					resolve()
+				} )
+			} ) )
 		} ) )
 	)
 } )

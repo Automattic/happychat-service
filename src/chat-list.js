@@ -187,10 +187,6 @@ export class ChatList extends EventEmitter {
 		// find them and open them on this socket
 		this.findOperatorChats( user )
 		.then( chats => {
-			if ( isEmpty( chats ) ) {
-				debug( 'no chats to reassign' )
-				return
-			}
 			debug( 'found existing chats, reassign:', user, chats )
 			this.operators.emit( 'reassign', user, socket, chats )
 		} )
@@ -355,7 +351,7 @@ export class ChatList extends EventEmitter {
 		debug( 'search for chats matching operator', this._chats )
 		return Promise.resolve(
 			map(
-				filter( values( this._chats ), ( [ , , op ] ) => op.id === operator.id ),
+				filter( values( this._chats ), ( [ , , op ] ) => op && op.id === operator.id ),
 				( [, chat] ) => chat
 			)
 		)
