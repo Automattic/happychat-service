@@ -127,21 +127,19 @@ export class ChatList extends EventEmitter {
 		} )
 
 		operators.on( 'chat.transfer', ( chat_id, from, to ) => {
-			debug( 'transfer chat', chat_id )
+			debug( 'transfer chat', chat_id, from, to )
 			this.findChatById( chat_id )
 			.then( ( chat ) => {
 				return this.findChatOperator( chat_id )
-				.then( ( op ) => {
-					if ( op.id !== from.id ) {
+				.then( ( op ) => promiseTimeout( new Promise( ( resolve, reject ) => {
+					if ( op && op.id !== from.id ) {
 						throw new Error( 'Assigning operator does not match assigned operator' )
 					}
-					return promiseTimeout( new Promise( ( resolve, reject ) => {
-						operators.emit( 'transfer', chat, op, to, asCallback( resolve, reject ) )
-						operators.emit( 'message', chat, from, assign( makeEventMessage( 'chat transferred', chat.id ), {
-							meta: { from, to, event_type: 'transfer' }
-						} ) )
-					} ), this._timeout )
-				} )
+					operators.emit( 'transfer', chat, op, to, asCallback( resolve, reject ) )
+					operators.emit( 'message', chat, from, assign( makeEventMessage( 'chat transferred', chat.id ), {
+						meta: { from, to, event_type: 'transfer' }
+					} ) )
+				} ), this._timeout ) )
 				.then( op => this.setChatAsAssigned( chat, op ) )
 				.then( op => this.emit( 'transfer', chat, op ) )
 				.catch( e => {
@@ -320,9 +318,7 @@ export class ChatList extends EventEmitter {
 	}
 
 	findChatOperator( chat_id ) {
-		return new Promise( ( resolve ) => {
-			resolve( get( this._chats, chat_id, [] )[2] )
-		} )
+		return Promise.resolve( get( this._chats, chat_id, [] )[2] )
 	}
 
 	findChat( channelIdentity ) {
