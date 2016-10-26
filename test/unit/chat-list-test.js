@@ -7,6 +7,8 @@ import { ChatList } from 'chat-list'
 import { tick } from '../tick'
 import io from '../mock-io'
 
+const debug = require( 'debug' )( 'happychat:chat-list:test' )
+
 const mockServer = () => {
 	const server = new EventEmitter()
 	server.io = io().server
@@ -216,6 +218,23 @@ describe( 'ChatList', () => {
 				equal( from.id, operator_id )
 				deepEqual( to, newOperator )
 				ok( isFunction( complete ) )
+				done()
+			} )
+			operators.emit( 'chat.transfer', chat.id, { id: operator_id }, newOperator )
+		} )
+
+		it( 'should fail to transfer chat with no assigned operator', done => {
+			const newOperator = { id: 'new-operator' }
+			chatlist._chats[ 'the-id' ] = [ 'assigned', chat ]
+			chatlist.once( 'miss', () => {
+				done( new Error( 'failed to transfer chat' ) )
+			} )
+			operators.once( 'transfer', ( _chat, fromOperator, toOperator, callback ) => {
+				equal( fromOperator, null )
+				callback( null, toOperator.id )
+			} )
+			chatlist.once( 'transfer', ( _chat, op_id ) => {
+				equal( op_id, 'new-operator' )
 				done()
 			} )
 			operators.emit( 'chat.transfer', chat.id, { id: operator_id }, newOperator )
