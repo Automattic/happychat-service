@@ -348,36 +348,34 @@ describe( 'Operators', () => {
 		]
 		let clients
 
-		const assign = ( chat_id ) => new Promise( ( resolve, reject ) => operators.emit(
-			'assign',
-			{ id: chat_id },
-			`customer/${chat_id}`,
-			( error, assigned ) => {
+		const assign = ( chat_id ) => new Promise( ( resolve, reject ) => {
+			operators.emit( 'assign', { id: chat_id }, `customer/${chat_id}`, ( error, assigned ) => {
 				if ( error ) {
 					return reject( error )
 				}
 				resolve( assigned )
-			}
-		) )
+			} )
+		} )
 
-		beforeEach( () => {
-			clients = []
-			return reduce( ops, ( promise, op ) => promise.then( () => new Promise( resolve => {
-				let io = server.newClient( op.id )
-				let record = { socket: io.socket, client: io.client, operator: op, load: op.load, capacity: op.capacity, status: 'available' }
-				clients.push( record )
-				io.client.once( 'identify', identify => identify( op ) )
-				io.client.once( 'init', () => io.client.emit( 'status', op.status, () => resolve() ) )
-				io.client.on( 'available', ( chat, callback ) => {
+		const connectAll = () => Promise.all( ops.map(
+			op => new Promise( ( resolve, reject ) => {
+				const io = server.newClient()
+				const record = { load: op.load, capacity: op.capacity, status: 'available' }
+				io.client
+				.on( 'init', () => io.client.emit( 'status', op.status, () => {
+					resolve()
+				} ) )
+				.on( 'available', ( chat, callback ) => {
 					callback( { load: record.load, capacity: record.capacity, id: op.id, status: op.status } )
 				} )
-				io.client.on( 'chat.open', () => {
+				.on( 'chat.open', () => {
 					record.load += 1
 				} )
-				operators.once( 'connection', ( _, callback ) => callback( null, op ) )
-				server.connect( io.socket )
-			} ), e => debug( 'failed', e ) ), Promise.resolve() )
-		} )
+				connectOperator( io, op ).catch( reject )
+			} )
+		) )
+
+		beforeEach( () => connectAll() )
 
 		const collectPromises = ( ... promises ) => new Promise( ( resolve, reject ) => {
 			let results = []
