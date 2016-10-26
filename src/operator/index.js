@@ -11,20 +11,17 @@ import reduce from 'lodash/reduce'
 import once from 'lodash/once'
 
 import reducer, {
-	updateIdentity,
-	removeUser,
-	removeUserSocket,
 	selectIdentities,
 	selectSocketIdentity,
 	selectTotalCapacity,
 	selectUser,
-	updateUserStatus,
-	updateCapacity,
 	updateAvailability,
 	incrementLoad,
 	decrementLoad
 } from './store'
-import { createStore } from 'redux'
+import { createStore, applyMiddleware } from 'redux'
+
+import operatorMiddleware from '../middlewares/operators'
 
 const DEFAULT_TIMEOUT = 1000
 const STATUS_AVAILABLE = 'available';
@@ -39,10 +36,6 @@ const withTimeout = ( fn, onError = throwTimeout, ms = DEFAULT_TIMEOUT ) => {
 	debug( 'calling with timeout', ms )
 	fn( () => clearTimeout( timeout ) )
 }
-
-const identityForUser = ( { id, displayName, avatarURL } ) => (
-	{ id, displayName, avatarURL }
-)
 
 const customerRoom = id => `customers/${ id }`
 
@@ -156,84 +149,6 @@ const emitInChat = throttle( ( { io, chat } ) => {
 	} )
 } )
 
-const join = ( { socket, events, user, io, selectIdentity } ) => {
-	debug( 'initialize the operator', user )
-	const user_room = `operators/${user.id}`
-	socket.on( 'status', ( status, done ) => {
-		// TODO: if operator has multiple clients, move all of them?
-		const updateStatus = ( e ) => {
-			events.emit( 'status', user, status )
-			done( e )
-		}
-
-		if ( status === 'online' ) {
-			debug( 'joining room', 'online' )
-			socket.join( 'online', updateStatus )
-		} else {
-			socket.leave( 'online', updateStatus )
-		}
-	} )
-
-	socket.on( 'capacity', ( capacity, done ) => {
-		events.emit( 'capacity', user, capacity );
-		done( capacity );
-	} )
-
-	socket.on( 'disconnect', () => {
-		// emitOnline( { io, events } )
-		events.emit( 'disconnect-socket', { user, socket } )
-		io.in( user_room ).clients( ( error, clients ) => {
-			if ( error ) {
-				debug( 'failed to query clients', error )
-				return;
-			}
-			if ( clients.length > 0 ) {
-				return;
-			}
-			events.emit( 'disconnect', user )
-		} )
-	} )
-
-	socket.join( user_room, () => {
-		socket.emit( 'init', user )
-		events.emit( 'init', { user, socket, room: user_room } )
-	} )
-
-	socket.on( 'message', ( chat_id, { id, text } ) => {
-		const meta = {}
-		const userIdentity = identityForUser( user )
-		const message = { id: id, session_id: chat_id, text, timestamp: timestamp(), user: userIdentity, meta }
-		// all customer connections for this user receive the message
-		debug( 'broadcasting message', user.id, id, message )
-		events.emit( 'message', { id: chat_id }, user, message )
-	} )
-
-	socket.on( 'chat.typing', ( chat_id, text ) => {
-		const userIdentity = identityForUser( user )
-		debug( 'received operator `typing` event', userIdentity.id, chat_id, text );
-
-		events.emit( 'typing', { id: chat_id }, userIdentity, text );
-	} )
-
-	socket.on( 'chat.join', ( chat_id ) => {
-		debug( 'client requesting to join', chat_id )
-		events.emit( 'chat.join', chat_id, user )
-	} )
-
-	socket.on( 'chat.leave', ( chat_id ) => {
-		events.emit( 'chat.leave', chat_id, user )
-	} )
-
-	socket.on( 'chat.close', ( chat_id ) => {
-		events.emit( 'chat.close', chat_id, user )
-	} )
-
-	socket.on( 'chat.transfer', ( chat_id, user_id ) => {
-		const toUser = selectIdentity( user_id )
-		events.emit( 'chat.transfer', chat_id, user, toUser )
-	} )
-}
-
 const operatorClients = ( { io, operator } ) => new Promise( ( resolve, reject ) => {
 	const room = `operators/${ operator.id }`
 	io.in( room ).clients( ( error, clients ) => {
@@ -296,7 +211,9 @@ const leaveChat = ( { io, operator, chat, room, events } ) => {
 
 export default io => {
 	const events = new EventEmitter()
-	const store = createStore( reducer() )
+	const store = createStore( reducer(), applyMiddleware(
+		operatorMiddleware( io, events )
+	) );
 	const emitOnline = throttle( users => {
 		io.emit( 'operators.online', users )
 		events.emit( 'available', users )
@@ -309,18 +226,6 @@ export default io => {
 
 	events.io = io
 
-	events.on( 'init', ( { socket, user } ) => {
-		store.dispatch( updateIdentity( socket, user ) )
-	} )
-
-	events.on( 'disconnect-socket', ( { socket, user } ) => {
-		store.dispatch( removeUserSocket( socket, user ) )
-	} )
-
-	events.on( 'disconnect', ( user ) => {
-		store.dispatch( removeUser( user ) )
-	} )
-
 	events.on( 'receive', ( { id }, message ) => {
 		io.in( customerRoom( id ) ).emit( 'chat.message', { id }, message )
 	} )
@@ -328,14 +233,6 @@ export default io => {
 	events.on( 'receive.typing', ( chat, user, text ) => {
 		const { id } = chat
 		io.in( customerRoom( id ) ).emit( 'chat.typing', chat, user, text )
-	} )
-
-	events.on( 'status', ( user, status ) => {
-		store.dispatch( updateUserStatus( user, status ) )
-	} )
-
-	events.on( 'capacity', ( user, capacity ) => {
-		store.dispatch( updateCapacity( user, capacity ) )
 	} )
 
 	events.on( 'transfer', ( chat, from, to, complete ) => {
@@ -440,13 +337,6 @@ export default io => {
 	events.on( 'identities', ( callback ) => {
 		debug( 'on.identities' )
 		callback( getIdentities() )
-	} )
-
-	io.on( 'connection', ( socket ) => {
-		debug( 'operator connecting' )
-		onConnection( { socket, events } )(
-			user => join( { socket, events, user, io, selectIdentity } )
-		)
 	} )
 
 	return events
