@@ -16,8 +16,8 @@ describe( 'Operators', () => {
 	let socket, client, server
 
 	const connectOperator = ( { socket: useSocket, client: useClient }, authUser = { id: 'user-id', displayName: 'name' } ) => new Promise( ( resolve ) => {
-		useClient.on( 'identify', ( identify ) => identify( authUser ) )
-		operators.once( 'connection', ( _, callback ) => callback( null, authUser ) )
+		useSocket.on( 'identify', ( identify ) => identify( null, authUser ) )
+		useClient.on( 'identify', ( identify ) => identify( null, authUser ) )
 		useClient.once( 'init', ( clientUser ) => {
 			useClient.emit( 'status', clientUser.status || 'online', () => resolve( { user: clientUser, client: useClient, socket: useSocket } ) )
 		} )
@@ -27,6 +27,7 @@ describe( 'Operators', () => {
 	beforeEach( () => {
 		( { socket, client, server } = mockio( socketid ) )
 		operators = operator( server )
+		operators.on( 'connection', ( s, callback ) => s.emit( 'identify', callback ) )
 	} )
 
 	it( 'should report false status when no operators connected', done => {
