@@ -8,6 +8,7 @@ import values from 'lodash/values'
 import throttle from 'lodash/throttle'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
+import once from 'lodash/once'
 
 import reducer, {
 	updateIdentity,
@@ -67,13 +68,14 @@ const queryAvailability = ( chat, clients, io ) => new Promise( ( resolve, rejec
 	}
 
 	parallel( clients.map( ( socket_id ) => ( complete ) => {
+		const callback = once( complete )
 		withTimeout( ( cancel ) => {
 			const socket = io.connected[socket_id]
 			socket.emit( 'available', chat, ( available ) => {
-				complete( null, assign( { socket }, available ) )
+				callback( null, assign( { socket }, available ) )
 				cancel()
 			} )
-		}, () => complete( null, { capacity: 0, load: 0 } ) )
+		}, () => callback( null, { capacity: 0, load: 0 } ) )
 	} ), ( error, results ) => {
 		if ( error ) {
 			return reject( error )
@@ -112,19 +114,6 @@ const pickAvailable = ( selectIdentity ) => ( availability ) => new Promise( ( r
 
 	resolve( selectIdentity( operator.socket ) )
 } )
-
-const once = fn => {
-	let result = null
-	let called = false
-	return ( ... args ) => {
-		if ( called ) {
-			return result
-		}
-		called = true
-		result = fn( ... args )
-		return result
-	}
-}
 
 const identifyClients = ( io, timeout ) => ( clients ) => new Promise( ( resolve, reject ) => {
 	parallel( map( clients, ( client_id ) => ( callback ) => {
