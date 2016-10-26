@@ -211,33 +211,35 @@ describe( 'Operators', () => {
 					{ id: 'ridley', displayName: 'ridley'}
 				]
 				let connections = []
-				beforeEach( () => users.reduce( ( promise, _user ) => {
-					let connection = server.newClient()
-					connections = connections.concat( connection )
-					return promise.then( () => connectOperator( connection, _user ) )
-				}, Promise.resolve() ) )
 
-				it( 'should transfer to user', ( done ) => {
+				const connectClients = () => Promise.all(
+					users.map( u => connectOperator( server.newClient(), u ) )
+				)
+
+				it( 'should transfer to user', () => connectClients().then( connections => new Promise( resolve => {
+					debug( 'fuck!' )
+					debug( 'doing it!', connections )
 					operators.once( 'chat.transfer', ( id, from, to ) => {
 						operators.emit( 'transfer', chat, from, to, () => {} )
 					} )
 					connections[0].client.once( 'chat.open', ( _chat ) => {
 						deepEqual( _chat, chat )
-						done()
+						resolve()
 					} )
 					client.emit( 'chat.transfer', chat.id, users[0].id )
-				} )
+				} ) ) )
 
-				it( 'should transfer when assigned is missing', done => {
+				it( 'should transfer when assigned is missing', () => connectClients().then( connections => new Promise( resolve => {
+					connections[0].client.on( 'chat.open', ( _chat ) => {
+						deepEqual( _chat, chat )
+						resolve()
+					} )
+
 					operators.emit( 'transfer', chat, null, { id: users[0].id }, ( e, op_id ) => {
 						equal( e, null )
 						equal( op_id, users[0].id )
 					} )
-					connections[0].client.once( 'chat.open', ( _chat ) => {
-						deepEqual( _chat, chat )
-						done()
-					} )
-				} )
+				} ) ) )
 			} )
 		} )
 
