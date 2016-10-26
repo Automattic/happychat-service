@@ -150,6 +150,19 @@ describe( 'Operators', () => {
 			} )
 		} )
 
+		it( 'should not error when operator responds multiple times to available', ( done ) => {
+			client.on( 'available', tick( ( chat, callback ) => {
+				doesNotThrow( () => {
+					callback( { load: 0, status: 'available', capacity: 6, id: user.id } )
+					callback( { load: 0, status: 'available', capacity: 6, id: user.id } )
+				} )
+			} ) )
+
+			operators.emit( 'assign', { id: 'chat-id' }, 'customer/room-name', tick( ( e ) => {
+				done( e )
+			} ) )
+		} )
+
 		describe( 'with assigned chat', () => {
 			var chat = { id: 'chat-id' }
 			beforeEach( () => new Promise( ( resolve, reject ) => {
