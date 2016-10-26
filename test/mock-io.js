@@ -34,7 +34,6 @@ export default ( socketid ) => {
 				return server
 			},
 			emit: ( ... args ) => {
-				// TODO: if any args blah
 				sockets.forEach( ( socket ) => socket.emit( ... args ) )
 				return server
 			}
@@ -71,7 +70,6 @@ export default ( socketid ) => {
 			socket.rooms = socket.rooms.concat( room )
 			const newSockets = {}
 			newSockets[room] = get( server.rooms, room, [] ).concat( socket )
-			debug( 'room now at', room, newSockets[room].length )
 			server.rooms = assign( {}, server.rooms, newSockets )
 			process.nextTick( complete )
 		}
@@ -79,7 +77,6 @@ export default ( socketid ) => {
 			socket.rooms = reject( socket.rooms, room )
 			const newSockets = {}
 			newSockets[room] = reject( get( server.rooms, room, [] ), socket )
-			debug( 'room now at', room, newSockets[room].length )
 			server.rooms = assign( {}, server.rooms, newSockets )
 			process.nextTick( complete )
 		}
@@ -96,9 +93,7 @@ export default ( socketid ) => {
 	}
 
 	server.disconnect = ( { socket, client } ) => {
-		debug( 'disconnect client and leave rooms', socket.id, client.id )
 		forEach( socket.rooms, ( room ) => {
-			debug( 'removing', socket.id, 'from', room, server.rooms[room] )
 			server.rooms[room] = reject( server.rooms[room], socket )
 		} )
 		socket.rooms = []
