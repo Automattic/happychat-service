@@ -9,6 +9,7 @@ import find from 'lodash/find'
 import filter from 'lodash/filter'
 import reduce from 'lodash/reduce'
 import map from 'lodash/map'
+import isEmpty from 'lodash/isEmpty'
 import { makeEventMessage } from './util'
 
 const STATUS_PENDING = 'pending'
@@ -185,7 +186,11 @@ export class ChatList extends EventEmitter {
 		// if this is an additional there will be already assigned chats
 		// find them and open them on this socket
 		this.findOperatorChats( user )
-		.then( ( chats ) => {
+		.then( chats => {
+			if ( isEmpty( chats ) ) {
+				debug( 'no chats to reassign' )
+				return
+			}
 			debug( 'found existing chats, reassign:', user, chats )
 			this.operators.emit( 'reassign', user, socket, chats )
 		} )
