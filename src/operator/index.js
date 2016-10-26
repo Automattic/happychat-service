@@ -262,16 +262,17 @@ const openChatForClients = ( { io, events, operator, room, chat } ) => ( clients
 	} )
 } )
 
-const assignChat = ( { io, operator, chat, room, events } ) => new Promise( ( resolve ) => {
+const assignChat = ( { io, operator, chat, room, events } ) => new Promise( ( resolve, reject ) => {
 	// send the event to the operator and confirm that the chat was opened
 	// TODO: timeouts? only one should have to succeed or should all of them have
 	// to succeed?
+	debug( 'assigning chat to operator')
 	operatorClients( { io, operator } )
 	.then( openChatForClients( { io, events, operator, room, chat } ) )
 	.then( () => {
 		emitInChat( { io, events, chat } )
 		resolve( operator )
-	} )
+	}, reject )
 } )
 
 const leaveChat = ( { io, operator, chat, room, events } ) => {
