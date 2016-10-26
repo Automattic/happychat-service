@@ -44,7 +44,6 @@ const operatorChatJoin = ( chat_id, user ) => {
 	}
 }
 
-
 const OPERATOR_CHAT_LEAVE = 'OPERATOR_CHAT_LEAVE';
 const operatorChatLeave = ( chat_id, user ) => {
 	return {
@@ -72,6 +71,11 @@ const operatorChatTransfer = ( chat_id, user, toUser ) => {
 		toUser
 	}
 }
+
+const OPERATOR_READY = 'OPERATOR_READY'
+const operatorReady = ( user, socket, room ) => ( {
+	type: OPERATOR_READY, user, socket, room
+} )
 
 const join = ( { socket, store, user, io } ) => {
 	debug( 'initialize the operator', user )
@@ -119,7 +123,7 @@ const join = ( { socket, store, user, io } ) => {
 	socket.join( user_room, () => {
 		socket.emit( 'init', user )
 		store.dispatch( updateIdentity( socket, user ) )
-		// events.emit( 'init', { user, socket, room: user_room } )
+		store.dispatch( operatorReady( user, socket, user_room ) )
 	} )
 
 	socket.on( 'message', ( chat_id, { id, text } ) => {
@@ -191,6 +195,8 @@ export default ( io, events ) => ( store ) => {
 			case OPERATOR_CHAT_TRANSFER:
 				events.emit( 'chat.transfer', action.chat_id, action.user, action.toUser );
 				break;
+			case OPERATOR_READY:
+				events.emit( 'init', { user: action.user, socket: action.socket, room: action.room } )
 		}
 		return next( action );
 	}
