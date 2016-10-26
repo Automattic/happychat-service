@@ -226,6 +226,17 @@ describe( 'Operators', () => {
 					} )
 					client.emit( 'chat.transfer', chat.id, users[0].id )
 				} )
+
+				it( 'should transfer when assigned is missing', done => {
+					operators.emit( 'transfer', chat, null, { id: users[0].id }, ( e, op_id ) => {
+						equal( e, null )
+						equal( op_id, users[0].id )
+					} )
+					connections[0].client.once( 'chat.open', ( _chat ) => {
+						deepEqual( _chat, chat )
+						done()
+					} )
+				} )
 			} )
 		} )
 
