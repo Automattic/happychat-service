@@ -339,17 +339,22 @@ export default io => {
 	} )
 
 	events.on( 'transfer', ( chat, from, to, complete ) => {
-		debug( 'transferring', chat, from, to );
-		const fromUser = selectUser( store.getState(), from.id )
+		debug( 'transferring', chat, from, to )
 		const toUser = selectUser( store.getState(), to.id )
 		const room = `customers/${ chat.id }`
 		// TODO: test for user availability
 		assignChat( { io, operator: toUser, chat, room, events } )
-		.then( () => {
-			store.dispatch( incrementLoad( toUser ) );
-			store.dispatch( decrementLoad( fromUser ) );
-			return complete( null, toUser.id )
-		} )
+		.then(
+			() => {
+				store.dispatch( incrementLoad( toUser ) );
+				if ( from ) {
+					const fromUser = selectUser( store.getState(), from.id )
+					store.dispatch( decrementLoad( fromUser ) );
+				}
+				return complete( null, toUser.id )
+			},
+			e => debug( 'failed to assign transfered chat', e )
+		)
 	} )
 
 	// additional operator socket came online
