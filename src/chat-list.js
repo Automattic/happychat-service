@@ -9,7 +9,6 @@ import find from 'lodash/find'
 import filter from 'lodash/filter'
 import reduce from 'lodash/reduce'
 import map from 'lodash/map'
-import isEmpty from 'lodash/isEmpty'
 import { makeEventMessage } from './util'
 
 const STATUS_PENDING = 'pending'
@@ -92,8 +91,8 @@ export class ChatList extends EventEmitter {
 			}, this._customerDisconnectTimeout )
 		} )
 
-		operators.on( 'init', ( operator ) => {
-			this.onOperatorConnected( operator )
+		operators.on( 'init', ( init ) => {
+			this.onOperatorConnected( init )
 		} )
 
 		operators.on( 'available', () => {
