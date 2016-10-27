@@ -1,5 +1,6 @@
 import { onConnection, timestamp } from '../../util'
 import {
+	REMOVE_USER,
 	updateUserStatus,
 	updateCapacity,
 	removeUserSocket,
@@ -197,6 +198,9 @@ export default ( io, events ) => ( store ) => {
 				break;
 			case OPERATOR_READY:
 				events.emit( 'init', { user: action.user, socket: action.socket, room: action.room } )
+			case REMOVE_USER:
+				events.emit( 'disconnect', action.user )
+				break;
 		}
 		return next( action );
 	}

@@ -28,7 +28,7 @@ export const selectTotalCapacity = ( { identities }, matchingStatus ) => reduce(
 
 // Types
 const UPDATE_IDENTITY = 'UPDATE_IDENTITY'
-const REMOVE_USER = 'REMOVE_USER'
+export const REMOVE_USER = 'REMOVE_USER'
 const REMOVE_USER_SOCKET = 'REMOVE_USER_SOCKET'
 const UPDATE_USER_STATUS = 'UPDATE_USER_STATUS'
 const UPDATE_USER_CAPACITY = 'UPDATE_USER_CAPACITY';
