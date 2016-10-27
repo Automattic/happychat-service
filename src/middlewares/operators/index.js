@@ -1,82 +1,87 @@
+import { parallel } from 'async'
+import map from 'lodash/map'
+import once from 'lodash/once'
+import isEmpty from 'lodash/isEmpty'
+import assign from 'lodash/assign'
+import throttle from 'lodash/throttle'
+
 import { onConnection, timestamp } from '../../util'
 import {
 	REMOVE_USER,
+	OPERATOR_RECEIVE,
+	OPERATOR_RECEIVE_TYPING,
+	OPERATOR_CHAT_ONLINE,
+	OPERATOR_IDENTIFY_CLIENT_REQUEST,
+	CLIENT_QUERY,
+	OPERATOR_CLIENT_QUERY,
+	OPERATOR_OPEN_CHAT_FOR_CLIENTS,
+	OPERATOR_LEAVE_CHAT,
+	OPERATOR_CLOSE_CHAT,
+	OPERATOR_QUERY_AVAILABILITY,
 	updateUserStatus,
 	updateCapacity,
 	removeUserSocket,
 	removeUser,
 	updateIdentity,
 	selectUser,
+	selectIdentities
 } from '../../operator/store';
 
 const debug = require( 'debug' )( 'happychat:middleware:operators' )
+
+const DEFAULT_TIMEOUT = 1000
+
+const throwTimeout = () => {
+	throw new Error( 'Operation timed out' )
+}
+
+const withTimeout = ( fn, onError = throwTimeout, ms = DEFAULT_TIMEOUT ) => {
+	const timeout = setTimeout( onError, ms )
+	debug( 'calling with timeout', ms )
+	fn( () => clearTimeout( timeout ) )
+}
 
 const identityForUser = ( { id, displayName, avatarURL } ) => (
 	{ id, displayName, avatarURL }
 )
 
-// Actions
+const customerRoom = id => `customers/${ id }`;
+
+// TODO Actions should be moved elsewhere since this should be socket.io specific
 const OPERATOR_MESSAGE = 'OPERATOR_MESSAGE';
-const operatorMessage = ( id, user, message ) => {
-	return {
-		type: OPERATOR_MESSAGE,
-		id,
-		user,
-		message
-	}
-}
+const operatorMessage = ( id, user, message ) => (
+	{ type: OPERATOR_MESSAGE, id, user, message }
+)
 
 const OPERATOR_TYPING = 'OPERATOR_TYPING';
-const operatorTyping = ( id, userIdentity, text ) => {
-	return {
-		type: OPERATOR_TYPING,
-		id,
-		userIdentity,
-		text
-	}
-}
+const operatorTyping = ( id, userIdentity, text ) => (
+	{ type: OPERATOR_TYPING, id, userIdentity, text }
+)
 
 const OPERATOR_CHAT_JOIN = 'OPERATOR_CHAT_JOIN';
-const operatorChatJoin = ( chat_id, user ) => {
-	return {
-		type: OPERATOR_CHAT_JOIN,
-		chat_id,
-		user
-	}
-}
+const operatorChatJoin = ( chat_id, user ) => (
+	{ type: OPERATOR_CHAT_JOIN, chat_id, user }
+)
 
 const OPERATOR_CHAT_LEAVE = 'OPERATOR_CHAT_LEAVE';
-const operatorChatLeave = ( chat_id, user ) => {
-	return {
-		type: OPERATOR_CHAT_LEAVE,
-		chat_id,
-		user
-	}
-}
+const operatorChatLeave = ( chat_id, user ) => (
+	{ type: OPERATOR_CHAT_LEAVE, chat_id, user }
+)
 
 const OPERATOR_CHAT_CLOSE = 'OPERATOR_CHAT_CLOSE';
-const operatorChatClose = ( chat_id, user ) => {
-	return {
-		type: OPERATOR_CHAT_CLOSE,
-		chat_id,
-		user
-	}
-}
+const operatorChatClose = ( chat_id, user ) => (
+	{ type: OPERATOR_CHAT_CLOSE, chat_id, user }
+)
 
 const OPERATOR_CHAT_TRANSFER = 'OPERATOR_CHAT_TRANSFER';
-const operatorChatTransfer = ( chat_id, user, toUser ) => {
-	return {
-		type: OPERATOR_CHAT_TRANSFER,
-		chat_id,
-		user,
-		toUser
-	}
-}
+const operatorChatTransfer = ( chat_id, user, toUser ) => (
+	{ type: OPERATOR_CHAT_TRANSFER, chat_id, user, toUser }
+)
 
 const OPERATOR_READY = 'OPERATOR_READY'
-const operatorReady = ( user, socket, room ) => ( {
-	type: OPERATOR_READY, user, socket, room
-} )
+const operatorReady = ( user, socket, room ) => (
+	{ type: OPERATOR_READY, user, socket, room }
+);
 
 const join = ( { socket, store, user, io } ) => {
 	debug( 'initialize the operator', user )
@@ -174,6 +179,108 @@ export default ( io, events ) => ( store ) => {
 		)
 	} )
 
+	const identifyClients = ( { clients, timeout, deferred } ) => {
+		parallel( map( clients, ( client_id ) => ( callback ) => {
+			const client = io.connected[client_id]
+			const complete = once( callback )
+			withTimeout( ( cancel ) => {
+				if ( !client ) {
+					cancel()
+					return complete( null, null )
+				}
+				client.emit( 'identify', ( identity ) => {
+					cancel()
+					complete( null, identity )
+				} )
+			}, () => complete( null, null ), timeout )
+		} ), ( error, results ) => {
+			if ( error ) {
+				return deferred.reject( error )
+			}
+			deferred.resolve( results )
+		} )
+	}
+
+	// TODO - room breaks the abstraction?
+	const queryClients = ( { room, deferred } ) => {
+		const onClients = ( error, clients ) => {
+			if ( error ) {
+				return deferred.reject( error )
+			}
+			deferred.resolve( clients )
+		}
+
+		if ( room ) {
+			io.in( room ).clients( onClients )
+		} else {
+			io.clients( onClients )
+		}
+	}
+
+	const operatorClientQuery = ( { id, deferred } ) => {
+		const room = `operators/${ id }`
+		io.in( room ).clients( ( error, clients ) => {
+			if ( error ) deferred.reject( error )
+			deferred.resolve( map( clients, ( socketid ) => io.connected[socketid] ) )
+		} )
+	}
+
+	const openChatForClients = ( { operator, clients, room, chat, deferred, onDisconnect } ) => {
+		const operator_room_name = `operators/${operator.id}`
+		parallel( map( clients, ( socket ) => ( complete ) => {
+			socket.join( room, ( error ) => {
+				// a socket has joined
+				debug( 'chat was opened', room )
+				events.emit( 'join', chat, operator, socket )
+				complete( error )
+				socket.on( 'disconnect', onDisconnect )
+			} )
+		} ), ( e ) => {
+			if ( e ) {
+				return deferred.reject( e )
+			}
+			debug( 'Assigning chat: (chat.open)', chat, operator_room_name )
+			io.in( operator_room_name ).emit( 'chat.open', chat )
+			deferred.resolve( clients )
+		} )
+	}
+
+	const leaveChat = ( { clients, room, operator_room, chat, deferred } ) => {
+		parallel( map( clients, socket => callback => {
+			socket.leave( room, error => callback( error, socket ) )
+		} ), e => {
+			if ( e ) return deferred.reject( e )
+			io.in( operator_room ).emit( 'chat.leave', chat )
+			deferred.resolve( clients )
+		} )
+	}
+
+	const queryAvailability = ( { clients, chat, deferred } ) => {
+		if ( isEmpty( clients ) ) {
+			return deferred.reject( new Error( 'no operators connected' ) )
+		}
+
+		parallel( clients.map( ( socket_id ) => ( complete ) => {
+			const callback = once( complete )
+			withTimeout( ( cancel ) => {
+				const socket = io.connected[socket_id]
+				socket.emit( 'available', chat, ( available ) => {
+					callback( null, assign( { socket }, available ) )
+					cancel()
+				} )
+			}, () => callback( null, { capacity: 0, load: 0 } ) )
+		} ), ( error, results ) => {
+			if ( error ) {
+				return deferred.reject( error )
+			}
+			deferred.resolve( results )
+		} )
+	}
+
+	store.subscribe( throttle( () => {
+		io.emit( 'operators.online', selectIdentities( store.getState() ) );
+	}, 100 ) )
+
 	return ( next ) => ( action ) => {
 		// const state = store.getState();
 
@@ -200,6 +307,36 @@ export default ( io, events ) => ( store ) => {
 				events.emit( 'init', { user: action.user, socket: action.socket, room: action.room } )
 			case REMOVE_USER:
 				events.emit( 'disconnect', action.user )
+				break;
+			case OPERATOR_RECEIVE:
+				io.in( customerRoom( action.id ) ).emit( 'chat.message', { id: action }, action.message )
+				break;
+			case OPERATOR_RECEIVE_TYPING:
+				io.in( customerRoom( action.id ) ).emit( 'chat.typing', action.chat, action.user, action.text )
+				break;
+			case OPERATOR_CHAT_ONLINE:
+				io.in( customerRoom( action.id ) ).emit( 'chat.online', action.id, action.identities )
+				break;
+			case OPERATOR_IDENTIFY_CLIENT_REQUEST:
+				identifyClients( action );
+				break;
+			case CLIENT_QUERY:
+				queryClients( action );
+				break;
+			case OPERATOR_CLIENT_QUERY:
+				operatorClientQuery( action );
+				break;
+			case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
+				openChatForClients( action );
+				break;
+			case OPERATOR_LEAVE_CHAT:
+				leaveChat( action );
+				break;
+			case OPERATOR_CLOSE_CHAT:
+				io.in( action.room ).emit( 'chat.close', action.chat, action.operator )
+				break;
+			case OPERATOR_QUERY_AVAILABILITY:
+				queryAvailability( action );
 				break;
 		}
 		return next( action );
