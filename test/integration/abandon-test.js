@@ -3,6 +3,10 @@ import util, { authenticators } from './util'
 
 const debug = require( 'debug' )( 'happychat:test:integration' )
 
+process.on( 'unhandledRejection', ( e ) => {
+	debug( 'unhandled rejection', e )
+} )
+
 describe( 'Abandoned service', () => {
 	let mockUser = {
 		id: 'mock-user-id',
@@ -38,8 +42,13 @@ describe( 'Abandoned service', () => {
 	} )
 
 	const reconnectOperator = ( { operator } ) => new Promise( ( resolve ) => {
-		operator.once( 'disconnect', () => operator.connect() )
+		operator.once( 'disconnect', () => {
+			debug( 'disconnected and reconnecting' )
+			operator.once( 'connect', () => debug( 'reconnected' ) )
+			operator.connect()
+		} )
 		operator.once( 'chat.open', ( chat ) => {
+			debug( 'chat reopend' )
 			resolve( chat )
 		} )
 		operator.disconnect()

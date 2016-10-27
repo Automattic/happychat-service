@@ -103,8 +103,7 @@ describe( 'Customer Service', () => {
 				done()
 			} )
 			customerEvents.emit( 'accept', { id: mockUser.session_id }, false )
-		})
-
+		} )
 	} )
 
 	it( 'should allow connections', () => {

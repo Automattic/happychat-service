@@ -7,6 +7,8 @@ import { ChatList } from 'chat-list'
 import { tick } from '../tick'
 import io from '../mock-io'
 
+import { getChat, getChatStatus, getChatOperator } from 'state/chat-list'
+
 const debug = require( 'debug' )( 'happychat:chat-list:test' )
 
 const mockServer = () => {
@@ -28,6 +30,18 @@ describe( 'ChatList', () => {
 	const autoAssign = ops => {
 		ops.on( 'assign', ( { id }, name, callback ) => {
 			callback( null, { id: 'operator-id', socket: new EventEmitter() } )
+		} )
+	}
+
+	const chatlistWithState = ( state ) => {
+		operators = mockServer()
+		customers = mockServer()
+		return new ChatList( {
+			operators,
+			customers,
+			timeout: TIMEOUT,
+			customerDisconnectTimeout: TIMEOUT,
+			state
 		} )
 	}
 
@@ -54,9 +68,11 @@ describe( 'ChatList', () => {
 	it( 'should request operator for chat', ( done ) => {
 		operators.on( 'assign', tick( ( { id }, name, callback ) => {
 			// chat is now pending an operator
-			ok( chatlist._chats['chat-id'] )
-			equal( chatlist._chats['chat-id'][0], 'pending' )
 			equal( id, 'chat-id' )
+			const state = chatlist.store.getState()
+			const chat = getChat( id, state )
+			ok( chat )
+			equal( getChatStatus( id, state ), 'pending' )
 			ok( isFunction( callback ) )
 			done()
 		} ) )
@@ -70,8 +86,8 @@ describe( 'ChatList', () => {
 		chatlist.on( 'found', tick( ( { id }, operator ) => {
 			equal( id, 'chat-id' )
 			equal( operator.id, 'operator-id' )
-			equal( chatlist._chats[id][0], 'assigned' )
-			deepEqual( chatlist._chats[id][2], operator )
+			equal( getChatStatus( id, chatlist.store.getState() ), 'assigned' )
+			deepEqual( getChatOperator( id, chatlist.store.getState() ), operator )
 			done()
 		} ) )
 		emitCustomerMessage()
@@ -98,6 +114,7 @@ describe( 'ChatList', () => {
 	} ) )
 
 	it( 'should ask operators for status when customer joins', ( done ) => {
+		chatlist = chatlistWithState( { 'session-id': [ 'assigned' ] } )
 		const socket = new EventEmitter();
 
 		operators.on( 'accept', tick( ( chat, callback ) => {
@@ -157,23 +174,25 @@ describe( 'ChatList', () => {
 	} )
 
 	describe( 'with customer connections', () => {
-		var socket
+		let socket
 		var operator_id = 'op'
 		beforeEach( () => {
 			// mock up some connected customer accounts
-			chatlist._chats = {
+			chatlist = chatlistWithState( {
 				abd: [ 'pending', { id: 'abd', user: 'Pending' } ],
 				123: [ 'assigned', { id: '123', user: 'Active' } ],
 				xyz: [ 'abandoned', { id: 'xyz', user: 'Abandoned' } ]
-			}
+			} )
 			socket = new EventEmitter()
 		} )
+
 		it( 'should send operator list of active connections', ( done ) => {
-			socket.on( 'chats', tick( ( chats ) => {
-				equal( chats.length, 3 )
-				deepEqual( map( chats, ( { user } ) => user ), [ 'Active', 'Pending', 'Abandoned' ] )
+			socket.once( 'chats', ( list ) => {
+				debug( 'received', list )
+				equal( list.length, 3 )
+				deepEqual( map( list, ( { user } ) => user ), [ 'Active', 'Pending', 'Abandoned' ] )
 				done()
-			} ) )
+			} )
 			operators.emit( 'init', { user: { id: operator_id }, socket } )
 		} )
 	} )
@@ -182,19 +201,20 @@ describe( 'ChatList', () => {
 		const operator_id = 'operator_id'
 		const chat = {id: 'the-id'}
 		var socket = new EventEmitter()
+
 		beforeEach( () => {
-			chatlist._chats[ 'the-id' ] = [ 'assigned', chat, {id: operator_id} ]
+			chatlist = chatlistWithState( { 'the-id': [ 'assigned', chat, {id: operator_id} ] } )
 			return assignOperator( operator_id, socket )
 		} )
 
 		it( 'should store assigned operator', () => {
-			equal( chatlist._chats[chat.id][2].id, operator_id )
+			equal( getChatOperator( chat.id, chatlist.store.getState() ).id, operator_id )
 		} )
 
 		it( 'should mark chats as abandoned when operator is completely disconnected', ( done ) => {
 			operators.on( 'disconnect', tick( () => {
-				ok( chatlist._chats[chat.id] )
-				equal( chatlist._chats[chat.id][0], 'abandoned' )
+				ok( getChat( chat.id, chatlist.store.getState() ) )
+				equal( getChatStatus( chat.id, chatlist.store.getState() ), 'abandoned' )
 				done()
 			} ) )
 			operators.emit( 'disconnect', { id: operator_id } )
@@ -205,7 +225,7 @@ describe( 'ChatList', () => {
 				deepEqual( operator, { id: 'op-id' } )
 				deepEqual( _chat, chat )
 				equal( room, `customers/${chat.id}` )
-				ok( !chatlist._chats[chat.id] )
+				ok( ! getChat( chat.id, chatlist.store.getState() ) )
 				done()
 			} )
 			operators.emit( 'chat.close', 'the-id', { id: 'op-id' } )
@@ -225,7 +245,7 @@ describe( 'ChatList', () => {
 
 		it( 'should fail to transfer chat with no assigned operator', done => {
 			const newOperator = { id: 'new-operator' }
-			chatlist._chats[ 'the-id' ] = [ 'assigned', chat ]
+			chatlist = chatlistWithState( { 'the-id': [ 'assigned', chat, null ] } )
 			chatlist.once( 'miss', () => {
 				done( new Error( 'failed to transfer chat' ) )
 			} )

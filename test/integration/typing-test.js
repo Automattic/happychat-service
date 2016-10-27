@@ -44,7 +44,7 @@ describe( 'Integration: Typing', () => {
 	beforeEach( () => {
 		service = util( authenticators( customer, operator, {} ) )
 		service.start()
-	}  )
+	} )
 
 	afterEach( () => {
 		service.stop()

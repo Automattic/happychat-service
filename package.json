@@ -32,6 +32,7 @@
   "dependencies": {
     "async": "^2.0.0-rc.2",
     "lodash": "^4.11.1",
+    "ramda": "^0.22.1",
     "redux": "^3.5.2",
     "socket.io": "^1.4.5",
     "uuid": "^2.0.1"

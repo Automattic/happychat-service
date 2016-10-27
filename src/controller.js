@@ -158,7 +158,7 @@ export default ( { customers, agents, operators } ) => {
 		const origin = 'operator'
 
 		runMiddleware( { origin, destination: 'agent', chat, message, user: operator } )
-		.then( m => agents.emit( 'receive', formatAgentMessage( 'operator', message.user.id, chat.id, m ) ) )
+		.then( m => agents.emit( 'receive', formatAgentMessage( 'operator', operator.id, chat.id, m ) ) )
 
 		runMiddleware( { origin, destination: 'operator', chat, message, user: operator } )
 		.then( m => new Promise( ( resolve, reject ) => {

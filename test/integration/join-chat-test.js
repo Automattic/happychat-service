@@ -43,7 +43,7 @@ describe( 'Operator', () => {
 
 	beforeEach( () => {
 		service = util( authenticators( mockUser, opUser, {} ) )
-		service.start() 
+		service.start()
 	} )
 	afterEach( () => service.stop() )
 

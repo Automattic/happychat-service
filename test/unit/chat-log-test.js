@@ -53,10 +53,10 @@ describe( 'ChatLog', () => {
 	it( 'should limit the size of the chat log cache', () => {
 		var head, rest
 		var record = ( i ) => () => {
-			return log.recordCustomerMessage( chat, { id:`message-${i}`, text: `message-${i}` } )
+			return log.recordCustomerMessage( chat, { id: `message-${i}`, text: `message-${i}` } )
 		}
 		var actions = []
-		while( actions.length < 20 ) {
+		while ( actions.length < 20 ) {
 			actions.push( record( actions.length ) )
 		}
 		[ head, ...rest ] = actions
