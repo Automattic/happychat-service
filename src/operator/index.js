@@ -11,7 +11,10 @@ import reducer, {
 	selectIdentities,
 	selectSocketIdentity,
 	selectTotalCapacity,
-	selectUser,
+	selectUser
+} from './store'
+
+import {
 	updateAvailability,
 	incrementLoad,
 	decrementLoad,
@@ -25,10 +28,11 @@ import reducer, {
 	operatorLeaveChat,
 	operatorChatClose,
 	operatorQueryAvailability
-} from './store'
+} from './actions';
+
 import { createStore, applyMiddleware } from 'redux'
 
-import operatorMiddleware from '../middlewares/operators'
+import socketIoMiddleware from '../middlewares/socket-io'
 
 const STATUS_AVAILABLE = 'available';
 
@@ -144,7 +148,7 @@ const leaveChat = ( { store, operator, chat, room, events } ) => {
 export default io => {
 	const events = new EventEmitter()
 	const store = createStore( reducer(), applyMiddleware(
-		operatorMiddleware( io, events )
+		socketIoMiddleware( io, events )
 	) );
 
 	const emitOnline = throttle( users => {

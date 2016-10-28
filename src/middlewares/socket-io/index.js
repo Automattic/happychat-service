@@ -22,7 +22,10 @@ import {
 	updateCapacity,
 	removeUserSocket,
 	removeUser,
-	updateIdentity,
+	updateIdentity
+} from '../../operator/actions';
+
+import {
 	selectUser,
 	selectIdentities
 } from '../../operator/store';
@@ -47,7 +50,6 @@ const identityForUser = ( { id, displayName, avatarURL } ) => (
 
 const customerRoom = id => `customers/${ id }`;
 
-// TODO Actions should be moved elsewhere since this should be socket.io specific
 const OPERATOR_MESSAGE = 'OPERATOR_MESSAGE';
 const operatorMessage = ( id, user, message ) => (
 	{ type: OPERATOR_MESSAGE, id, user, message }
@@ -277,12 +279,13 @@ export default ( io, events ) => ( store ) => {
 		} )
 	}
 
-	store.subscribe( throttle( () => {
+	const emitOnline = throttle( () => {
 		io.emit( 'operators.online', selectIdentities( store.getState() ) );
-	}, 100 ) )
+	}, 100 );
 
 	return ( next ) => ( action ) => {
 		// const state = store.getState();
+		emitOnline();
 
 		switch ( action.type ) {
 			case OPERATOR_MESSAGE:
