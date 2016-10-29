@@ -7,7 +7,7 @@ import { ChatList } from 'chat-list'
 import { tick } from '../tick'
 import io from '../mock-io'
 
-import { getChat, getChatStatus, getChatOperator } from 'state/chat-list'
+import { getChat, getChatStatus, getChatOperator } from 'chat-list/selectors'
 
 const debug = require( 'debug' )( 'happychat:chat-list:test' )
 

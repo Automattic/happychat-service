@@ -3,17 +3,22 @@ import assign from 'lodash/assign'
 import values from 'lodash/values'
 import filter from 'lodash/filter'
 import map from 'lodash/map'
-import { makeEventMessage } from './util'
+import { makeEventMessage } from '../util'
 import { createStore, applyMiddleware } from 'redux'
 import {
 	reducer,
-	middleware,
-	// selectors
+	STATUS_NEW
+} from './reducer'
+import {
+	middleware
+} from './middleware'
+import {
 	getChat,
 	getChatOperator,
 	getChatStatus,
 	getChats,
-	// actions
+} from './selectors'
+import {
 	broadcastChats,
 	insertPendingChat,
 	setChatMissed,
@@ -24,10 +29,8 @@ import {
 	recoverChats,
 	receiveCustomerMessage,
 	closeChat,
-	transferChat,
-	// constants
-	STATUS_NEW
-} from 'state/chat-list'
+	transferChat
+} from './actions'
 
 const STATUS_ASSIGNED = 'assigned'
 const STATUS_CUSTOMER_DISCONNECT = 'customer-disconnect'
