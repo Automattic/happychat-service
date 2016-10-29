@@ -4,7 +4,6 @@ import assign from 'lodash/assign'
 
 import { ChatList } from './chat-list'
 import { ChatLog } from './chat-log'
-import { makeEventMessage } from './util'
 
 const debug = require( 'debug' )( 'happychat:controller' )
 
@@ -30,8 +29,6 @@ const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
 	}
 	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
 }
-
-export const NO_OPS_AVAILABLE_MSG = 'No agents are currently available to chat, please try again later.';
 
 export default ( { customers, agents, operators } ) => {
 	const middlewares = []
@@ -80,23 +77,6 @@ export default ( { customers, agents, operators } ) => {
 	} )
 
 	chats
-	.on( 'miss', ( e, chat ) => {
-		debug( 'failed to find operator', e, chat, e.stack )
-		const { id: chat_id } = chat;
-		const user = {
-			id: -1,
-			displayName: 'Agent W',
-			avatarURL: 'https://wapuuclub.files.wordpress.com/2015/12/original_wapuu.png'
-		};
-		const message = makeEventMessage( NO_OPS_AVAILABLE_MSG, chat_id );
-		message.type = 'message';
-		message.user = user;
-		message.meta = {};
-		message.meta.skiptranscript = true;
-		debug( 'sending message', { id: chat_id }, user, message );
-		operators.emit( 'message', { id: chat_id }, user, message );
-		customers.emit( 'chat.unavailable', chat );
-	} )
 	.on( 'open', ( { id } ) => {
 		debug( 'looking for operator', id )
 	} )

@@ -1,4 +1,4 @@
-import { equal, deepEqual, ok } from 'assert'
+import { equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
 import makeController from 'controller'
 
@@ -71,16 +71,6 @@ describe( 'Controller', () => {
 			} )
 			customers.emit( 'message', { id: 'user-id', session_id: 'user-id' }, { session_id: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 } )
 		} )
-
-		it( 'should send a message on miss', ( done ) => {
-			operators.on( 'message', ( chat, user, message ) => {
-				equal( message.type, 'message' );
-				ok( message.text )
-				ok( message.user );
-				done();
-			});
-			customers.emit( 'message', { id: 'user-id', session_id: 'user-id' }, { session_id: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 } )
-		})
 	} )
 
 	describe( 'agent message', () => {

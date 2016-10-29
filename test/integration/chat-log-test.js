@@ -1,6 +1,5 @@
 import { deepEqual } from 'assert'
 import util, { authenticators } from './util'
-import { NO_OPS_AVAILABLE_MSG } from 'controller'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
 import assign from 'lodash/assign'
@@ -87,7 +86,7 @@ describe( 'Chat logs', () => {
 		.then( ( [ log ] ) => {
 			deepEqual(
 				map( log, ( { text } ) => text ),
-				map( [ ...mockMessages, NO_OPS_AVAILABLE_MSG ], m => 'test: ' + m )
+				map( mockMessages, m => 'test: ' + m )
 			)
 		} )
 	} )
@@ -101,7 +100,7 @@ describe( 'Chat logs', () => {
 		.then( setOperatorOnline )
 		.then( listenForLog )
 		.then( ( [ , messages ] ) => {
-			deepEqual( map( messages, ( { text } ) => text ), [ ...mockMessages, NO_OPS_AVAILABLE_MSG ] )
+			deepEqual( map( messages, ( { text } ) => text ), mockMessages )
 		} )
 	} )
 } )
