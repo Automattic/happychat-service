@@ -60,9 +60,7 @@ const main = ( authenticators, port = 65115 ) => {
 export { main as default }
 
 export const authenticators = ( customer, operator, agent ) => {
-	debug( 'initializing authenticator', customer )
 	let customerAuthenticator = ( socket, callback ) => {
-		debug( 'authenticating customer', customer )
 		callback( null, customer )
 	}
 	let agentAuthenticator = ( socket, callback ) => callback( null, agent )

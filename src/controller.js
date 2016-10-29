@@ -49,7 +49,7 @@ export default ( { customers, agents, operators } ) => {
 			// the next middleware
 			const run = ( data, [ head, ... rest ] ) => {
 				if ( !head ) {
-					debug( 'middleware complete', chat.id, data )
+					debug( 'middleware complete', chat.id, data.type )
 					return middlewareComplete( data.message )
 				}
 
@@ -77,14 +77,21 @@ export default ( { customers, agents, operators } ) => {
 	} )
 
 	chats
-	.on( 'open', ( { id } ) => {
-		debug( 'looking for operator', id )
-	} )
-	.on( 'found', ( channel, operator ) => {
-		debug( 'found operator', channel.id, operator.id )
-	} )
-	.on( 'chat.status', ( status, chat ) => {
-		debug( 'chats status changed', status, chat.id )
+	.on( 'miss', ( e, chat, lastStatus ) => {
+		debug( 'failed to find operator', chat.id, lastStatus )
+		const { id: chat_id } = chat;
+		const user = {
+			id: -1,
+			displayName: 'Agent W',
+			avatarURL: 'https://wapuuclub.files.wordpress.com/2015/12/original_wapuu.png'
+		};
+		const message = makeEventMessage( NO_OPS_AVAILABLE_MSG, chat_id );
+		message.type = 'message';
+		message.user = user;
+		message.meta = {};
+		message.meta.skiptranscript = true;
+		// operators.emit( 'message', { id: chat_id }, user, message );
+		customers.emit( 'chat.unavailable', chat );
 	} )
 
 	agents.on( 'system.info', done => {
@@ -130,7 +137,7 @@ export default ( { customers, agents, operators } ) => {
 
 	customers.on( 'message', ( chat, message ) => {
 		// broadcast the message to
-		debug( 'customer message', chat.id, message.id, message )
+		debug( 'customer message', chat.id, message.id, message.text )
 		const origin = 'customer'
 		runMiddleware( { origin, destination: 'customer', chat, message } )
 		.then( m => new Promise( ( resolve, reject ) => {
@@ -154,7 +161,7 @@ export default ( { customers, agents, operators } ) => {
 	} )
 
 	operators.on( 'message', ( chat, operator, message ) => {
-		debug( 'operator message', chat, message )
+		debug( 'operator message', chat, message.text )
 		const origin = 'operator'
 
 		runMiddleware( { origin, destination: 'agent', chat, message, user: operator } )

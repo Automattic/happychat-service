@@ -82,7 +82,7 @@ export default ( io ) => {
 	events.io = io
 
 	events.on( 'receive', ( chat, message ) => {
-		debug( 'sending message to customer', chat, message )
+		debug( 'sending message to customer', chat.id, message.text )
 		io.to( chatRoom( chat ) ).emit( 'message', message )
 	} )
 

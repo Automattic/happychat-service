@@ -1,4 +1,4 @@
-import { deepEqual, equal } from 'assert'
+import { deepEqual, equal, ok } from 'assert'
 import {
 	reducer,
 	// selectors
@@ -7,6 +7,8 @@ import {
 	getChatStatus,
 	getAllChats,
 	getOperatorAbandonedChats,
+	getChatsWithStatus,
+	havePendingChat,
 	// actions
 	insertPendingChat,
 	closeChat,
@@ -16,9 +18,12 @@ import {
 	// constants
 	STATUS_PENDING,
 	STATUS_MISSED,
-	STATUS_ABANDONED
+	STATUS_ABANDONED,
+	STATUS_ASSIGNED
 } from 'state/chat-list'
 import { createStore } from 'redux'
+
+const debug = require( 'debug' )( 'happychat:test' )
 
 const defaultState = () => createStore( reducer ).getState()
 
@@ -28,7 +33,7 @@ const dispatchAction = ( action, subscriber, state = defaultState() ) => () => n
 		subscriber( getState() )
 		resolve()
 	} )
-	dispatch( action )
+	debug( 'dispatching', dispatch( action ) )
 } )
 
 describe( 'ChatList reducer', () => {
@@ -84,6 +89,23 @@ describe( 'ChatList reducer', () => {
 		)
 	} )
 
+	it( 'should select chat with status', ()=> {
+		deepEqual(
+			getChatsWithStatus( STATUS_PENDING, {
+				id: [ STATUS_PENDING, { id: 'id' } ],
+				id2: [ STATUS_PENDING, { id: 'id2' } ],
+				id3: [ STATUS_ASSIGNED, { id: 'id2' } ]
+			} ),
+			[ { id: 'id' }, { id: 'id2' } ]
+		)
+	} )
+
+	it( 'should have pending chat', () => {
+		ok( havePendingChat( {
+			id: [ STATUS_PENDING, { id: 'id' } ]
+		} ) )
+	} )
+
 	it( 'should insert pending chat', dispatchAction(
 		insertPendingChat( { id: 'chat-id' } ),
 		state => {
@@ -95,7 +117,7 @@ describe( 'ChatList reducer', () => {
 	) )
 
 	it( 'should remove closed chat', dispatchAction(
-		closeChat( { id: 'some-chat' } ),
+		closeChat( 'some-chat' ),
 		state => {
 			deepEqual( state, { 'other-chat': 'b' } )
 		},

@@ -63,6 +63,7 @@ describe( 'Operator Transfer', () => {
 			} ) )
 			.then( ( [a] ) => new Promise( resolve => {
 				// check to make sure the transfer event message is in the log
+				debug( 'wtf', messages )
 				let transfer = find( messages, ( { type, meta } ) => type === 'event' && meta.event_type === 'transfer' )
 				ok( transfer )
 				const expectedTo = Object.assign( {}, operators[1], { load: 0 } )

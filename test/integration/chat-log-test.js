@@ -33,7 +33,7 @@ describe( 'Chat logs', () => {
 
 	const listenForLog = ( customer ) => new Promise( ( resolve ) => {
 		debug( 'waiting for logs' )
-		customer.on( 'log', ( ... args ) => resolve( args ) )
+		customer.once( 'log', ( ... args ) => resolve( args ) )
 	} )
 
 	const sendMessages = ( messages ) => ( customer ) => {
@@ -84,6 +84,7 @@ describe( 'Chat logs', () => {
 		.then( connect )
 		.then( listenForLog )
 		.then( ( [ log ] ) => {
+			debug( 'log', log )
 			deepEqual(
 				map( log, ( { text } ) => text ),
 				map( mockMessages, m => 'test: ' + m )
