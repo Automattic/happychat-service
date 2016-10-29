@@ -20,13 +20,22 @@ import {
 	TRANSFER_CHAT,
 	assignChat,
 	assignNextChat,
+	broadcastChats,
+	closeChat,
 	insertPendingChat,
+	receiveCustomerMessage,
+	reassignChats,
+	recoverChats,
 	setChatMissed,
 	setChatOperator,
-	setChatsRecovered
+	setChatStatus,
+	setChatsRecovered,
+	setOperatorChatsAbandoned,
+	transferChat
 } from './actions'
 import {
 	getChat,
+	getChatOperator,
 	getChats,
 	getChatsForOperator,
 	getChatStatus,
@@ -36,11 +45,14 @@ import {
 	haveMissedChat,
 	havePendingChat,
 	isChatStatusNew,
-	isAssigningChat
+	isAssigningChat,
 } from './selectors'
 import {
+	STATUS_ASSIGNED,
+	STATUS_CUSTOMER_DISCONNECT,
 	STATUS_MISSED,
-	STATUS_PENDING
+	STATUS_NEW,
+	STATUS_PENDING,
 } from './reducer'
 import { makeEventMessage } from '../util'
 
@@ -60,7 +72,103 @@ const asCallback = ( resolve, reject ) => ( e, value ) => {
 	resolve( value )
 }
 
-export const middleware = ( { customers, operators, events } ) => store => {
+export default ( { customers, operators, events } ) => store => {
+	customers.on( 'join', ( socketIdentifier, chat ) => {
+		const status = getChatStatus( chat.id, store.getState() )
+		if ( status === STATUS_CUSTOMER_DISCONNECT ) {
+			store.dispatch( setChatStatus( chat, STATUS_ASSIGNED ) )
+		}
+	} )
+
+	customers.on( 'message', ( chat, message ) => {
+		store.dispatch( receiveCustomerMessage( chat, message ) )
+	} )
+
+	customers.on( 'join', ( socket, chat ) => {
+		const notifyStatus = status => customers.emit( 'accept', chat, status )
+		const status = getChatStatus( chat.id, store.getState() )
+
+		if ( status !== STATUS_NEW ) {
+			debug( 'already chatting', chat, status )
+			notifyStatus( true )
+			return
+		}
+
+		timeout( new Promise( ( resolve, reject ) => {
+			operators.emit( 'accept', chat, asCallback( resolve, reject ) )
+		} ), events._timeout )
+		.then(
+			canAccept => notifyStatus( canAccept ),
+			e => {
+				debug( 'failed to query status', e )
+				notifyStatus( false )
+			}
+		)
+	} )
+
+	customers.on( 'disconnect', ( chat ) => {
+		store.dispatch( setChatStatus( chat, STATUS_CUSTOMER_DISCONNECT ) )
+
+		setTimeout( () => {
+			const status = getChatStatus( chat.id, store.getState() )
+			if ( status !== STATUS_CUSTOMER_DISCONNECT ) {
+				return
+			}
+
+			const operator = getChatOperator( chat.id, store.getState() )
+			operators.emit( 'message', chat, operator,
+				merge( makeEventMessage( 'customer left', chat.id ), {
+					meta: { event_type: 'customer-leave' }
+				} )
+			)
+		}, events._customerDisconnectTimeout )
+	} )
+
+	operators.on( 'init', ( { user, socket, room } ) => {
+		// if this is an additional there will be already assigned chats
+		// find them and open them on this socket
+		debug( 'reassign to user?', user )
+		store.dispatch( recoverChats( user, socket ) )
+		store.dispatch( reassignChats( user, socket ) )
+		store.dispatch( broadcastChats( socket ) )
+	} )
+
+	operators.on( 'available', () => {
+		store.dispatch( assignNextChat() )
+	} )
+
+	operators.on( 'disconnect', ( operator ) => {
+		debug( 'operator disconnected mark chats as abandoned' )
+		store.dispatch( setOperatorChatsAbandoned( operator.id ) )
+	} )
+
+	operators.on( 'chat.join', ( chat_id, operator ) => {
+		debug( 'operator joining chat', chat_id, operator )
+		const chat = getChat( chat_id, store.getState() )
+		const room_name = `customers/${ chat.id }`
+		operators.emit( 'open', chat, room_name, operator )
+		operators.emit( 'message', chat, operator, merge( makeEventMessage( 'operator joined', chat.id ), {
+			meta: { operator, event_type: 'join' }
+		} ) )
+	} )
+
+	operators.on( 'chat.transfer', ( chat_id, from, to ) => {
+		store.dispatch( transferChat( chat_id, from, to ) )
+	} )
+
+	operators.on( 'chat.leave', ( chat_id, operator ) => {
+		const chat = getChat( chat_id, store.getState() )
+		const room_name = `customers/${ chat.id }`
+		operators.emit( 'leave', chat, room_name, operator )
+		operators.emit( 'message', chat, operator, merge( makeEventMessage( 'operator left', chat.id ), {
+			meta: { operator, event_type: 'leave' }
+		} ) )
+	} )
+
+	operators.on( 'chat.close', ( chat_id, operator ) => {
+		store.dispatch( closeChat( chat_id, operator ) )
+	} )
+
 	return next => action => {
 		debug( 'received', action.type )
 		const prevState = store.getState()
@@ -83,11 +191,6 @@ export const middleware = ( { customers, operators, events } ) => store => {
 					debug( 'chat missed', action.chat_id, previousStatus, action.error )
 					events.emit( 'miss', action.error, missedChat, previousStatus )
 				}
-				// const [ status ] = get( this._chats, chat.id, [] );
-				// this._chats = set( this._chats, chat.id, [ STATUS_MISSED, chat ] )
-				// if ( status !== STATUS_MISSED ) {
-				// 	this.emit( 'miss', error, chat )
-				// }
 				break;
 			case CLOSE_CHAT:
 				let closedChat = getChat( action.chat_id, prevState )
@@ -100,7 +203,6 @@ export const middleware = ( { customers, operators, events } ) => store => {
 			case SET_CHAT_OPERATOR:
 				let { operator, chat_id } = action
 				let chatToUpdate = getChat( action.chat_id, store.getState() )
-				events.emit( 'chat.status', 'found', chatToUpdate, operator )
 				events.emit( 'found', chatToUpdate, operator )
 				operators.emit( 'message', chatToUpdate, operator, merge( makeEventMessage( 'operator assigned', chat_id ), {
 					meta: { operator, event_type: 'assigned' }
@@ -152,7 +254,7 @@ export const middleware = ( { customers, operators, events } ) => store => {
 				// events.emit( 'chat.status', STATUS_ASSIGNING, chatToAssign )
 				timeout( new Promise( ( resolve, reject ) => {
 					operators.emit( 'assign', chatToAssign, customer_room_name, asCallback( resolve, reject ) )
-				} ) )
+				} ), events._timeout )
 				.then(
 					( op ) => {
 						store.dispatch( setChatOperator( chatToAssign.id, op ) )

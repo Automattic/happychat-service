@@ -80,7 +80,7 @@ const whereOperatorIs = id => compose(
 
 const whenOperatorIs = id => when( whereOperatorIs( id ) )
 
-export const reducer = ( state = {}, action ) => {
+export default ( state = {}, action ) => {
 	switch ( action.type ) {
 		case SET_CHAT_MISSED:
 		case SET_CHAT_OPERATOR:

@@ -1,7 +1,5 @@
 import { deepEqual, equal, ok } from 'assert'
-import {
-	reducer,
-	// constants
+import reducer, {
 	STATUS_PENDING,
 	STATUS_MISSED,
 	STATUS_ABANDONED,

@@ -90,7 +90,7 @@ export default ( { customers, agents, operators } ) => {
 		message.user = user;
 		message.meta = {};
 		message.meta.skiptranscript = true;
-		// operators.emit( 'message', { id: chat_id }, user, message );
+		operators.emit( 'message', { id: chat_id }, user, message );
 		customers.emit( 'chat.unavailable', chat );
 	} )
 
