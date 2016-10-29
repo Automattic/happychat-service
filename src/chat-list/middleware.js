@@ -49,9 +49,9 @@ import {
 } from './selectors'
 import {
 	STATUS_ASSIGNED,
+	STATUS_ASSIGNING,
 	STATUS_CUSTOMER_DISCONNECT,
 	STATUS_MISSED,
-	STATUS_NEW,
 	STATUS_PENDING,
 } from './reducer'
 import { makeEventMessage } from '../util'
@@ -88,7 +88,7 @@ export default ( { customers, operators, events } ) => store => {
 		const notifyStatus = status => customers.emit( 'accept', chat, status )
 		const status = getChatStatus( chat.id, store.getState() )
 
-		if ( status !== STATUS_NEW ) {
+		if ( status === STATUS_ASSIGNED || status === STATUS_ASSIGNING ) {
 			debug( 'already chatting', chat, status )
 			notifyStatus( true )
 			return

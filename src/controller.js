@@ -2,8 +2,9 @@ import isFunction from 'lodash/isFunction'
 import isEmpty from 'lodash/isEmpty'
 import assign from 'lodash/assign'
 
-import { ChatList } from './chat-list'
+import chatlist from './chat-list'
 import { ChatLog } from './chat-log'
+import { makeEventMessage } from './util'
 
 const debug = require( 'debug' )( 'happychat:controller' )
 
@@ -33,7 +34,7 @@ const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
 export default ( { customers, agents, operators } ) => {
 	const middlewares = []
 	const toAgents = forward( agents )
-	const chats = new ChatList( { customers, operators } )
+	const chats = chatlist( { customers, operators } )
 	const log = { operator: new ChatLog(), customer: new ChatLog() }
 
 	const runMiddleware = ( { origin, destination, chat, user, message } ) => new Promise( ( resolveMiddleware ) => {
@@ -90,7 +91,7 @@ export default ( { customers, agents, operators } ) => {
 		message.user = user;
 		message.meta = {};
 		message.meta.skiptranscript = true;
-		operators.emit( 'message', { id: chat_id }, user, message );
+		// operators.emit( 'message', { id: chat_id }, user, message );
 		customers.emit( 'chat.unavailable', chat );
 	} )
 

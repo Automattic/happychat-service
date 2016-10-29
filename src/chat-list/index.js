@@ -6,20 +6,17 @@ import {
 import reducer from './reducer'
 import middleware from './middleware'
 
-export class ChatList extends EventEmitter {
-	constructor( { customers, operators, timeout = 1000, customerDisconnectTimeout = 90000, state = undefined } ) {
-		super()
+export default ( { customers, operators, timeout = 1000, customerDisconnectTimeout = 90000, state = undefined } ) => {
+	const events = new EventEmitter()
+	events._timeout = timeout
+	events._customerDisconnectTimeout = customerDisconnectTimeout
+	const io_middleware = middleware( { customers, operators, events } )
+	const store = createStore( reducer, state, applyMiddleware( io_middleware ) )
 
-		const { getState } = this.store = createStore( reducer, state, applyMiddleware( middleware( { customers, operators, events: this } ) ) )
-
-		// Default timeout for querying operator clients for information
-		this._timeout = timeout
-		this._customerDisconnectTimeout = customerDisconnectTimeout
-
-		// event and io for customer and operator connections
-		this.customers = customers
-		this.operators = operators
-
-		this.findAllOpenChats = () => getChats( getState() )
+	return {
+		findAllOpenChats: () => getChats( store.getState() ),
+		on: events.on.bind( events ),
+		once: events.once.bind( events ),
+		store
 	}
 }
