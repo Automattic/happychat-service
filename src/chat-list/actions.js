@@ -1,19 +1,18 @@
-export const BROADCAST_CHATS = 'BROADCAST_CHATS'
-export const RECEIVE_CUSTOMER_MESSAGE = 'RECEIVE_CUSTOMER_MESSAGE'
-export const ASSIGN_MISSED_CHAT = 'ASSIGN_MISSED_CHAT'
-export const REASSIGN_CHATS = 'REASSIGN_CHATS'
-export const SET_CHATS_ABANDONED = 'SET_CHATS_ABANDONED'
-export const SET_OPERATOR_CHATS_ABANDONED = 'SET_OPERATOR_CHATS_ABANDONED'
-export const RECOVER_CHATS = 'RECOVER_CHATS'
-export const INSERT_PENDING_CHAT = 'INSERT_PENDING_CHAT'
-export const CLOSE_CHAT = 'CLOSE_CHAT'
-export const SET_CHAT_STATUS = 'SET_CHAT_STATUS'
-export const SET_CHAT_MISSED = 'SET_CHAT_MISSED'
-export const SET_CHAT_OPERATOR = 'SET_CHAT_OPERATOR'
-export const TRANSFER_CHAT = 'TRANSFER_CHAT'
-export const SET_CHATS_RECOVERED = 'SET_CHATS_RECOVERED'
 export const ASSIGN_NEXT_CHAT = 'ASSIGN_NEXT_CHAT'
 export const ASSIGN_CHAT = 'ASSIGN_CHAT'
+export const BROADCAST_CHATS = 'BROADCAST_CHATS'
+export const CLOSE_CHAT = 'CLOSE_CHAT'
+export const INSERT_PENDING_CHAT = 'INSERT_PENDING_CHAT'
+export const REASSIGN_CHATS = 'REASSIGN_CHATS'
+export const RECEIVE_CUSTOMER_MESSAGE = 'RECEIVE_CUSTOMER_MESSAGE'
+export const RECOVER_CHATS = 'RECOVER_CHATS'
+export const SET_CHAT_MISSED = 'SET_CHAT_MISSED'
+export const SET_CHAT_OPERATOR = 'SET_CHAT_OPERATOR'
+export const SET_CHAT_STATUS = 'SET_CHAT_STATUS'
+export const SET_CHATS_ABANDONED = 'SET_CHATS_ABANDONED'
+export const SET_CHATS_RECOVERED = 'SET_CHATS_RECOVERED'
+export const SET_OPERATOR_CHATS_ABANDONED = 'SET_OPERATOR_CHATS_ABANDONED'
+export const TRANSFER_CHAT = 'TRANSFER_CHAT'
 
 export const broadcastChats = ( socket ) => ( {
 	type: BROADCAST_CHATS, socket
@@ -21,10 +20,6 @@ export const broadcastChats = ( socket ) => ( {
 
 export const receiveCustomerMessage = ( chat, message ) => ( {
 	type: RECEIVE_CUSTOMER_MESSAGE, chat, message
-} )
-
-export const assignMissedChat = () => ( {
-	type: ASSIGN_MISSED_CHAT
 } )
 
 export const reassignChats = ( operator, socket ) => ( {

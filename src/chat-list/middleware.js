@@ -6,7 +6,6 @@ import {
 
 import {
 	ASSIGN_CHAT,
-	ASSIGN_MISSED_CHAT,
 	ASSIGN_NEXT_CHAT,
 	BROADCAST_CHATS,
 	CLOSE_CHAT,
@@ -124,7 +123,7 @@ export default ( { customers, operators, events } ) => store => {
 		}, events._customerDisconnectTimeout )
 	} )
 
-	operators.on( 'init', ( { user, socket, room } ) => {
+	operators.on( 'init', ( { user, socket } ) => {
 		// if this is an additional there will be already assigned chats
 		// find them and open them on this socket
 		debug( 'reassign to user?', user )
