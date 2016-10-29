@@ -20,8 +20,6 @@ import {
 	UPDATE_AVAILABILITY,
 } from './actions'
 
-const debug = require( 'debug' )( 'happychat:operator:store' )
-
 // Selectors
 export const selectIdentities = ( { identities } ) => values( identities )
 export const selectSocketIdentity = ( { sockets, identities }, socket ) => get(
