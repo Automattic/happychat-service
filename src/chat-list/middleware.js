@@ -1,7 +1,6 @@
 import {
 	merge,
-	map,
-	lensProp
+	map
 } from 'ramda'
 
 import {
@@ -210,7 +209,7 @@ export default ( { customers, operators, events } ) => store => {
 		let chats = getOperatorAbandonedChats( operator.id, store.getState() )
 		// TODO: should this time out?
 		operators.emit( 'recover', { user: operator, socket: socket, room: `operators/${ operator.id }` }, chats, () => {
-			store.dispatch( setChatsRecovered( map( lensProp( 'id' ), chats ) ) )
+			store.dispatch( setChatsRecovered( map( ( { id } ) => id, chats ) ) )
 		} )
 	}
 
