@@ -21,6 +21,7 @@ import {
 	closeChat,
 	setChatStatus,
 	setChatsAbandoned,
+	setChatsRecovered,
 	setOperatorChatsAbandoned
 } from 'chat-list/actions'
 
@@ -167,4 +168,21 @@ describe( 'ChatList reducer', () => {
 			4: [ STATUS_PENDING, '4', { id: 'other' } ]
 		}
 	) )
+
+	it( 'should set chats recovered', dispatchAction(
+		setChatsRecovered( [ 'a', '3' ] ),
+		state => {
+			deepEqual( state, {
+				a: [ STATUS_ASSIGNED, 'a', { id: 'op-id' } ],
+				2: [ STATUS_ABANDONED, '2', { id: 'op-id' } ],
+				3: [ STATUS_ASSIGNED, '3', { id: 'op-id' } ],
+				4: [ STATUS_PENDING, '4', { id: 'other' } ]
+			} )
+		},
+		{
+			a: [ STATUS_ABANDONED, 'a', { id: 'op-id' } ],
+			2: [ STATUS_ABANDONED, '2', { id: 'op-id' } ],
+			3: [ STATUS_ABANDONED, '3', { id: 'op-id' } ],
+			4: [ STATUS_PENDING, '4', { id: 'other' } ]
+		}	) )
 } )

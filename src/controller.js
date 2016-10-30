@@ -215,7 +215,8 @@ export default ( { customers, agents, operators } ) => {
 			}
 			return external
 		},
-		middlewares
+		middlewares,
+		chats
 	}
 
 	return external
