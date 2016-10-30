@@ -358,10 +358,13 @@ describe( 'ChatList', () => {
 				ok( operator.socket )
 				ok( operator.user )
 				ok( isArray( chats ) )
-				ok( isFunction( complete ) )
+				deepEqual( list.store.getState(), {
+					'chat-id': [ 'assigned', { id: chat_id }, { id: operator_id } ]
+				} )
 				equal( chats.length, 1 )
 				done()
 			} ) )
+
 			operators.emit( 'init', { user: { id: operator_id }, socket } )
 		} )
 	} )
