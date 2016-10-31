@@ -1,4 +1,3 @@
-import EventEmitter from 'events'
 import { parallel } from 'async'
 import isEmpty from 'lodash/isEmpty'
 import set from 'lodash/set'
@@ -7,7 +6,7 @@ import throttle from 'lodash/throttle'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
 
-import reducer, {
+import {
 	selectIdentities,
 	selectSocketIdentity,
 	selectTotalCapacity,
@@ -29,10 +28,6 @@ import {
 	operatorChatClose,
 	operatorQueryAvailability
 } from './actions';
-
-import { createStore, applyMiddleware } from 'redux'
-
-import socketIoMiddleware from '../middlewares/socket-io'
 
 const STATUS_AVAILABLE = 'available';
 
@@ -75,7 +70,6 @@ const pickAvailable = ( selectIdentity ) => ( availability ) => new Promise( ( r
 	if ( !operator.socket ) {
 		return reject( new Error( 'invalid operator' ) )
 	}
-
 	resolve( selectIdentity( operator.socket ) )
 } )
 
@@ -145,11 +139,7 @@ const leaveChat = ( { store, operator, chat, room, events } ) => {
 	} )
 }
 
-export default io => {
-	const events = new EventEmitter()
-	const store = createStore( reducer(), applyMiddleware(
-		socketIoMiddleware( io, events )
-	) );
+export default ( io, events, store ) => {
 
 	const emitOnline = throttle( users => {
 		events.emit( 'available', users )
