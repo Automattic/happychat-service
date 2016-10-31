@@ -1,8 +1,8 @@
 import { createStore, applyMiddleware, combineReducers } from 'redux'
-import operatorMiddleware from 'middlewares/socket-io'
-import operatorReducer from 'operator/store'
-import chatlistReducer from 'chat-list/reducer'
-import chatlistMiddleware from 'chat-list/middleware'
+import operatorMiddleware from '../middlewares/socket-io'
+import operatorReducer from '../operator/store'
+import chatlistReducer from '../chat-list/reducer'
+import chatlistMiddleware from '../chat-list/middleware'
 
 export default ( { io, customers, operators, chatlist } ) => createStore(
 	combineReducers( { operators: operatorReducer(), chatlist: chatlistReducer } ),

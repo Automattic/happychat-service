@@ -4,8 +4,8 @@ import customer from './customer'
 import agent from './agent'
 import operator from './operator'
 import buildController from './controller'
-import chatlist from 'chat-list'
-import createStore from 'store'
+import chatlist from './chat-list'
+import createStore from './store'
 
 const debug = require( 'debug' )( 'happychat:main' )
 
