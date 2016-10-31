@@ -175,7 +175,7 @@ describe( 'Operators', () => {
 			beforeEach( () => new Promise( ( resolve, reject ) => {
 				client.once( 'available', ( pendingChat, available ) => available( { status: 'available', load: 0, capacity: 1 } ) )
 				client.once( 'chat.open', () => resolve() )
-				operators.emit( 'assign', chat, 'room-name', error => {
+				operators.emit( 'assign', chat, `customers/${ chat.id }`, error => {
 					if ( error ) return reject( error )
 				} )
 			} ) )
@@ -201,6 +201,16 @@ describe( 'Operators', () => {
 					} )
 					client.emit( 'chat.transfer', chat.id, userb.id )
 				} ) )
+			} )
+
+			it( 'should send message from customer', ( done ) => {
+				client.once( 'chat.message', ( { id: chat_id }, message ) => {
+					equal( chat_id, chat.id )
+					equal( message.id, 'message-id' )
+					equal( message.text, 'hola mundo' )
+					done()
+				} )
+				operators.emit( 'receive', chat, { id: 'message-id', text: 'hola mundo' } )
 			} )
 
 			it( 'should increment the operator load', ( done ) => {
