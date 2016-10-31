@@ -35,5 +35,5 @@ export default ( server, { customerAuthenticator, agentAuthenticator, operatorAu
 		store
 	} )
 
-	return { io, agents, customers, operators, controller }
+	return { io, agents, customers, operators, controller, store }
 }
