@@ -1,6 +1,7 @@
 import {
 	merge,
-	map
+	map,
+	ifElse
 } from 'ramda'
 
 import {
@@ -78,6 +79,12 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 		}
 	} )
 
+	const whenChatExists = ( success, failure = () => {} ) => ( chat_id, operator ) => ifElse(
+		chat => !! chat,
+		chat => success( chat, operator ),
+		() => failure( chat_id, operator )
+	)( getChat( chat_id, store.getState() ) )
+
 	customers.on( 'message', ( chat, message ) => {
 		store.dispatch( receiveCustomerMessage( chat, message ) )
 	} )
@@ -140,32 +147,31 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 		store.dispatch( setOperatorChatsAbandoned( operator.id ) )
 	} )
 
-	operators.on( 'chat.join', ( chat_id, operator ) => {
-		debug( 'operator joining chat', chat_id, operator )
-		const chat = getChat( chat_id, store.getState() )
+	operators.on( 'chat.join', whenChatExists( ( chat, operator ) => {
+		debug( 'operator joining chat', chat.id, operator )
+
 		const room_name = `customers/${ chat.id }`
 		operators.emit( 'open', chat, room_name, operator )
 		operators.emit( 'message', chat, operator, merge( makeEventMessage( 'operator joined', chat.id ), {
 			meta: { operator, event_type: 'join' }
 		} ) )
-	} )
+	}, chat_id => debug( 'chat.join without existing chat', chat_id ) ) )
 
 	operators.on( 'chat.transfer', ( chat_id, from, to ) => {
 		store.dispatch( transferChat( chat_id, from, to ) )
 	} )
 
-	operators.on( 'chat.leave', ( chat_id, operator ) => {
-		const chat = getChat( chat_id, store.getState() )
+	operators.on( 'chat.leave', whenChatExists( ( chat, operator ) => {
 		const room_name = `customers/${ chat.id }`
 		operators.emit( 'leave', chat, room_name, operator )
 		operators.emit( 'message', chat, operator, merge( makeEventMessage( 'operator left', chat.id ), {
 			meta: { operator, event_type: 'leave' }
 		} ) )
-	} )
+	}, chat_id => debug( 'chat.leave without existing chat', chat_id ) ) )
 
-	operators.on( 'chat.close', ( chat_id, operator ) => {
-		store.dispatch( closeChat( chat_id, operator ) )
-	} )
+	operators.on( 'chat.close', whenChatExists( ( chat, operator ) => {
+		store.dispatch( closeChat( chat.id, operator ) )
+	}, chat_id => debug( 'chat.close without existing chat', chat_id ) ) )
 
 	const handleReceiveCustomerMessage = ( action ) => {
 		debug( 'see if we should assign?', getChatStatus( action.chat.id, store.getState() ) )
