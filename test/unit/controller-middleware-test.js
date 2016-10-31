@@ -12,7 +12,7 @@ describe( 'Controller middleware', () => {
 		customers = new EventEmitter()
 		agents = new EventEmitter()
 		operators = new EventEmitter()
-		controller = makeController( { agents, operators, customers } )
+		controller = makeController( { agents, operators, customers, chatlist: new EventEmitter() } )
 	} )
 
 	it( 'should register middleware', () => {

@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events'
 import { ok, equal, deepEqual, doesNotThrow } from 'assert'
 import operator from 'operator'
 import mockio from '../mock-io'
@@ -6,6 +7,7 @@ import { parallel } from 'async'
 import map from 'lodash/map'
 import includes from 'lodash/includes'
 import reduce from 'lodash/reduce'
+import createStore from 'store'
 
 const debug = require( 'debug' )( 'happychat:test:operators' )
 
@@ -13,7 +15,7 @@ describe( 'Operators', () => {
 	let operators
 	let socketid = 'socket-id'
 	let user
-	let socket, client, server
+	let socket, client, server, events, store, io
 
 	const connectOperator = ( { socket: useSocket, client: useClient }, authUser = { id: 'user-id', displayName: 'name' } ) => new Promise( ( resolve ) => {
 		useSocket.on( 'identify', ( identify ) => identify( null, authUser ) )
@@ -25,8 +27,12 @@ describe( 'Operators', () => {
 	} )
 
 	beforeEach( () => {
-		( { socket, client, server } = mockio( socketid ) )
-		operators = operator( server )
+		events = new EventEmitter();
+		( { server: io } = mockio( socketid ) )
+		server = io.of( '/operator' );
+		( { socket, client } = server.newClient( socketid ) )
+		store = createStore( { io, operators: events, customers: new EventEmitter(), chatlist: new EventEmitter() } )
+		operators = operator( server, events, store )
 		operators.on( 'connection', ( s, callback ) => s.emit( 'identify', callback ) )
 	} )
 
@@ -140,14 +146,14 @@ describe( 'Operators', () => {
 					callback( { load: 0, status: 'available', capacity: 5, id: userb.id } )
 				} )
 
-				operators.emit( 'assign', { id: 'chat-id' }, 'customer/room-name', tick( ( error, assigned ) => {
+				operators.emit( 'assign', { id: 'chat-id' }, 'customer/room-name', ( error, assigned ) => {
 					ok( ! error )
 					ok( a_open )
 					ok( b_open )
 					equal( assigned.id, 'user-id' )
 					ok( includes( socket.rooms, 'customer/room-name' ) )
 					done()
-				} ) )
+				} )
 			} )
 		} )
 
@@ -246,7 +252,7 @@ describe( 'Operators', () => {
 		it( 'should notify with updated operator list when operator joins', ( done ) => {
 			const userb = { id: 'a-user', displayName: 'Jem', status: 'online', load: 1, capacity: 2 }
 			const userc = { id: 'abcdefg', displayName: 'other', status: 'away', load: 3, capacity: 5 }
-			server.on( 'operators.online', tick( ( identities ) => {
+			server.once( 'operators.online', tick( ( identities ) => {
 				equal( identities.length, 3 )
 				deepEqual( map( identities, ( { displayName } ) => displayName ), [ 'furiosa', 'Jem', 'other' ] )
 				deepEqual( map( identities, ( { status } ) => status ), [ 'online', 'online', 'away' ] )
@@ -359,10 +365,10 @@ describe( 'Operators', () => {
 
 		const connectAll = () => Promise.all( ops.map(
 			op => new Promise( ( resolve, reject ) => {
-				const io = server.newClient()
+				const io_client = server.newClient()
 				const record = { load: op.load, capacity: op.capacity, status: 'available' }
-				io.client
-				.on( 'init', () => io.client.emit( 'status', op.status, () => {
+				io_client.client
+				.on( 'init', () => io_client.client.emit( 'status', op.status, () => {
 					resolve()
 				} ) )
 				.on( 'available', ( chat, callback ) => {
@@ -371,7 +377,7 @@ describe( 'Operators', () => {
 				.on( 'chat.open', () => {
 					record.load += 1
 				} )
-				connectOperator( io, op ).catch( reject )
+				connectOperator( io_client, op ).catch( reject )
 			} )
 		) )
 

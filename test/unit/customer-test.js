@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events'
 import customer from 'customer'
 import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
@@ -5,7 +6,7 @@ import { contains, ok, equal, deepEqual } from '../assert'
 const debug = require( 'debug' )( 'happychat:test:customer' )
 
 describe( 'Customer Service', () => {
-	let server, socket, client, customerEvents
+	let server, socket, client, customerEvents, events
 	const mockUser = {
 		id: 'abdefgh',
 		username: 'ridley',
@@ -15,9 +16,10 @@ describe( 'Customer Service', () => {
 	}
 	let auth
 	beforeEach( () => {
+		events = new EventEmitter();
 		( { server, socket, client } = mockIO() )
 		auth = ( next = () => {} ) => {
-			let events = customer( server ).on( 'connection', ( _socket, authUser ) => {
+			customer( server, events ).on( 'connection', ( _socket, authUser ) => {
 				authUser( null, mockUser )
 				client.on( 'init', () => next() )
 			} )
@@ -112,12 +114,12 @@ describe( 'Customer Service', () => {
 			equal( event, 'connection' )
 			equal( typeof( listener ), 'function' )
 			connected = true
-		}} )
+		} }, events )
 		ok( connected )
 	} )
 
 	it( 'should emit connection', ( done ) => {
-		const customers = customer( server )
+		const customers = customer( server, events )
 		customers.on( 'connection', () => {
 			done()
 		} )
@@ -125,7 +127,7 @@ describe( 'Customer Service', () => {
 	} )
 
 	it( 'should authenticate and init client', ( done ) => {
-		customer( server ).once( 'connection', ( _socket, authUser ) => {
+		customer( server, events ).once( 'connection', ( _socket, authUser ) => {
 			authUser( null, { id: 'user1', username: 'user1', session_id: 'session' } )
 		} )
 
@@ -140,7 +142,7 @@ describe( 'Customer Service', () => {
 
 	it( 'should notify user join and leave', ( done ) => {
 		socket.id = 'socket-id'
-		let events = auth()
+		events = auth()
 
 		events.on( 'disconnect-socket', ( { socketIdentifier, chat, user } ) => {
 			equal( socketIdentifier.id, mockUser.id )
@@ -164,13 +166,13 @@ describe( 'Customer Service', () => {
 	} )
 
 	it( 'should fail to authenticate with invalid token', ( done ) => {
-		customer( server ).once( 'connection', ( _socket, authorize ) => authorize( new Error( 'nope' ) ) )
+		customer( server, events ).once( 'connection', ( _socket, authorize ) => authorize( new Error( 'nope' ) ) )
 		client.on( 'unauthorized', () => done() )
 		server.emit( 'connection', socket )
 	} )
 
 	describe( 'with multiple connections', () => {
-		let events, connection2;
+		let connection2;
 		beforeEach( ( next ) => {
 			events = auth( () => {
 				connection2 = server.connectNewClient( undefined, () => next() )

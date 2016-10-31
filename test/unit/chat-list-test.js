@@ -4,8 +4,11 @@ import { isFunction, isArray } from 'lodash/lang'
 import { map } from 'lodash/collection'
 
 import chatlist from 'chat-list'
+import reducer from 'chat-list/reducer'
+import middleware from 'chat-list/middleware'
 import { tick } from '../tick'
 import io from '../mock-io'
+import { createStore, combineReducers, applyMiddleware } from 'redux'
 
 import { getChat, getChatStatus, getChatOperator } from 'chat-list/selectors'
 
@@ -19,10 +22,11 @@ const mockServer = () => {
 
 const TIMEOUT = 10
 
-describe( 'ChatList', () => {
+describe( 'ChatList component', () => {
 	let list
 	let operators
 	let customers
+	let store
 	const emitCustomerMessage = ( id = 'chat-id', text = 'hello' ) => {
 		customers.emit( 'message', { id }, { text } )
 	}
@@ -36,24 +40,20 @@ describe( 'ChatList', () => {
 	const chatlistWithState = ( state ) => {
 		operators = mockServer()
 		customers = mockServer()
+		const events = new EventEmitter()
+		store = createStore( combineReducers( { chatlist: reducer } ), { chatlist: state }, applyMiddleware(
+			middleware( { customers, operators, events, timeout: TIMEOUT, customerDisconnectTimeout: TIMEOUT } )
+		) )
 		return chatlist( {
-			operators,
-			customers,
-			timeout: TIMEOUT,
-			customerDisconnectTimeout: TIMEOUT,
-			state
+			store,
+			events
 		} )
 	}
 
 	beforeEach( () => {
 		operators = mockServer()
 		customers = mockServer()
-		list = chatlist( {
-			operators,
-			customers,
-			timeout: TIMEOUT,
-			customerDisconnectTimeout: TIMEOUT
-		} )
+		list = chatlistWithState()
 	} )
 
 	it( 'should notify when new chat has started', ( done ) => {
@@ -358,9 +358,9 @@ describe( 'ChatList', () => {
 				ok( operator.socket )
 				ok( operator.user )
 				ok( isArray( chats ) )
-				deepEqual( list.store.getState(), {
+				deepEqual( list.store.getState(), { chatlist: {
 					'chat-id': [ 'assigned', { id: chat_id }, { id: operator_id } ]
-				} )
+				} } )
 				equal( chats.length, 1 )
 				done()
 			} ) )
