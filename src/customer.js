@@ -1,4 +1,3 @@
-import { EventEmitter } from 'events'
 import isEmpty from 'lodash/isEmpty'
 import { onConnection, timestamp } from './util'
 
@@ -77,8 +76,7 @@ const join = ( { events, io, user, socket } ) => {
 	socket.join( customerRoom( user ), init( { user, socket, events, io } ) )
 }
 
-export default ( io ) => {
-	const events = new EventEmitter()
+export default ( io, events ) => {
 	events.io = io
 
 	events.on( 'receive', ( chat, message ) => {
