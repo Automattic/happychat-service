@@ -1,5 +1,4 @@
-import { ok, equal, deepEqual } from 'assert'
-import { tick } from '../tick'
+import { equal } from 'assert'
 import util, { authenticators } from './util'
 
 const debug = require( 'debug' )( 'happychat:test:integration:typing' )

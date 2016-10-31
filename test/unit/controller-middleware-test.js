@@ -3,8 +3,6 @@ import makeController from 'controller'
 import { EventEmitter } from 'events'
 import assign from 'lodash/assign'
 
-const debug = require( 'debug' )( 'happychat:test:controller-middleware' )
-
 describe( 'Controller middleware', () => {
 	var agents, operators, customers, controller
 

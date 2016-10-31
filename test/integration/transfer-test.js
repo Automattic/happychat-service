@@ -61,7 +61,7 @@ describe( 'Operator Transfer', () => {
 				a.emit( 'chat.transfer', chat.id, 'b' )
 				b.once( 'chat.open', () => resolve( [a, b] ) )
 			} ) )
-			.then( ( [a] ) => new Promise( resolve => {
+			.then( ( [first] ) => new Promise( resolve => {
 				// check to make sure the transfer event message is in the log
 				debug( 'wtf', messages )
 				let transfer = find( messages, ( { type, meta } ) => type === 'event' && meta.event_type === 'transfer' )
@@ -71,7 +71,7 @@ describe( 'Operator Transfer', () => {
 				deepEqual( transfer.meta.to, expectedTo )
 
 				// clients should receive updated operator load status
-				a.once( 'operators.online', ( status ) => {
+				first.once( 'operators.online', ( status ) => {
 					deepEqual(
 						status,
 						[operators[0], Object.assign( {}, operators[1], { load: 1 } )]
