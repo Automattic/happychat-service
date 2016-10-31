@@ -312,7 +312,7 @@ export default ( io, events ) => ( store ) => {
 				events.emit( 'disconnect', action.user )
 				break;
 			case OPERATOR_RECEIVE:
-				io.in( customerRoom( action.id ) ).emit( 'chat.message', { id: action }, action.message )
+				io.in( customerRoom( action.id ) ).emit( 'chat.message', { id: action.id }, action.message )
 				break;
 			case OPERATOR_RECEIVE_TYPING:
 				io.in( customerRoom( action.id ) ).emit( 'chat.typing', action.chat, action.user, action.text )
