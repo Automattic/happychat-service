@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events'
 
 import get from 'lodash/get'
+import set from 'lodash/set'
 import assign from 'lodash/assign'
 import keys from 'lodash/keys'
 import forEach from 'lodash/forEach'
@@ -11,46 +12,51 @@ const noop = () => {}
 
 var COUNTER = 0
 
-export default ( socketid ) => {
-	const server = new EventEmitter()
+class Server extends EventEmitter {
+	constructor( ns = '/' ) {
+		super()
+		this.rooms = {}
+		this.connected = {}
+		this.namespace = ns
+	}
 
-	server.rooms = {}
-
-	server.to = ( room ) => ( {
-		emit: ( ... args ) => {
-			get( server.rooms, room, [] ).forEach( ( socket ) => {
-				socket.emit( ... args )
-			} )
+	to( room ) {
+		return {
+			emit: ( ... args ) => {
+				get( this.rooms, room, [] ).forEach( ( socket ) => {
+					socket.emit( ... args )
+				} )
+			}
 		}
-	} )
+	}
 
-	server.in = ( room ) => {
-		const sockets = get( server.rooms, room, [] )
+	in( room ) {
+		const sockets = get( this.rooms, room, [] )
 		debug( 'requesting room', room, sockets.length )
 		return {
 			clients: ( cb ) => {
 				// return socket ids of clients
 				cb( null, sockets.map( ( socket ) => socket.id ) )
-				return server
+				return this
 			},
 			emit: ( ... args ) => {
 				sockets.forEach( ( socket ) => socket.emit( ... args ) )
-				return server
+				return this
 			}
 		}
 	}
 
-	server.clients = ( cb ) => {
-		cb( null, keys( get( server, 'connected', {} ) ) )
+	clients( cb ) {
+		cb( null, keys( get( this, 'connected', {} ) ) )
 	}
 
-	server.connected = {}
-	server.connect = ( socket ) => {
-		server.connected[socket.id] = socket
-		process.nextTick( () => server.emit( 'connection', socket ) )
+	connect( socket ) {
+		debug( 'connecting', this.namespace, socket.id )
+		this.connected[socket.id] = socket
+		process.nextTick( () => this.emit( 'connection', socket ) )
 	}
 
-	server.newClient = ( id ) => {
+	newClient( id ) {
 		if ( id === undefined ) id = `socket-io-id-${ COUNTER }`
 		COUNTER ++
 		const client = new EventEmitter()
@@ -69,41 +75,56 @@ export default ( socketid ) => {
 		socket.join = ( room, complete ) => {
 			socket.rooms = socket.rooms.concat( room )
 			const newSockets = {}
-			newSockets[room] = get( server.rooms, room, [] ).concat( socket )
-			server.rooms = assign( {}, server.rooms, newSockets )
+			newSockets[room] = get( this.rooms, room, [] ).concat( socket )
+			this.rooms = assign( {}, this.rooms, newSockets )
 			process.nextTick( complete )
 		}
 		socket.leave = ( room, complete ) => {
 			socket.rooms = reject( socket.rooms, room )
 			const newSockets = {}
-			newSockets[room] = reject( get( server.rooms, room, [] ), socket )
-			server.rooms = assign( {}, server.rooms, newSockets )
+			newSockets[room] = reject( get( this.rooms, room, [] ), socket )
+			this.rooms = assign( {}, this.rooms, newSockets )
 			process.nextTick( complete )
 		}
 		socket.close = () => {}
 		return { socket, client }
 	}
 
-	server.connectNewClient = ( id, next = noop ) => {
-		const connection = server.newClient( id )
+	connectNewClient( id, next = noop ) {
+		const connection = this.newClient( id )
 		const { socket } = connection
-		server.once( 'connection', next )
-		server.connect( socket )
+		this.once( 'connection', next )
+		this.connect( socket )
 		return connection
 	}
 
-	server.disconnect = ( { socket, client } ) => {
+	disconnect( { socket, client } ) {
 		forEach( socket.rooms, ( room ) => {
-			server.rooms[room] = reject( server.rooms[room], socket )
+			this.rooms[room] = reject( this.rooms[room], socket )
 		} )
 		socket.rooms = []
-		delete server.connected[socket.id]
+		delete this.connected[socket.id]
 		process.nextTick( () => {
 			socket.emit( 'disconnect' )
 			client.emit( 'disconnect' )
-			server.emit( 'disconnect', socket )
+			this.emit( 'disconnect', socket )
 		} )
 	}
 
+}
+
+export default ( socketid ) => {
+	const server = new Server()
+
+	server.namespaces = {}
+	server.of = ( name ) => {
+		let ns = get( server.namespaces, name )
+		if ( ns ) {
+			return ns
+		}
+		ns = new Server( name )
+		set( server.namespaces, name, ns )
+		return ns
+	}
 	return assign( { server }, server.newClient( socketid ) )
 }
