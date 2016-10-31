@@ -56,7 +56,7 @@ import { makeEventMessage } from '../util'
 
 const debug = require( 'debug' )( 'happychat:chat-list:middleware' )
 
-const timeout = ( promise, ms = 1000 ) => Promise.race( [
+const withTimeout = ( promise, ms = 1000 ) => Promise.race( [
 	promise,
 	new Promise( ( resolve, reject ) => {
 		setTimeout( () => reject( new Error( 'timeout' ) ), ms )
@@ -92,7 +92,7 @@ export default ( { customers, operators, events } ) => store => {
 			return
 		}
 
-		timeout( new Promise( ( resolve, reject ) => {
+		withTimeout( new Promise( ( resolve, reject ) => {
 			operators.emit( 'accept', chat, asCallback( resolve, reject ) )
 		} ), events._timeout )
 		.then(
@@ -230,7 +230,7 @@ export default ( { customers, operators, events } ) => store => {
 		debug( 'time to do the transfer dance', store.getState() )
 		const { chat_id, to, from } = action
 		const chat = getChat( chat_id, store.getState() )
-		timeout( new Promise( ( resolve, reject ) => {
+		withTimeout( new Promise( ( resolve, reject ) => {
 			operators.emit( 'message', chat, from, merge( makeEventMessage( 'chat transferred', chat_id ), {
 				meta: { from, to, event_type: 'transfer' }
 			} ) )
@@ -252,7 +252,7 @@ export default ( { customers, operators, events } ) => store => {
 		const customer_room_name = `customers/${chat.id}`
 		debug( 'attempting to assign chat' )
 		// events.emit( 'chat.status', STATUS_ASSIGNING, chatToAssign )
-		timeout( new Promise( ( resolve, reject ) => {
+		withTimeout( new Promise( ( resolve, reject ) => {
 			operators.emit( 'assign', chat, customer_room_name, asCallback( resolve, reject ) )
 		} ), events._timeout )
 		.then(
