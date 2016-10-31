@@ -23,6 +23,7 @@ import {
 	STATUS_ASSIGNING
 } from './reducer'
 
+const selectChatlist = view( lensProp( 'chatlist' ) )
 const mapToChat = map( chatView )
 
 const matchingStatus = status => filter( compose( equals( status ), statusView ) )
@@ -42,14 +43,16 @@ export const getChatsForOperator = ( operator_id, state ) => compose(
 		operatorView
 	) ),
 	// get the values of chat
-	values
+	values,
+	selectChatlist
 )( state )
 
-export const getAllChats = compose( mapToChat, values )
+export const getAllChats = compose( mapToChat, values, selectChatlist )
 export const getChatsWithStatus = ( status, state ) => compose(
 	mapToChat,
 	matchingStatus( status ),
-	values
+	values,
+	selectChatlist
 )( state )
 
 export const getOperatorAbandonedChats = ( id, state ) => compose(
@@ -58,7 +61,8 @@ export const getOperatorAbandonedChats = ( id, state ) => compose(
 		compose( whereEq( { id } ), defaultTo( {} ), operatorView ),
 		compose( equals( STATUS_ABANDONED ), statusView )
 	) ),
-	values
+	values,
+	selectChatlist
 )( state )
 
 export const getAbandonedChats = ( state ) => getChatsWithStatus( STATUS_ABANDONED, state )
@@ -67,24 +71,28 @@ export const getMissedChats = ( state ) => getChatsWithStatus( STATUS_MISSED, st
 export const getChatOperator = ( chat_id, state ) => compose(
 	operatorView,
 	defaultTo( [] ),
-	view( lensProp( chat_id ) )
+	view( lensProp( chat_id ) ),
+	selectChatlist
 )( state )
 
 export const getChat = ( chat_id, state ) => compose(
 	chatView,
 	defaultTo( [] ),
-	view( lensProp( chat_id ) )
+	view( lensProp( chat_id ) ),
+	selectChatlist
 )( state )
 
 export const getChats = state => compose(
 	mapToChat,
-	values
+	values,
+	selectChatlist
 )( state )
 
 export const getChatStatus = ( chat_id, state ) => defaultTo( STATUS_NEW )( compose(
 	statusView,
 	defaultTo( [] ),
-	view( lensProp( chat_id ) )
+	view( lensProp( chat_id ) ),
+	selectChatlist
 )( state ) )
 
 export const isChatStatusNew = ( chat_id, state ) => equals( STATUS_NEW, getChatStatus( chat_id, state ) )
