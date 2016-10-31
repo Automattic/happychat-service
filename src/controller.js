@@ -2,7 +2,6 @@ import isFunction from 'lodash/isFunction'
 import isEmpty from 'lodash/isEmpty'
 import assign from 'lodash/assign'
 
-import chatlist from './chat-list'
 import { ChatLog } from './chat-log'
 import { makeEventMessage } from './util'
 
@@ -31,10 +30,10 @@ const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
 	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
 }
 
-export default ( { customers, agents, operators } ) => {
+export default ( { customers, agents, operators, chatlist } ) => {
 	const middlewares = []
 	const toAgents = forward( agents )
-	const chats = chatlist( { customers, operators } )
+	const chats = chatlist
 	const log = { operator: new ChatLog(), customer: new ChatLog() }
 
 	const runMiddleware = ( { origin, destination, chat, user, message } ) => new Promise( ( resolveMiddleware ) => {
