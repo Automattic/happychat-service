@@ -1,7 +1,6 @@
 import { equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
 import makeController from 'controller'
-import chatlist from 'chat-list'
 import createStore from 'store'
 import mockio from '../mock-io'
 
@@ -14,7 +13,7 @@ describe( 'Controller', () => {
 		operators = new EventEmitter()
 		let chats = new EventEmitter()
 		const store = createStore( { io: mockio().server, customers, operators, chatlist: chats } )
-		makeController( { customers, agents, operators, chatlist: chatlist( { store, events: chats } ) } )
+		makeController( { customers, agents, operators, store } )
 	} )
 
 	const mockUser = { id: 'user-id', displayName: 'Furiosa' }

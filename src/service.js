@@ -4,7 +4,6 @@ import customer from './customer'
 import agent from './agent'
 import operator from './operator'
 import buildController from './controller'
-import chatlist from './chat-list'
 import createStore from './store'
 
 const debug = require( 'debug' )( 'happychat:main' )
@@ -33,7 +32,6 @@ export default ( server, { customerAuthenticator, agentAuthenticator, operatorAu
 		customers,
 		agents,
 		operators,
-		chatlist: chatlist( { store, events: chatlistEvents } ),
 		store
 	} )
 

@@ -3,7 +3,7 @@ import isEmpty from 'lodash/isEmpty'
 import assign from 'lodash/assign'
 
 import { ChatLog } from './chat-log'
-import { makeEventMessage } from './util'
+import { getChats } from './chat-list/selectors'
 
 const debug = require( 'debug' )( 'happychat:controller' )
 
@@ -30,10 +30,9 @@ const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
 	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
 }
 
-export default ( { customers, agents, operators, chatlist } ) => {
+export default ( { customers, agents, operators, store } ) => {
 	const middlewares = []
 	const toAgents = forward( agents )
-	const chats = chatlist
 	const log = { operator: new ChatLog(), customer: new ChatLog() }
 
 	const runMiddleware = ( { origin, destination, chat, user, message } ) => new Promise( ( resolveMiddleware ) => {
@@ -79,7 +78,7 @@ export default ( { customers, agents, operators, chatlist } ) => {
 	agents.on( 'system.info', done => {
 		Promise.all( [
 			new Promise( ( resolve ) => operators.emit( 'identities', resolve ) ),
-			chats.findAllOpenChats(),
+			Promise.resolve( getChats( store.getState() ) ),
 		] ).then( values => {
 			debug( 'system.info, got values', values );
 
@@ -196,8 +195,7 @@ export default ( { customers, agents, operators, chatlist } ) => {
 			}
 			return external
 		},
-		middlewares,
-		chats
+		middlewares
 	}
 
 	return external
