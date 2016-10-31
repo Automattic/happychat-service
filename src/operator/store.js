@@ -21,13 +21,13 @@ import {
 } from './actions'
 
 // Selectors
-export const selectIdentities = ( { identities } ) => values( identities )
-export const selectSocketIdentity = ( { sockets, identities }, socket ) => get(
+export const selectIdentities = ( { operators: { identities } } ) => values( identities )
+export const selectSocketIdentity = ( { operators: { sockets, identities } }, socket ) => get(
 	identities,
 	get( sockets, socket.id )
 )
-export const selectUser = ( { identities }, userId ) => get( identities, userId )
-export const selectTotalCapacity = ( { identities }, matchingStatus ) => reduce( identities,
+export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
+export const selectTotalCapacity = ( { operators: { identities } }, matchingStatus ) => reduce( identities,
 	( { load: totalLoad, capacity: totalCapacity }, { load, capacity, status } ) => ( {
 		load: totalLoad + ( status === matchingStatus ? load : 0 ),
 		capacity: totalCapacity + ( status === matchingStatus ? capacity : 0 )
