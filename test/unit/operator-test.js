@@ -226,7 +226,6 @@ describe( 'Operators', () => {
 					{ id: 'nausica', displayName: 'nausica'},
 					{ id: 'ridley', displayName: 'ridley'}
 				]
-				let connections = []
 
 				const connectClients = () => Promise.all(
 					users.map( u => connectOperator( server.newClient(), u ) )
@@ -362,7 +361,6 @@ describe( 'Operators', () => {
 			{ id: 'river', displayName: 'River Tam', status: 'available', capacity: 6, load: 3 },
 			{ id: 'buffy', displayName: 'Buffy', status: 'offline', capacity: 20, load: 0 }
 		]
-		let clients
 
 		const assign = ( chat_id ) => new Promise( ( resolve, reject ) => {
 			operators.emit( 'assign', { id: chat_id }, `customer/${chat_id}`, ( error, assigned ) => {
