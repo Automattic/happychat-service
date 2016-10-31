@@ -77,24 +77,6 @@ export default ( { customers, agents, operators } ) => {
 		.catch( e => debug( e.message ) )
 	} )
 
-	chats
-	.on( 'miss', ( e, chat, lastStatus ) => {
-		debug( 'failed to find operator', chat.id, lastStatus )
-		const { id: chat_id } = chat;
-		const user = {
-			id: -1,
-			displayName: 'Agent W',
-			avatarURL: 'https://wapuuclub.files.wordpress.com/2015/12/original_wapuu.png'
-		};
-		const message = makeEventMessage( NO_OPS_AVAILABLE_MSG, chat_id );
-		message.type = 'message';
-		message.user = user;
-		message.meta = {};
-		message.meta.skiptranscript = true;
-		// operators.emit( 'message', { id: chat_id }, user, message );
-		customers.emit( 'chat.unavailable', chat );
-	} )
-
 	agents.on( 'system.info', done => {
 		Promise.all( [
 			new Promise( ( resolve ) => operators.emit( 'identities', resolve ) ),
