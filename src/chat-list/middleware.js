@@ -70,7 +70,7 @@ const asCallback = ( resolve, reject ) => ( e, value ) => {
 	resolve( value )
 }
 
-export default ( { customers, operators, events } ) => store => {
+export default ( { customers, operators, events, timeout = 1000, customerDisconnectTimeout = 90000 } ) => store => {
 	customers.on( 'join', ( socketIdentifier, chat ) => {
 		const status = getChatStatus( chat.id, store.getState() )
 		if ( status === STATUS_CUSTOMER_DISCONNECT ) {
@@ -94,7 +94,7 @@ export default ( { customers, operators, events } ) => store => {
 
 		withTimeout( new Promise( ( resolve, reject ) => {
 			operators.emit( 'accept', chat, asCallback( resolve, reject ) )
-		} ), events._timeout )
+		} ), timeout )
 		.then(
 			canAccept => notifyStatus( canAccept ),
 			e => {
@@ -119,7 +119,7 @@ export default ( { customers, operators, events } ) => store => {
 					meta: { event_type: 'customer-leave' }
 				} )
 			)
-		}, events._customerDisconnectTimeout )
+		}, customerDisconnectTimeout )
 	} )
 
 	operators.on( 'init', ( { user, socket } ) => {
@@ -235,7 +235,7 @@ export default ( { customers, operators, events } ) => store => {
 				meta: { from, to, event_type: 'transfer' }
 			} ) )
 			operators.emit( 'transfer', chat, from, to, asCallback( resolve, reject ) )
-		} ), events._timeout )
+		} ), timeout )
 		.then(
 			id => {
 				events.emit( 'transfer', chat, id )
@@ -254,7 +254,7 @@ export default ( { customers, operators, events } ) => store => {
 		// events.emit( 'chat.status', STATUS_ASSIGNING, chatToAssign )
 		withTimeout( new Promise( ( resolve, reject ) => {
 			operators.emit( 'assign', chat, customer_room_name, asCallback( resolve, reject ) )
-		} ), events._timeout )
+		} ), timeout )
 		.then(
 			( op ) => {
 				store.dispatch( setChatOperator( chat.id, op ) )
