@@ -93,19 +93,9 @@ const join = ( { socket, store, user, io } ) => {
 	const selectIdentity = userId => selectUser( store.getState(), userId );
 
 	socket.on( 'status', ( status, done ) => {
-		// TODO: if operator has multiple clients, move all of them?
-		const updateStatus = ( e ) => {
-			store.dispatch( updateUserStatus( user, status ) );
-			// events.emit( 'status', user, status )
-			done( e )
-		}
-
-		if ( status === 'online' ) {
-			debug( 'joining room', 'online' )
-			socket.join( 'online', updateStatus )
-		} else {
-			socket.leave( 'online', updateStatus )
-		}
+		store.dispatch( updateUserStatus( user, status ) );
+		// events.emit( 'status', user, status )
+		done()
 	} )
 
 	socket.on( 'capacity', ( capacity, done ) => {
