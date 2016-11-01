@@ -152,10 +152,6 @@ export default ( io, events, store ) => {
 	events.io = io
 	events.store = store
 
-	events.on( 'receive.typing', ( chat, user, text ) => {
-		store.dispatch( operatorReceiveTyping( chat, user, text ) );
-	} )
-
 	events.on( 'transfer', ( chat, from, to, complete ) => {
 		debug( 'transferring', chat, from, to )
 		const toUser = selectUser( store.getState(), to.id )

@@ -5,7 +5,7 @@ import createStore from 'store'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
 import { RECEIVE_CUSTOMER_MESSAGE } from '../../src/chat-list/actions';
-import { OPERATOR_RECEIVE } from '../../src/operator/actions';
+import { OPERATOR_RECEIVE, OPERATOR_RECEIVE_TYPING } from '../../src/operator/actions';
 
 describe( 'Controller', () => {
 	let customers, agents, operators, store, watchingMiddleware
@@ -168,10 +168,10 @@ describe( 'Controller', () => {
 
 	describe( 'customer `typing`', () => {
 		it( 'should notify operators', ( done ) => {
-			operators.on( 'receive.typing', ( chat, user, text ) => {
-				equal( chat.id, 'chat-id' )
-				equal( user.id, 'user-id' )
-				equal( text, 'typing a message...' )
+			watchingMiddleware.watchForType( OPERATOR_RECEIVE_TYPING, ( action ) => {
+				equal( action.chat.id, 'chat-id' )
+				equal( action.user.id, 'user-id' )
+				equal( action.text, 'typing a message...' )
 				done()
 			} )
 
@@ -181,10 +181,10 @@ describe( 'Controller', () => {
 
 	describe( 'operator `typing`', () => {
 		it( 'should notify operators', ( done ) => {
-			operators.on( 'receive.typing', ( chat, user, text ) => {
-				equal( chat.id, 'chat-id' )
-				equal( user.id, 'user-id' )
-				equal( text, 'typing a message...' )
+			watchingMiddleware.watchForType( OPERATOR_RECEIVE_TYPING, ( action ) => {
+				equal( action.chat.id, 'chat-id' )
+				equal( action.user.id, 'user-id' )
+				equal( action.text, 'typing a message...' )
 				done()
 			} )
 

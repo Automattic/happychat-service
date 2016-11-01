@@ -4,7 +4,7 @@ import assign from 'lodash/assign'
 
 import { ChatLog } from './chat-log'
 import { getChats } from './chat-list/selectors'
-import { operatorReceive } from './operator/actions'
+import { operatorReceive, operatorReceiveTyping } from './operator/actions'
 
 const debug = require( 'debug' )( 'happychat:controller' )
 
@@ -109,11 +109,11 @@ export default ( { customers, agents, operators, store } ) => {
 	} )
 
 	customers.on( 'typing', ( chat, user, text ) => {
-		operators.emit( 'receive.typing', chat, user, text )
+		store.dispatch( operatorReceiveTyping( chat, user, text ) );
 	} )
 
 	operators.on( 'typing', ( chat, user, text ) => {
-		operators.emit( 'receive.typing', chat, user, text )
+		store.dispatch( operatorReceiveTyping( chat, user, text ) );
 		customers.emit( 'receive.typing', chat, user, text )
 	} )
 
