@@ -4,7 +4,7 @@ import { isFunction, isArray } from 'lodash/lang'
 import { map } from 'lodash/collection'
 
 import reducer from 'chat-list/reducer'
-import middleware from 'chat-list/middleware'
+import middleware from 'middlewares/socket-io/chatlist'
 import { tick } from '../tick'
 import io from '../mock-io'
 import { createStore, combineReducers, applyMiddleware } from 'redux'

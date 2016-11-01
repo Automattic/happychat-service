@@ -31,7 +31,7 @@ import {
 	setChatsRecovered,
 	setOperatorChatsAbandoned,
 	transferChat
-} from './actions'
+} from '../../chat-list/actions'
 import {
 	getChat,
 	getChatOperator,
@@ -45,15 +45,15 @@ import {
 	havePendingChat,
 	isChatStatusNew,
 	isAssigningChat,
-} from './selectors'
+} from '../../chat-list/selectors'
 import {
 	STATUS_ASSIGNED,
 	STATUS_ASSIGNING,
 	STATUS_CUSTOMER_DISCONNECT,
 	STATUS_MISSED,
 	STATUS_PENDING,
-} from './reducer'
-import { makeEventMessage } from '../util'
+} from '../../chat-list/reducer'
+import { makeEventMessage } from '../../util'
 
 const debug = require( 'debug' )( 'happychat:chat-list:middleware' )
 
