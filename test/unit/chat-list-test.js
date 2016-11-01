@@ -8,6 +8,9 @@ import middleware from 'middlewares/socket-io/chatlist'
 import { tick } from '../tick'
 import io from '../mock-io'
 import { createStore, combineReducers, applyMiddleware } from 'redux'
+import WatchingMiddleware from '../mock-middleware'
+import { OPERATOR_CLOSE_CHAT } from '../../src/operator/actions';
+
 
 import { getChat, getChatStatus, getChatOperator } from 'chat-list/selectors'
 
@@ -26,6 +29,8 @@ describe( 'ChatList component', () => {
 	let customers
 	let store
 	let events
+	let watchingMiddleware
+
 	const emitCustomerMessage = ( id = 'chat-id', text = 'hello' ) => {
 		customers.emit( 'message', { id }, { text } )
 	}
@@ -40,8 +45,10 @@ describe( 'ChatList component', () => {
 		operators = mockServer()
 		customers = mockServer()
 		events = new EventEmitter()
+		watchingMiddleware = new WatchingMiddleware()
 		store = createStore( combineReducers( { chatlist: reducer } ), { chatlist: state }, applyMiddleware(
-			middleware( { customers, operators, events, timeout: TIMEOUT, customerDisconnectTimeout: TIMEOUT } )
+			middleware( { customers, operators, events, timeout: TIMEOUT, customerDisconnectTimeout: TIMEOUT } ),
+			watchingMiddleware.middleware()
 		) )
 	}
 
@@ -216,10 +223,10 @@ describe( 'ChatList component', () => {
 		} )
 
 		it( 'should allow operator to close chat', ( done ) => {
-			operators.once( 'close', ( _chat, room, operator ) => {
-				deepEqual( operator, { id: 'op-id' } )
-				deepEqual( _chat, chat )
-				equal( room, `customers/${chat.id}` )
+			watchingMiddleware.watchForType( OPERATOR_CLOSE_CHAT, ( action ) => {
+				deepEqual( action.operator, { id: 'op-id' } )
+				deepEqual( action.chat, chat )
+				equal( action.room, `customers/${chat.id}` )
 				ok( ! getChat( chat.id, store.getState() ) )
 				done()
 			} )

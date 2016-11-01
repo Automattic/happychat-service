@@ -18,6 +18,7 @@ import {
 	INCREMENT_USER_LOAD,
 	DECREMENT_USER_LOAD,
 	UPDATE_AVAILABILITY,
+	OPERATOR_CLOSE_CHAT
 } from './actions'
 
 // Selectors
@@ -93,6 +94,7 @@ const identities = ( state = {}, action ) => {
 			const incrementedLoad = getLoad( user, state ) + action.amount;
 			return setLoad( { user, load: incrementedLoad }, state );
 		case DECREMENT_USER_LOAD:
+		case OPERATOR_CLOSE_CHAT:
 			const decrementCurrentLoad = getLoad( user, state ) - 1;
 			return setLoad( { user, load: decrementCurrentLoad }, state );
 		default:

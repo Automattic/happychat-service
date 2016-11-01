@@ -9,7 +9,7 @@ import includes from 'lodash/includes'
 import reduce from 'lodash/reduce'
 import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
-import { operatorReceive } from '../../src/operator/actions';
+import { operatorReceive, operatorChatClose } from '../../src/operator/actions';
 
 const debug = require( 'debug' )( 'happychat:test:operators' )
 
@@ -357,7 +357,7 @@ describe( 'Operators', () => {
 					if ( e ) reject( e )
 					resolve( messages )
 				} )
-				operators.emit( 'close', { id: 'chat-id' }, 'customers/chat-id', op )
+				store.dispatch( operatorChatClose( { id: 'chat-id' }, 'customers/chat-id', op ) )
 			} ) )
 			.then( ( messages ) => {
 				equal( messages.length, 2 )

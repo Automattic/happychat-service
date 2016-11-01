@@ -18,14 +18,12 @@ import {
 	incrementLoad,
 	decrementLoad,
 	operatorReceive,
-	operatorReceiveTyping,
 	operatorChatOnline,
 	operatorIdentifyClientRequest,
 	operatorClientQuery,
 	clientQuery,
 	operatorOpenChatForClients,
 	operatorLeaveChat,
-	operatorChatClose,
 	operatorQueryAvailability
 } from './actions';
 
@@ -213,11 +211,6 @@ export default ( io, events, store ) => {
 		.catch( ( e ) => {
 			debug( 'failed to join chat', e )
 		} )
-	} )
-
-	events.on( 'close', ( chat, room, operator ) => {
-		store.dispatch( operatorChatClose( chat, room, operator ) )
-		store.dispatch( decrementLoad( operator ) )
 	} )
 
 	events.on( 'leave', ( chat, room, operator ) => {
