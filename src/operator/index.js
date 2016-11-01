@@ -152,11 +152,6 @@ export default ( io, events, store ) => {
 	events.io = io
 	events.store = store
 
-	// TODO - do a store dispatch where these events are being emitted
-	events.on( 'receive', ( { id }, message ) => {
-		store.dispatch( operatorReceive( id, message ) );
-	} )
-
 	events.on( 'receive.typing', ( chat, user, text ) => {
 		store.dispatch( operatorReceiveTyping( chat, user, text ) );
 	} )
@@ -217,7 +212,7 @@ export default ( io, events, store ) => {
 		assignChat( { store, operator, chat, room, events } )
 		.then( () => {
 			debug( 'operator joined chat', operator, chat )
-			events.emit( 'receive', chat, {} )
+			store.dispatch( operatorReceive( chat.id ) );
 		} )
 		.catch( ( e ) => {
 			debug( 'failed to join chat', e )

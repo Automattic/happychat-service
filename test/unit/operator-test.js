@@ -8,6 +8,8 @@ import map from 'lodash/map'
 import includes from 'lodash/includes'
 import reduce from 'lodash/reduce'
 import createStore from 'store'
+import WatchingMiddleware from '../mock-middleware'
+import { operatorReceive } from '../../src/operator/actions';
 
 const debug = require( 'debug' )( 'happychat:test:operators' )
 
@@ -15,7 +17,7 @@ describe( 'Operators', () => {
 	let operators
 	let socketid = 'socket-id'
 	let user
-	let socket, client, server, events, store, io
+	let socket, client, server, events, store, io, watchingMiddleware
 
 	const connectOperator = ( { socket: useSocket, client: useClient }, authUser = { id: 'user-id', displayName: 'name' } ) => new Promise( ( resolve ) => {
 		useClient
@@ -31,7 +33,9 @@ describe( 'Operators', () => {
 		( { server: io } = mockio( socketid ) )
 		server = io.of( '/operator' );
 		( { socket, client } = server.newClient( socketid ) )
-		store = createStore( { io, operators: events, customers: new EventEmitter(), chatlist: new EventEmitter() } )
+		watchingMiddleware = new WatchingMiddleware()
+
+		store = createStore( { io, operators: events, customers: new EventEmitter(), chatlist: new EventEmitter(), middlewares: [ watchingMiddleware.middleware() ] } )
 		operators = operator( server, events, store )
 		operators.on( 'connection', ( s, callback ) => s.emit( 'identify', callback ) )
 	} )
@@ -218,7 +222,8 @@ describe( 'Operators', () => {
 					equal( message.text, 'hola mundo' )
 					done()
 				} )
-				operators.emit( 'receive', chat, { id: 'message-id', text: 'hola mundo' } )
+
+				store.dispatch( operatorReceive( chat.id, { id: 'message-id', text: 'hola mundo' } ) );
 			} )
 
 			it( 'should increment the operator load', ( done ) => {

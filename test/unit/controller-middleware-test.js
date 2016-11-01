@@ -2,15 +2,28 @@ import { equal } from 'assert'
 import makeController from 'controller'
 import { EventEmitter } from 'events'
 import assign from 'lodash/assign'
+import createStore from 'store'
+import mockio from '../mock-io'
+import WatchingMiddleware from '../mock-middleware'
+import { OPERATOR_RECEIVE } from '../../src/operator/actions';
 
 describe( 'Controller middleware', () => {
-	var agents, operators, customers, controller
+	let controller, customers, agents, operators, store, watchingMiddleware
 
 	beforeEach( () => {
 		customers = new EventEmitter()
 		agents = new EventEmitter()
 		operators = new EventEmitter()
-		controller = makeController( { agents, operators, customers, chatlist: new EventEmitter() } )
+		let chats = new EventEmitter()
+		watchingMiddleware = new WatchingMiddleware()
+		store = createStore( {
+			io: mockio().server,
+			customers,
+			operators,
+			chatlist: chats,
+			middlewares: [ watchingMiddleware.middleware() ]
+		} )
+		controller = makeController( { customers, agents, operators, store } )
 	} )
 
 	it( 'should register middleware', () => {
@@ -74,10 +87,12 @@ describe( 'Controller middleware', () => {
 			equal( destination, 'operator' )
 			next( assign( {}, message, { text: 'intercepted' } ) )
 		} )
-		operators.on( 'receive', ( chat, message ) => {
-			equal( message.text, 'intercepted' )
+
+		watchingMiddleware.watchForType( OPERATOR_RECEIVE, ( action ) => {
+			equal( action.message.text, 'intercepted' )
 			done()
 		} )
+
 		operators.emit(
 			'message',
 			{ id: 'chat-id' },
@@ -96,10 +111,12 @@ describe( 'Controller middleware', () => {
 		} )
 		.middleware( ( { message } ) => assign( {}, message, { text: message.text + ' world' } ) )
 
-		operators.once( 'receive', ( chat, { text } ) => {
-			equal( text, 'goodbye world' )
+
+		watchingMiddleware.watchForType( OPERATOR_RECEIVE, ( action ) => {
+			equal( action.message.text, 'goodbye world' )
 			done()
 		} )
+
 		customers.emit(
 			'message',
 			{ id: 'user-id' },

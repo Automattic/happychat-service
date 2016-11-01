@@ -4,6 +4,7 @@ import assign from 'lodash/assign'
 
 import { ChatLog } from './chat-log'
 import { getChats } from './chat-list/selectors'
+import { operatorReceive } from './operator/actions'
 
 const debug = require( 'debug' )( 'happychat:controller' )
 
@@ -137,7 +138,7 @@ export default ( { customers, agents, operators, store } ) => {
 			log.operator.recordCustomerMessage( chat, m )
 			.then( () => resolve( m ), reject )
 		} ) )
-		.then( m => operators.emit( 'receive', chat, m ) )
+		.then( m => store.dispatch( operatorReceive( chat.id, m ) ) )
 		.catch( e => debug( 'middleware failed', e ) )
 	} )
 
@@ -153,7 +154,7 @@ export default ( { customers, agents, operators, store } ) => {
 			log.operator.recordOperatorMessage( chat, operator, m )
 			.then( () => resolve( m ), reject )
 		} ) )
-		.then( m => operators.emit( 'receive', chat, m ) )
+		.then( m => store.dispatch( operatorReceive( chat.id, m ) ) )
 
 		runMiddleware( { origin, destination: 'customer', chat, message, user: operator } )
 		.then( m => new Promise( ( resolve, reject ) => {
@@ -176,7 +177,7 @@ export default ( { customers, agents, operators, store } ) => {
 			log.operator.recordAgentMessage( chat, m )
 			.then( () => resolve( m ), reject )
 		} ) )
-		.then( m => operators.emit( 'receive', chat, format( m ) ) )
+		.then( m => store.dispatch( operatorReceive( chat.id, format( m ) ) ) )
 
 		runMiddleware( { origin, destination: 'customer', chat, message } )
 		.then( m => new Promise( ( resolve, reject ) => {

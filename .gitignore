@@ -3,3 +3,4 @@ lib/
 *.tgz
 .vscode
 coverage/
+typings/

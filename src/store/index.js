@@ -5,11 +5,12 @@ import broadcastMiddleware from '../middlewares/socket-io/broadcast'
 import operatorReducer from '../operator/store'
 import chatlistReducer from '../chat-list/reducer'
 
-export default ( { io, customers, operators, chatlist } ) => createStore(
+export default ( { io, customers, operators, chatlist, middlewares = [] } ) => createStore(
 	combineReducers( { operators: operatorReducer(), chatlist: chatlistReducer } ),
 	applyMiddleware(
 		operatorMiddleware( io.of( '/operator' ), operators ),
 		chatlistMiddleware( { customers, operators, events: chatlist } ),
-		broadcastMiddleware( io.of( '/operator' ) )
+		broadcastMiddleware( io.of( '/operator' ) ),
+		...middlewares
 	)
 )

@@ -3,16 +3,26 @@ import { EventEmitter } from 'events'
 import makeController from 'controller'
 import createStore from 'store'
 import mockio from '../mock-io'
+import WatchingMiddleware from '../mock-middleware'
+import { RECEIVE_CUSTOMER_MESSAGE } from '../../src/chat-list/actions';
+import { OPERATOR_RECEIVE } from '../../src/operator/actions';
 
 describe( 'Controller', () => {
-	let customers, agents, operators
+	let customers, agents, operators, store, watchingMiddleware
 
 	beforeEach( () => {
 		customers = new EventEmitter()
 		agents = new EventEmitter()
 		operators = new EventEmitter()
 		let chats = new EventEmitter()
-		const store = createStore( { io: mockio().server, customers, operators, chatlist: chats } )
+		watchingMiddleware = new WatchingMiddleware()
+		store = createStore( {
+			io: mockio().server,
+			customers,
+			operators,
+			chatlist: chats,
+			middlewares: [ watchingMiddleware.middleware() ]
+		} )
 		makeController( { customers, agents, operators, store } )
 	} )
 
@@ -67,12 +77,13 @@ describe( 'Controller', () => {
 		} )
 
 		it( 'should notify operators', ( done ) => {
-			operators.on( 'receive', ( user, message ) => {
-				equal( message.id, 'message-id' )
-				equal( message.session_id, 'user-id' )
-				equal( message.text, 'hello' )
+			watchingMiddleware.watchForType( RECEIVE_CUSTOMER_MESSAGE, ( action ) => {
+				equal( action.message.id, 'message-id' )
+				equal( action.message.session_id, 'user-id' )
+				equal( action.message.text, 'hello' )
 				done()
 			} )
+
 			customers.emit( 'message', { id: 'user-id', session_id: 'user-id' }, { session_id: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 } )
 		} )
 	} )
@@ -123,11 +134,12 @@ describe( 'Controller', () => {
 
 	describe( 'operator message', () => {
 		it( 'should notify operators', ( done ) => {
-			operators.on( 'receive', ( chat, message ) => {
-				equal( chat.id, 'chat-id' )
-				equal( message.id, 'message-id' )
-				done()
-			} )
+			watchingMiddleware.watchForAction( {
+				type: OPERATOR_RECEIVE,
+				id: 'chat-id',
+				message: { id: 'message-id' }
+			}, () => done() );
+
 			operators.emit( 'message', { id: 'chat-id' }, mockUser, { id: 'message-id', user: mockUser } )
 		} )
 
