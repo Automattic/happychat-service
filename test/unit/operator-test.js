@@ -18,10 +18,10 @@ describe( 'Operators', () => {
 	let socket, client, server, events, store, io
 
 	const connectOperator = ( { socket: useSocket, client: useClient }, authUser = { id: 'user-id', displayName: 'name' } ) => new Promise( ( resolve ) => {
-		useSocket.on( 'identify', ( identify ) => identify( null, authUser ) )
-		useClient.on( 'identify', ( identify ) => identify( null, authUser ) )
-		useClient.once( 'init', ( clientUser ) => {
-			useClient.emit( 'status', clientUser.status || 'online', () => resolve( { user: clientUser, client: useClient, socket: useSocket } ) )
+		useClient
+		.once( 'identify', ( identify ) => identify( null, authUser ) )
+		.once( 'init', ( clientUser ) => {
+			resolve( { user: clientUser, client: useClient, socket: useSocket } )
 		} )
 		server.connect( useSocket )
 	} )
