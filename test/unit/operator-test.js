@@ -53,6 +53,14 @@ describe( 'Operators', () => {
 			} )
 		} )
 
+		it( 'should send current state to operator', done => {
+			client.on( 'broadcast.state', ( version, state ) => {
+				ok( version )
+				deepEqual( state, store.getState() )
+				done()
+			} )
+		} )
+
 		it( 'should recover chats for an operator', ( done ) => {
 			operators.emit( 'recover', { user: op }, [ { id: 'something' } ], tick( () => {
 				equal( operators.io.rooms['customers/something'].length, 1 )

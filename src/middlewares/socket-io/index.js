@@ -80,7 +80,7 @@ const operatorChatTransfer = ( chat_id, user, toUser ) => (
 	{ type: OPERATOR_CHAT_TRANSFER, chat_id, user, toUser }
 )
 
-const OPERATOR_READY = 'OPERATOR_READY'
+export const OPERATOR_READY = 'OPERATOR_READY'
 const operatorReady = ( user, socket, room ) => (
 	{ type: OPERATOR_READY, user, socket, room }
 );
