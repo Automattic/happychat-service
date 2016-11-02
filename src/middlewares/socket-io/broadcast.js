@@ -36,7 +36,7 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 			new Promise( ( resolve, reject ) => {
 				const user = selectSocketIdentity( getState(), socket )
 				const action = { type: REMOTE_ACTION_TYPE, action: remoteAction, socket, user }
-				if ( canRemoteDispatch( action ) ) {
+				if ( canRemoteDispatch( action, getState ) ) {
 					dispatch( merge( action, { resolve, reject } ) )
 				} else {
 					reject( new Error( 'Remote dispatch not allowed' ) )
