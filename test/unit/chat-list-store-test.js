@@ -24,6 +24,9 @@ import {
 	setChatsRecovered,
 	setOperatorChatsAbandoned
 } from 'chat-list/actions'
+import {
+	operatorOpenChatForClients
+} from 'operator/actions';
 
 import { createStore, combineReducers } from 'redux'
 
@@ -110,13 +113,22 @@ describe( 'ChatList reducer', () => {
 		} } ) )
 	} )
 
-	it( 'should insert pending chat', dispatchAction(
-		insertPendingChat( { id: 'chat-id' } ),
+	it( 'should update chat member set', dispatchAction(
+		operatorOpenChatForClients( { id: 1 }, [], 'room', { id: 'chat-id' } ),
 		state => {
 			deepEqual(
 				state,
-				{ chatlist: { 'chat-id': [ STATUS_PENDING, { id: 'chat-id' }, null ] } }
+				{ chatlist: { 'chat-id': [ null, null, null, null, { 1: true } ] } }
 			)
+		},
+		{ 'chat-id': [ null, null, null, null, {} ] }
+	) )
+
+	it( 'should insert pending chat', dispatchAction(
+		insertPendingChat( { id: 'chat-id' } ),
+		state => {
+			const status = getChatStatus( 'chat-id', state )
+			equal( status, STATUS_PENDING )
 		}
 	) )
 
