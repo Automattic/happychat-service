@@ -73,8 +73,10 @@ const asCallback = ( resolve, reject ) => ( e, value ) => {
 
 export default ( { customers, operators, events, timeout = 1000, customerDisconnectTimeout = 90000 } ) => store => {
 	customers.on( 'join', ( socketIdentifier, chat ) => {
-		const status = getChatStatus( chat.id, store.getState() )
-		if ( status === STATUS_CUSTOMER_DISCONNECT ) {
+		const state = store.getState()
+		const status = getChatStatus( chat.id, state )
+		const operator = getChatOperator( chat.id, state )
+		if ( operator && status === STATUS_CUSTOMER_DISCONNECT ) {
 			store.dispatch( setChatStatus( chat, STATUS_ASSIGNED ) )
 		}
 	} )
