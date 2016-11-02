@@ -1,10 +1,12 @@
 import jsondiff from 'simperium-jsondiff'
 import { v4 as uuid } from 'uuid'
 import { OPERATOR_READY } from './index'
-import { isEmpty } from 'ramda'
+import { isEmpty, merge } from 'ramda'
 import { selectSocketIdentity } from '../../operator/store'
 
 const debug = require( 'debug' )( 'happychat:socket-io:broadcast' )
+
+const REMOTE_ACTION_TYPE = 'REMOTE_ACTION_TYPE'
 
 const join = ( io, socket ) => new Promise( ( resolve, reject ) => {
 	socket.join( 'broadcast', e => {
@@ -21,7 +23,7 @@ const broadcastVersion = ( io, version, nextVersion, patch ) => {
 	io.in( 'broadcast' ).emit( 'broadcast.update', version, nextVersion, patch )
 }
 
-export default ( io, selector = ( state ) => state ) => ( { getState } ) => {
+export default ( io, canRemoteDispatch = () => false, selector = ( state ) => state ) => ( { getState, dispatch } ) => {
 	debug( 'initialized broadcaster' )
 	const { diff } = jsondiff()
 	let version = uuid()
@@ -29,7 +31,28 @@ export default ( io, selector = ( state ) => state ) => ( { getState } ) => {
 
 	const listen = socket => {
 		// socket needs to catch up to current state
-		socket.on( 'broadcast.state', callback => callback( version, currentState ) )
+		const stateListener = callback => callback( version, currentState )
+		const dispatchListener = ( remoteAction, callback ) => {
+			new Promise( ( resolve, reject ) => {
+				const user = selectSocketIdentity( getState(), socket )
+				const action = { type: REMOTE_ACTION_TYPE, action: remoteAction, socket, user }
+				if ( canRemoteDispatch( action ) ) {
+					dispatch( merge( action, { resolve, reject } ) )
+				} else {
+					reject( new Error( 'Remote dispatch not allowed' ) )
+				}
+			} )
+			.then(
+				r => callback( null, r ),
+				e => callback( e )
+			)
+		}
+		socket.on( 'broadcast.state', stateListener )
+		socket.on( 'broadcast.dispatch', dispatchListener )
+		socket.once( 'disconnect', () => {
+			socket.removeListener( 'broadcast.state', stateListener )
+			socket.removeListener( 'broadcast.dispatch', dispatchListener )
+		} )
 		return Promise.resolve( socket )
 	}
 
@@ -39,6 +62,24 @@ export default ( io, selector = ( state ) => state ) => ( { getState } ) => {
 	}
 
 	return next => action => {
+		switch ( action.type ) {
+			case REMOTE_ACTION_TYPE:
+				try {
+					dispatch( action.action )
+					action.resolve()
+				} catch ( e ) {
+					action.reject( e )
+				}
+				return next( action )
+			// when the socket joins operators initialize them
+			case OPERATOR_READY:
+				join( io, action.socket )
+				.then( listen )
+				.then( sendState )
+				.catch( e => debug( 'Failed to add user socket to broadcast', action.user.id, e ) )
+				break;
+		}
+
 		const previousState = getState()
 		const result = next( action )
 		const nextState = currentState = selector( getState() )
@@ -51,16 +92,6 @@ export default ( io, selector = ( state ) => state ) => ( { getState } ) => {
 			broadcastVersion( io, version, nextVersion, patch )
 			version = nextVersion
 			currentState = nextState
-		}
-
-		switch ( action.type ) {
-			// when the socket joins operators initialize them
-			case OPERATOR_READY:
-				join( io, action.socket )
-				.then( listen )
-				.then( sendState )
-				.catch( e => debug( 'Failed to add user socket to broadcast', action.user.id, e ) )
-				break;
 		}
 
 		return result
