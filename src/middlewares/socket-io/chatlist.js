@@ -102,6 +102,10 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 	} )
 
 	customers.on( 'disconnect', ( chat ) => {
+		if ( isChatStatusNew( chat.id, store.getState() ) ) {
+			debug( 'Customer disconnected without starting chat', chat.id )
+			return;
+		}
 		store.dispatch( setChatStatus( chat, STATUS_CUSTOMER_DISCONNECT ) )
 
 		setTimeout( () => {
