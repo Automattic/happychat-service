@@ -9,6 +9,8 @@ import omit from 'lodash/omit'
 import reduce from 'lodash/reduce'
 import { combineReducers } from 'redux'
 
+const debug = require( 'debug' )( 'happychat:operator:store' )
+
 import {
 	UPDATE_IDENTITY,
 	REMOVE_USER,
@@ -96,6 +98,10 @@ const identities = ( state = {}, action ) => {
 			return setLoad( { user, load: incrementedLoad }, state );
 		case DECREMENT_USER_LOAD:
 		case OPERATOR_CLOSE_CHAT:
+			if ( !user ) {
+				debug( action.type, 'without user' )
+				return state;
+			}
 			const decrementCurrentLoad = getLoad( user, state ) - 1;
 			return setLoad( { user, load: decrementCurrentLoad }, state );
 		default:
