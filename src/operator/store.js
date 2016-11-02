@@ -21,8 +21,12 @@ import {
 	DECREMENT_USER_LOAD,
 	UPDATE_AVAILABILITY,
 	OPERATOR_CLOSE_CHAT,
-	SET_ACCEPTS_CUSTOMERS
+	SET_SYSTEM_ACCEPTS_CUSTOMERS
 } from './actions'
+
+import {
+	STATUS_AVAILABLE
+} from './index'
 
 // Selectors
 export const selectIdentities = ( { operators: { identities } } ) => values( identities )
@@ -31,13 +35,26 @@ export const selectSocketIdentity = ( { operators: { sockets, identities } }, so
 	get( sockets, socket.id )
 )
 export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
-export const selectTotalCapacity = ( { operators: { identities } }, matchingStatus ) => reduce( identities,
+export const selectTotalCapacity = ( { operators: { identities } }, matchingStatus = STATUS_AVAILABLE ) => reduce( identities,
 	( { load: totalLoad, capacity: totalCapacity }, { load, capacity, status } ) => ( {
-		load: totalLoad + ( status === matchingStatus ? load : 0 ),
-		capacity: totalCapacity + ( status === matchingStatus ? capacity : 0 )
+		load: totalLoad + ( status === matchingStatus ? parseInt( load ) : 0 ),
+		capacity: totalCapacity + ( status === matchingStatus ? parseInt( capacity ) : 0 )
 	} ),
 	{ load: 0, capacity: 0 }
 )
+
+export const getSystemAcceptsCustomers = ( { operators: { system: { acceptsCustomers } } } ) => acceptsCustomers
+
+export const isSystemAcceptingCustomers = state => {
+	const systemAcceptsCustomers = getSystemAcceptsCustomers( state )
+	debug( 'is system on?', systemAcceptsCustomers )
+	if ( ! systemAcceptsCustomers ) {
+		return false
+	}
+	debug( 'is there capacity?', systemAcceptsCustomers )
+	const { load, capacity } = selectTotalCapacity( state )
+	return load < capacity
+}
 
 // Reducers
 const user_sockets = ( state = {}, action ) => {
@@ -121,8 +138,9 @@ const sockets = ( state = {}, action ) => {
 
 const system = ( state = { acceptsCustomers: false }, action ) => {
 	switch ( action.type ) {
-		case SET_ACCEPTS_CUSTOMERS:
-			return assign( {}, state, { acceptsCustomers: action.accept } )
+		case SET_SYSTEM_ACCEPTS_CUSTOMERS:
+			debug( 'accepts customers?', action )
+			return assign( {}, state, { acceptsCustomers: action.isEnabled } )
 	}
 	return state
 }
