@@ -48,14 +48,14 @@ import {
 } from '../../chat-list/selectors'
 import {
 	STATUS_ASSIGNED,
-	STATUS_ASSIGNING,
 	STATUS_CUSTOMER_DISCONNECT,
 	STATUS_MISSED,
 	STATUS_PENDING,
 } from '../../chat-list/reducer'
 import { operatorChatClose } from '../../operator/actions'
-import { selectTotalCapacity } from '../../operator/store'
-import { STATUS_AVAILABLE } from '../../operator'
+import {
+	isSystemAcceptingCustomers
+} from '../../operator/store'
 import { makeEventMessage } from '../../util'
 
 const debug = require( 'debug' )( 'happychat:chat-list:middleware' )
@@ -81,6 +81,7 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 		const operator = getChatOperator( chat.id, state )
 		if ( operator && status === STATUS_CUSTOMER_DISCONNECT ) {
 			store.dispatch( setChatStatus( chat, STATUS_ASSIGNED ) )
+			return
 		}
 	} )
 
@@ -94,17 +95,10 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 		store.dispatch( receiveCustomerMessage( chat, message ) )
 	} )
 
-	customers.on( 'join', ( socket, chat ) => {
-		const notifyStatus = status => customers.emit( 'accept', status )
-		const status = getChatStatus( chat.id, store.getState() )
-
-		if ( status === STATUS_ASSIGNED || status === STATUS_ASSIGNING ) {
-			debug( 'already chatting', chat, status )
-			notifyStatus( true )
-			return
-		}
-		const { load, capacity } = selectTotalCapacity( store.getState(), STATUS_AVAILABLE )
-		notifyStatus( load < capacity )
+	customers.on( 'join', ( socketid, chat, socket ) => {
+		// when a customer joins inform of status update
+		debug( 'socket?', socket )
+		socket.emit( 'accept', isSystemAcceptingCustomers( store.getState() ) )
 	} )
 
 	customers.on( 'disconnect', ( chat ) => {
