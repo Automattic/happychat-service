@@ -135,8 +135,9 @@ describe( 'Operators', () => {
 
 		it( 'should allow remote dispatch', done => {
 			client.once( 'broadcast.state', () => {
-				client.emit( 'broadcast.dispatch', setAcceptsCustomers( false ), ( error ) => {
+				client.emit( 'broadcast.dispatch', setAcceptsCustomers( true ), ( error ) => {
 					equal( error, null )
+					ok( store.getState().operators.system.acceptsCustomers )
 					done()
 				} )
 			} )
