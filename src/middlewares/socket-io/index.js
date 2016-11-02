@@ -3,7 +3,6 @@ import map from 'lodash/map'
 import once from 'lodash/once'
 import isEmpty from 'lodash/isEmpty'
 import assign from 'lodash/assign'
-import throttle from 'lodash/throttle'
 
 import { onConnection, timestamp } from '../../util'
 import {
@@ -26,8 +25,7 @@ import {
 } from '../../operator/actions';
 
 import {
-	selectUser,
-	selectIdentities
+	selectUser
 } from '../../operator/store';
 
 const debug = require( 'debug' )( 'happychat:middleware:operators' )
@@ -269,14 +267,7 @@ export default ( io, events ) => ( store ) => {
 		} )
 	}
 
-	const emitOnline = throttle( () => {
-		io.emit( 'operators.online', selectIdentities( store.getState() ) );
-	}, 100 );
-
 	return ( next ) => ( action ) => {
-		// const state = store.getState();
-		emitOnline();
-
 		switch ( action.type ) {
 			case OPERATOR_MESSAGE:
 				events.emit( 'message', { id: action.id }, action.user, action.message );
