@@ -10,6 +10,8 @@ import reduce from 'lodash/reduce'
 import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
 import { operatorReceive, operatorChatClose, setAcceptsCustomers } from 'operator/actions'
+import { selectTotalCapacity } from 'operator/store'
+import { STATUS_AVAILABLE } from 'operator'
 
 const debug = require( 'debug' )( 'happychat:test:operators' )
 
@@ -38,13 +40,6 @@ describe( 'Operators', () => {
 		store = createStore( { io, operators: events, customers: new EventEmitter(), chatlist: new EventEmitter(), middlewares: [ watchingMiddleware.middleware() ] } )
 		operators = operator( server, events, store )
 		operators.on( 'connection', ( s, callback ) => s.emit( 'identify', callback ) )
-	} )
-
-	it( 'should report false status when no operators connected', done => {
-		operators.emit( 'accept', { id: 'session-id' }, ( e, status ) => {
-			ok( !status )
-			done()
-		} )
 	} )
 
 	describe( 'when authenticated and online', () => {
@@ -434,11 +429,11 @@ describe( 'Operators', () => {
 			)
 		} ) )
 
-		it( 'should report accepting customers', done => {
-			operators.emit( 'accept', { id: 'session-id' }, ( e, status ) => {
-				ok( status )
-				done();
-			} )
+		it( 'should report accepting customers', () => {
+			const { load, capacity } = selectTotalCapacity( store.getState(), STATUS_AVAILABLE )
+			ok( load < capacity )
+			equal( load, 5 )
+			equal( capacity, 17 )
 		} )
 
 		it( 'should handle identities event', done => {
