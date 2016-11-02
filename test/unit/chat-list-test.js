@@ -1,26 +1,16 @@
 import { ok, equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
 import { isFunction, isArray } from 'lodash/lang'
-import { map } from 'lodash/collection'
 
-import reducer from 'chat-list/reducer'
-import middleware from 'middlewares/socket-io/chatlist'
 import { tick } from '../tick'
-import io from '../mock-io'
-import { createStore, combineReducers, applyMiddleware } from 'redux'
+import mockio from '../mock-io'
+import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
 import { OPERATOR_CLOSE_CHAT } from '../../src/operator/actions';
-
 
 import { getChat, getChatStatus, getChatOperator } from 'chat-list/selectors'
 
 const debug = require( 'debug' )( 'happychat:chat-list:test' )
-
-const mockServer = () => {
-	const server = new EventEmitter()
-	server.io = io().server
-	return server
-}
 
 const TIMEOUT = 10
 
@@ -30,6 +20,7 @@ describe( 'ChatList component', () => {
 	let store
 	let events
 	let watchingMiddleware
+	let io
 
 	const emitCustomerMessage = ( id = 'chat-id', text = 'hello' ) => {
 		customers.emit( 'message', { id }, { text } )
@@ -42,19 +33,18 @@ describe( 'ChatList component', () => {
 	}
 
 	const chatlistWithState = ( state ) => {
-		operators = mockServer()
-		customers = mockServer()
+		( { server: io } = mockio() )
+		operators = new EventEmitter()
+		customers = new EventEmitter()
 		events = new EventEmitter()
 		watchingMiddleware = new WatchingMiddleware()
-		store = createStore( combineReducers( { chatlist: reducer } ), { chatlist: state }, applyMiddleware(
-			middleware( { customers, operators, events, timeout: TIMEOUT, customerDisconnectTimeout: TIMEOUT } ),
-			watchingMiddleware.middleware()
-		) )
+		store = createStore(
+			{ io, operators, customers, chatlist: events, middlewares: [ watchingMiddleware.middleware() ], timeout: 10 },
+			{ chatlist: state }
+		)
 	}
 
 	beforeEach( () => {
-		operators = mockServer()
-		customers = mockServer()
 		chatlistWithState()
 	} )
 
@@ -126,8 +116,7 @@ describe( 'ChatList component', () => {
 			callback( null, true )
 		} ) )
 
-		customers.on( 'accept', tick( ( chat, status ) => {
-			equal( chat.id, 'session-id' )
+		customers.on( 'accept', tick( ( status ) => {
 			ok( status )
 			done()
 		} ) )
@@ -135,34 +124,9 @@ describe( 'ChatList component', () => {
 		customers.emit( 'join', { session_id: 'session-id' }, { id: 'session-id' }, socket )
 	} )
 
-	it( 'should fail status check if callback throws an error', done => {
-		operators.on( 'accept', () => {
-			throw new Error( 'oops' )
-		} )
-
-		customers.on( 'accept', tick( ( chat, status ) => {
-			equal( chat.id, 'session-id' )
-			ok( ! status )
-			done()
-		} ) )
-
-		customers.emit( 'join', { session_id: 'session-id' }, { id: 'session-id' } )
-	} )
-
-	it( 'should fail status check if callback times out', done => {
-		customers.on( 'accept', tick( ( chat, status ) => {
-			equal( chat.id, 'session-id' )
-			ok( ! status )
-			done()
-		} ) )
-
-		customers.emit( 'join', { session_id: 'session-id' }, { id: 'session-id' } )
-	} )
-
 	it( 'should fail status check if existing chat is not assigned', ( done ) => {
 		chatlistWithState( { 'assigned-id': [ 'missed', { id: 'assigned-id' } ] } )
-		customers.on( 'accept', tick( ( chat, status ) => {
-			equal( chat.id, 'assigned-id' )
+		customers.on( 'accept', tick( ( status ) => {
 			ok( ! status )
 			done()
 		} ) )
@@ -170,6 +134,8 @@ describe( 'ChatList component', () => {
 	} )
 
 	const assignOperator = ( operator_id, socket = new EventEmitter() ) => new Promise( ( resolve ) => {
+		// first we need to join the operator
+		io.of( '/operator' ).emit
 		operators.once( 'assign', ( chat, room, callback ) => callback( null, { id: operator_id, socket } ) )
 		events.once( 'found', () => resolve() )
 		emitCustomerMessage()
@@ -177,11 +143,12 @@ describe( 'ChatList component', () => {
 
 	describe( 'with active chat', () => {
 		const operator_id = 'operator_id'
-		const chat = {id: 'the-id'}
+		const chat = { id: 'the-id' }
 		var socket = new EventEmitter()
 
 		beforeEach( () => {
-			chatlistWithState( { 'the-id': [ 'assigned', chat, {id: operator_id} ] } )
+			// TODO: the operator needs to be authenticated before it can close chats
+			chatlistWithState( { 'the-id': [ 'assigned', chat, { id: operator_id } ] } )
 			return assignOperator( operator_id, socket )
 		} )
 
@@ -307,9 +274,10 @@ describe( 'ChatList component', () => {
 			operators.emit( 'chat.leave', chat.id, newOperator )
 		} )
 
+		// TODO: operator needs to be authed before chat can be closed
 		it( 'should send a message when operator closes chat', done => {
-			operators.once( 'message', tick( ( _chat, { id }, message ) => {
-				equal( id, operator_id )
+			operators.once( 'message', tick( ( _chat, operator, message ) => {
+				equal( operator.id, operator_id )
 				deepEqual( _chat, chat )
 				equal( message.type, 'event' )
 				equal( message.meta.by.id, operator_id )
@@ -336,9 +304,9 @@ describe( 'ChatList component', () => {
 				ok( operator.socket )
 				ok( operator.user )
 				ok( isArray( chats ) )
-				deepEqual( store.getState(), { chatlist: {
+				deepEqual( store.getState().chatlist, {
 					'chat-id': [ 'assigned', { id: chat_id }, { id: operator_id } ]
-				} } )
+				} )
 				equal( chats.length, 1 )
 				done()
 			} ) )
