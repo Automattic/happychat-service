@@ -1,7 +1,7 @@
 import jsondiff from 'simperium-jsondiff'
 import { v4 as uuid } from 'uuid'
 import { OPERATOR_READY } from './index'
-import { isEmpty, merge } from 'ramda'
+import { isEmpty } from 'ramda'
 import { selectSocketIdentity } from '../../operator/store'
 
 const debug = require( 'debug' )( 'happychat:socket-io:broadcast' )
@@ -28,23 +28,23 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 	const { diff } = jsondiff()
 	let version = uuid()
 	let currentState = selector( getState() )
+	let patch;
 
 	const listen = socket => {
 		// socket needs to catch up to current state
 		const stateListener = callback => callback( version, currentState )
 		const dispatchListener = ( remoteAction, callback ) => {
-			new Promise( ( resolve, reject ) => {
-				const user = selectSocketIdentity( getState(), socket )
-				const action = { type: REMOTE_ACTION_TYPE, action: remoteAction, socket, user }
-				if ( canRemoteDispatch( action, getState ) ) {
-					dispatch( merge( action, { resolve, reject } ) )
-				} else {
-					reject( new Error( 'Remote dispatch not allowed' ) )
-				}
-			} )
-			.then(
-				r => callback( null, r ),
-				e => callback( e )
+			debug( 'received remote dispatch', remoteAction.type )
+			const user = selectSocketIdentity( getState(), socket )
+			const action = { type: REMOTE_ACTION_TYPE, action: remoteAction, socket, user }
+			if ( ! canRemoteDispatch( action, getState ) ) {
+				debug( 'remote dispatch not allowed for action', remoteAction.type )
+				callback( 'Remote dispatch not allowed' )
+				return
+			}
+			dispatch( action ).then(
+				result => callback( null, result ),
+				e => callback( e.message )
 			)
 		}
 		socket.on( 'broadcast.state', stateListener )
@@ -64,13 +64,20 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 	return next => action => {
 		switch ( action.type ) {
 			case REMOTE_ACTION_TYPE:
-				try {
-					dispatch( action.action )
-					action.resolve()
-				} catch ( e ) {
-					action.reject( e )
-				}
-				return next( action )
+				debug( 'handling REMOTE_ACTION_TYPE' )
+				return new Promise( ( resolve, reject ) => {
+					try {
+						if ( action.action.version && action.action.version !== version ) {
+							// if action is dispatched with a version number, require it to
+							// be up to date with the server version
+							return action.reject( new Error( 'out of date' ) )
+						}
+						dispatch( action.action )
+						resolve( version )
+					} catch ( e ) {
+						reject( e.message )
+					}
+				} )
 			// when the socket joins operators initialize them
 			case OPERATOR_READY:
 				join( io, action.socket )
@@ -83,12 +90,13 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 		const previousState = getState()
 		const result = next( action )
 		const nextState = currentState = selector( getState() )
-		const patch = diff( previousState, nextState )
+		const nextPatch = diff( previousState, nextState )
 
 		// TODO: throttle?
 
-		if ( ! isEmpty( patch ) ) {
+		if ( ! isEmpty( nextPatch ) ) {
 			const nextVersion = uuid()
+			patch = nextPatch
 			broadcastVersion( io, version, nextVersion, patch )
 			version = nextVersion
 			currentState = nextState
