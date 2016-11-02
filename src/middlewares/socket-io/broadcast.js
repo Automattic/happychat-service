@@ -21,11 +21,11 @@ const broadcastVersion = ( io, version, nextVersion, patch ) => {
 	io.in( 'broadcast' ).emit( 'broadcast.update', version, nextVersion, patch )
 }
 
-export default io => ( { getState } ) => {
+export default ( io, selector = ( state ) => state ) => ( { getState } ) => {
 	debug( 'initialized broadcaster' )
 	const { diff } = jsondiff()
 	let version = uuid()
-	let currentState = getState()
+	let currentState = selector( getState() )
 
 	const listen = socket => {
 		// socket needs to catch up to current state
@@ -41,7 +41,7 @@ export default io => ( { getState } ) => {
 	return next => action => {
 		const previousState = getState()
 		const result = next( action )
-		const nextState = currentState = getState()
+		const nextState = currentState = selector( getState() )
 		const patch = diff( previousState, nextState )
 
 		// TODO: throttle?
