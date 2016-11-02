@@ -109,28 +109,12 @@ describe( 'ChatList component', () => {
 		chatlistWithState( { 'session-id': [ 'assigned' ] } )
 		const socket = new EventEmitter();
 
-		operators.on( 'accept', tick( ( chat, callback ) => {
-			equal( chat.id, 'session-id' )
-			equal( typeof callback, 'function' )
-			// report that there is capacity
-			callback( null, true )
-		} ) )
-
-		customers.on( 'accept', tick( ( status ) => {
-			ok( status )
+		socket.once( 'accept', ( accepted ) => {
+			ok( ! accepted )
 			done()
-		} ) )
+		} )
 
 		customers.emit( 'join', { session_id: 'session-id' }, { id: 'session-id' }, socket )
-	} )
-
-	it( 'should fail status check if existing chat is not assigned', ( done ) => {
-		chatlistWithState( { 'assigned-id': [ 'missed', { id: 'assigned-id' } ] } )
-		customers.on( 'accept', tick( ( status ) => {
-			ok( ! status )
-			done()
-		} ) )
-		customers.emit( 'join', { session_id: 'assigned-id' }, { id: 'assigned-id' } )
 	} )
 
 	const assignOperator = ( operator_id, socket = new EventEmitter() ) => new Promise( ( resolve ) => {

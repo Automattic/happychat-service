@@ -125,7 +125,7 @@ describe( 'Operators', () => {
 		it( 'should fail to remote dispatch', done => {
 			client.once( 'broadcast.state', () => {
 				client.emit( 'broadcast.dispatch', { type: 'UNKNOWN' }, ( error ) => {
-					equal( error.message, 'Remote dispatch not allowed' )
+					equal( error, 'Remote dispatch not allowed' )
 					done()
 				} )
 			} )
