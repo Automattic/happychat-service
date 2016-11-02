@@ -23,6 +23,13 @@ import {
 	SET_CHAT_MISSED,
 	CLOSE_CHAT
 } from './actions'
+import {
+	OPERATOR_CHAT_LEAVE,
+	OPERATOR_CHAT_JOIN,
+	OPERATOR_OPEN_CHAT_FOR_CLIENTS
+} from '../operator/actions'
+
+const debug = require( 'debug' )( 'happychat:chat-list:reducer' )
 
 export const STATUS_NEW = 'new'
 export const STATUS_PENDING = 'pending'
@@ -35,20 +42,29 @@ export const STATUS_CUSTOMER_DISCONNECT = 'customer-disconnect'
 const statusLens = lensIndex( 0 )
 const chatLens = lensIndex( 1 )
 const operatorLens = lensIndex( 2 )
+const timestampLens = lensIndex( 3 )
+const membersLens = lensIndex( 4 )
 
 export const statusView = view( statusLens )
 export const chatView = view( chatLens )
 export const operatorView = view( operatorLens )
+export const timestampView = view( timestampLens )
+export const membersView = view( membersLens )
 
 const setStatus = set( statusLens )
 const setChat = set( chatLens )
 const setOperator = set( operatorLens )
+const setTimestamp = set( timestampLens )
+const setMembers = set( membersLens )
 
-const chat = ( state = [ null, null, null ], action ) => {
+const timestamp = () => ( new Date() ).getTime()
+
+const chat = ( state = [ null, null, null, null, {} ], action ) => {
 	switch ( action.type ) {
 		case INSERT_PENDING_CHAT:
 			return compose(
 				setStatus( STATUS_PENDING ),
+				setTimestamp( timestamp() ),
 				setChat( action.chat )
 			)( state )
 		case SET_CHAT_OPERATOR:
@@ -67,6 +83,11 @@ const chat = ( state = [ null, null, null ], action ) => {
 			return setStatus( STATUS_ASSIGNING, state )
 		case SET_CHAT_MISSED:
 			return setStatus( STATUS_MISSED, state )
+		case OPERATOR_CHAT_LEAVE:
+			return setMembers( dissoc( action.operator.id, membersView( state ) ), state )
+		case OPERATOR_CHAT_JOIN:
+		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
+			return setMembers( set( lensProp( action.operator.id ), true, membersView( state ) ), state )
 	}
 	return state
 }
@@ -83,10 +104,13 @@ export default ( state = {}, action ) => {
 	switch ( action.type ) {
 		case SET_CHAT_MISSED:
 		case SET_CHAT_OPERATOR:
+		case OPERATOR_CHAT_JOIN:
+		case OPERATOR_CHAT_LEAVE:
 			const chatIdLens = lensProp( action.chat_id )
 			return set( chatIdLens, chat( view( chatIdLens, state ), action ) )( state )
 		case SET_CHAT_STATUS:
 		case INSERT_PENDING_CHAT:
+		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
 		case ASSIGN_CHAT:
 			const lens = lensProp( action.chat.id )
 			return set( lens, chat( view( lens, state ), action ) )( state )
