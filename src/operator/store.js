@@ -18,7 +18,8 @@ import {
 	INCREMENT_USER_LOAD,
 	DECREMENT_USER_LOAD,
 	UPDATE_AVAILABILITY,
-	OPERATOR_CLOSE_CHAT
+	OPERATOR_CLOSE_CHAT,
+	SET_ACCEPTS_CUSTOMERS
 } from './actions'
 
 // Selectors
@@ -112,8 +113,17 @@ const sockets = ( state = {}, action ) => {
 	}
 }
 
+const system = ( state = { acceptsCustomers: false }, action ) => {
+	switch ( action.type ) {
+		case SET_ACCEPTS_CUSTOMERS:
+			return assign( {}, state, { acceptsCustomers: action.accept } )
+	}
+	return state
+}
+
 export default () => combineReducers( {
 	user_sockets,
 	identities,
-	sockets
+	sockets,
+	system
 } )

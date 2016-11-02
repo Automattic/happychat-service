@@ -9,7 +9,7 @@ import includes from 'lodash/includes'
 import reduce from 'lodash/reduce'
 import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
-import { operatorReceive, operatorChatClose } from '../../src/operator/actions';
+import { operatorReceive, operatorChatClose, setAcceptsCustomers } from 'operator/actions'
 
 const debug = require( 'debug' )( 'happychat:test:operators' )
 
@@ -125,6 +125,25 @@ describe( 'Operators', () => {
 				} )
 			} ) )
 			operators.emit( 'open', { id: 'chat-id' }, 'customers/chat-id', { id: 'user-id' } )
+		} )
+
+		it( 'should fail to remote dispatch', done => {
+			client.once( 'broadcast.state', () => {
+				client.emit( 'broadcast.dispatch', { type: 'UNKNOWN' }, ( error ) => {
+					equal( error.message, 'Remote dispatch not allowed' )
+					done()
+				} )
+			} )
+		} )
+
+		it( 'should allow remote dispatch', done => {
+			client.once( 'broadcast.state', () => {
+				client.emit( 'broadcast.dispatch', setAcceptsCustomers( true ), ( error ) => {
+					equal( error, null )
+					ok( store.getState().operators.system.acceptsCustomers )
+					done()
+				} )
+			} )
 		} )
 
 		it( 'should emit when user wants to leave a chat', ( done ) => {
