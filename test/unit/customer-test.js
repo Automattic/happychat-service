@@ -100,7 +100,7 @@ describe( 'Customer Service', () => {
 		} )
 
 		it( 'should handle accept event', done => {
-			client.once( 'accept', ( accepted ) => {
+			server.once( 'accept', ( accepted ) => {
 				ok( !accepted )
 				done()
 			} )
