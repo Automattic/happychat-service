@@ -89,8 +89,7 @@ export default ( io, events ) => {
 		io.to( chatRoom( chat ) ).emit( 'typing', !isEmpty( text ) )
 	} )
 
-	events.on( 'accept', ( chat, accepted ) => {
-		// broadcast the status of accepting coneections
+	events.on( 'accept', ( accepted ) => {
 		io.emit( 'accept', accepted )
 	} )
 
