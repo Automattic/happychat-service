@@ -6,11 +6,12 @@ import operatorReducer from '../operator/store'
 import chatlistReducer from '../chat-list/reducer'
 import canRemoteDispatch from '../operator/canRemoteDispatch'
 
-export default ( { io, customers, operators, chatlist, middlewares = [] } ) => createStore(
+export default ( { io, customers, operators, chatlist, middlewares = [], timeout = undefined }, state ) => createStore(
 	combineReducers( { operators: operatorReducer(), chatlist: chatlistReducer } ),
+	state,
 	applyMiddleware(
 		operatorMiddleware( io.of( '/operator' ), operators ),
-		chatlistMiddleware( { customers, operators, events: chatlist } ),
+		chatlistMiddleware( { customers, operators, events: chatlist, timeout, customerDisconnectTimeout: timeout } ),
 		broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
 		...middlewares
 	)
