@@ -9,7 +9,6 @@ import reduce from 'lodash/reduce'
 import {
 	selectIdentities,
 	selectSocketIdentity,
-	selectTotalCapacity,
 	selectUser
 } from './store'
 
@@ -230,12 +229,6 @@ export default ( io, events, store ) => {
 			debug( 'failed to find operator', e )
 			callback( e )
 		} )
-	} )
-
-	// respond if operators are willing to handle new customer connection
-	events.on( 'accept', ( chat, callback ) => {
-		const { load, capacity } = selectTotalCapacity( store.getState(), STATUS_AVAILABLE )
-		callback( null, capacity > load )
 	} )
 
 	events.on( 'identities', ( callback ) => {
