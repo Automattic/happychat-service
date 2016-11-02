@@ -12,7 +12,6 @@ import {
 	defaultTo,
 	lensIndex
 } from 'ramda'
-
 import {
 	INSERT_PENDING_CHAT,
 	SET_CHAT_OPERATOR,

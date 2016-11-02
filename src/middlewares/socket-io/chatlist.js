@@ -7,7 +7,6 @@ import {
 import {
 	ASSIGN_CHAT,
 	ASSIGN_NEXT_CHAT,
-	BROADCAST_CHATS,
 	CLOSE_CHAT,
 	INSERT_PENDING_CHAT,
 	REASSIGN_CHATS,
@@ -19,7 +18,6 @@ import {
 	TRANSFER_CHAT,
 	assignChat,
 	assignNextChat,
-	broadcastChats,
 	closeChat,
 	insertPendingChat,
 	receiveCustomerMessage,
@@ -35,7 +33,6 @@ import {
 import {
 	getChat,
 	getChatOperator,
-	getChats,
 	getChatsForOperator,
 	getChatStatus,
 	getNextMissedChat,
@@ -135,7 +132,6 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 		debug( 'reassign to user?', user )
 		store.dispatch( recoverChats( user, socket ) )
 		store.dispatch( reassignChats( user, socket ) )
-		store.dispatch( broadcastChats( socket ) )
 	} )
 
 	operators.on( 'available', () => {
@@ -227,11 +223,6 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 		operators.emit( 'reassign', operator, socket, chats )
 	}
 
-	const handleBroadcastChats = ( action ) => {
-		debug( 'state', getChats( store.getState() ) )
-		action.socket.emit( 'chats', getChats( store.getState() ) )
-	}
-
 	const handleTransferChat = ( action ) => {
 		debug( 'time to do the transfer dance', store.getState() )
 		const { chat_id, to, from } = action
@@ -313,9 +304,6 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 			case REASSIGN_CHATS:
 				handleReassignChats( action )
 				break;
-			case BROADCAST_CHATS:
-				handleBroadcastChats( action )
-				break
 			case TRANSFER_CHAT:
 				handleTransferChat( action )
 				break
