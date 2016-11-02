@@ -124,6 +124,24 @@ describe( 'Operators', () => {
 			operators.emit( 'open', { id: 'chat-id' }, 'customers/chat-id', { id: 'user-id' } )
 		} )
 
+		it( 'should fail to remote dispatch', done => {
+			client.once( 'broadcast.state', () => {
+				client.emit( 'broadcast.dispatch', { type: 'UNKNOWN' }, ( error ) => {
+					equal( error.message, 'Remote dispatch not allowed' )
+					done()
+				} )
+			} )
+		} )
+
+		it( 'should allow remote dispatch', done => {
+			client.once( 'broadcast.state', () => {
+				client.emit( 'broadcast.dispatch', setAcceptsCustomers( false ), ( error ) => {
+					equal( error, null )
+					done()
+				} )
+			} )
+		} )
+
 		it( 'should emit when user wants to leave a chat', ( done ) => {
 			operators.on( 'chat.leave', ( chat_id, clientUser ) => {
 				equal( chat_id, 'chat-id' )
