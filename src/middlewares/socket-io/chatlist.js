@@ -174,10 +174,13 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 		store.dispatch( closeChat( chat.id, operator ) )
 	}, chat_id => debug( 'chat.close without existing chat', chat_id ) ) )
 
-	const handleReceiveCustomerMessage = ( action ) => {
-		debug( 'see if we should assign?', getChatStatus( action.chat.id, store.getState() ) )
-		if ( isChatStatusNew( action.chat.id, store.getState() ) ) {
-			store.dispatch( insertPendingChat( action.chat ) )
+	const handleReceiveCustomerMessage = ( { chat } ) => {
+		const state = store.getState()
+		debug( 'see if we should assign?', getChatStatus( chat.id, state ) )
+		const operator = getChatOperator( chat.id, state )
+		const isNew = isChatStatusNew( chat.id, state )
+		if ( !operator || isNew ) {
+			store.dispatch( insertPendingChat( chat ) )
 			return
 		}
 		// TODO: check if there is an operator in the room
