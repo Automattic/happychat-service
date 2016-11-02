@@ -56,36 +56,4 @@ describe( 'Operator list', () => {
 		} )
 		client.close()
 	} )
-
-	const waitForList = ( clients ) => new Promise( ( resolve ) => {
-		parallel( map( clients, ( client ) => ( callback ) => {
-			client.once( 'operators.online', ( list ) => {
-				callback( null, list )
-			} )
-		} ), ( e, lists ) => {
-			resolve( { clients, lists } )
-		} )
-	} )
-
-	it( 'get updated operator lists', () => {
-		return connectAllOperators()
-		.then( waitForList )
-		.then( ( { clients, lists } ) => {
-			equal( lists.length, 4 )
-			deepEqual(
-				map( lists[0], ( { id } ) => id ),
-				map( operators, ( { id } ) => id )
-			)
-			return Promise.resolve( clients )
-		} )
-		.then( disconnectOperator )
-		.then( waitForList )
-		.then( ( { lists } ) => {
-			equal( lists.length, 3 )
-			deepEqual(
-				map( lists[0], ( { id } ) => id ),
-				map( operators.slice( 1 ), ( { id } ) => id )
-			)
-		} )
-	} )
 } )

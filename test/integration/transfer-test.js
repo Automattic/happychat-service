@@ -69,15 +69,7 @@ describe( 'Operator Transfer', () => {
 				const expectedTo = Object.assign( {}, operators[1], { load: 0 } )
 				deepEqual( transfer.meta.from, operators[0] )
 				deepEqual( transfer.meta.to, expectedTo )
-
-				// clients should receive updated operator load status
-				first.once( 'operators.online', ( status ) => {
-					deepEqual(
-						status,
-						[operators[0], Object.assign( {}, operators[1], { load: 1 } )]
-					)
-					resolve()
-				} )
+				resolve()
 			} ) )
 		} ) )
 	)

@@ -175,30 +175,6 @@ describe( 'ChatList component', () => {
 		emitCustomerMessage()
 	} )
 
-	describe( 'with customer connections', () => {
-		let socket
-		var operator_id = 'op'
-		beforeEach( () => {
-			// mock up some connected customer accounts
-			chatlistWithState( {
-				abd: [ 'pending', { id: 'abd', user: 'Pending' } ],
-				123: [ 'assigned', { id: '123', user: 'Active' } ],
-				xyz: [ 'abandoned', { id: 'xyz', user: 'Abandoned' } ]
-			} )
-			socket = new EventEmitter()
-		} )
-
-		it( 'should send operator list of active connections', ( done ) => {
-			socket.once( 'chats', ( chats ) => {
-				debug( 'received', chats )
-				equal( chats.length, 3 )
-				deepEqual( map( chats, ( { user } ) => user ), [ 'Active', 'Pending', 'Abandoned' ] )
-				done()
-			} )
-			operators.emit( 'init', { user: { id: operator_id }, socket } )
-		} )
-	} )
-
 	describe( 'with active chat', () => {
 		const operator_id = 'operator_id'
 		const chat = {id: 'the-id'}

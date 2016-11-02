@@ -114,7 +114,7 @@ describe( 'Operators', () => {
 			client.emit( 'chat.join', 'chat-id' )
 		} )
 
-		it( 'should update operator list when chat is joined', done => {
+		it( 'should not throw when callback runs twice', done => {
 			// chat room operator
 			client.removeAllListeners( 'identify' )
 			client.on( 'identify', tick( ( identify ) => {
@@ -226,14 +226,6 @@ describe( 'Operators', () => {
 				store.dispatch( operatorReceive( chat.id, { id: 'message-id', text: 'hola mundo' } ) );
 			} )
 
-			it( 'should increment the operator load', ( done ) => {
-				server.once( 'operators.online', tick( ( identities ) => {
-					const expectedLoad = op.load + 1;
-					equal( expectedLoad, identities[0].load );
-					done();
-				} ) )
-			} );
-
 			describe( 'with multiple operators', () => {
 				const users = [
 					{ id: 'nausica', displayName: 'nausica'},
@@ -269,27 +261,6 @@ describe( 'Operators', () => {
 					} )
 				} ) ) )
 			} )
-		} )
-
-		it( 'should notify with updated operator list when operator joins', ( done ) => {
-			const userb = { id: 'a-user', displayName: 'Jem', status: 'online', load: 1, capacity: 2 }
-			const userc = { id: 'abcdefg', displayName: 'other', status: 'away', load: 3, capacity: 5 }
-			server.once( 'operators.online', tick( ( identities ) => {
-				equal( identities.length, 3 )
-				deepEqual( map( identities, ( { displayName } ) => displayName ), [ 'furiosa', 'Jem', 'other' ] )
-				deepEqual( map( identities, ( { status } ) => status ), [ 'online', 'online', 'away' ] )
-				deepEqual( map( identities, ( { load } ) => load ), [ 1, 1, 3 ] );
-				deepEqual( map( identities, ( { capacity } ) => capacity ), [ 3, 2, 5 ] );
-				done()
-			} ) )
-
-			const connectiona = server.newClient()
-			const connectionb = server.newClient()
-			const connectionc = server.newClient()
-
-			connectOperator( connectiona, userb )
-			.then( () => connectOperator( connectionb, user ) )
-			.then( () => connectOperator( connectionc, userc ) )
 		} )
 	} )
 

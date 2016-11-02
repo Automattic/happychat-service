@@ -5,9 +5,11 @@ import {
 } from 'ramda'
 
 import {
+	OPERATOR_READY
+} from './index'
+import {
 	ASSIGN_CHAT,
 	ASSIGN_NEXT_CHAT,
-	BROADCAST_CHATS,
 	CLOSE_CHAT,
 	INSERT_PENDING_CHAT,
 	REASSIGN_CHATS,
@@ -19,7 +21,6 @@ import {
 	TRANSFER_CHAT,
 	assignChat,
 	assignNextChat,
-	broadcastChats,
 	closeChat,
 	insertPendingChat,
 	receiveCustomerMessage,
@@ -35,7 +36,6 @@ import {
 import {
 	getChat,
 	getChatOperator,
-	getChats,
 	getChatsForOperator,
 	getChatStatus,
 	getNextMissedChat,
@@ -74,8 +74,10 @@ const asCallback = ( resolve, reject ) => ( e, value ) => {
 
 export default ( { customers, operators, events, timeout = 1000, customerDisconnectTimeout = 90000 } ) => store => {
 	customers.on( 'join', ( socketIdentifier, chat ) => {
-		const status = getChatStatus( chat.id, store.getState() )
-		if ( status === STATUS_CUSTOMER_DISCONNECT ) {
+		const state = store.getState()
+		const status = getChatStatus( chat.id, state )
+		const operator = getChatOperator( chat.id, state )
+		if ( operator && status === STATUS_CUSTOMER_DISCONNECT ) {
 			store.dispatch( setChatStatus( chat, STATUS_ASSIGNED ) )
 		}
 	} )
@@ -136,7 +138,6 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 		debug( 'reassign to user?', user )
 		store.dispatch( recoverChats( user, socket ) )
 		store.dispatch( reassignChats( user, socket ) )
-		store.dispatch( broadcastChats( socket ) )
 	} )
 
 	operators.on( 'available', () => {
@@ -174,10 +175,13 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 		store.dispatch( closeChat( chat.id, operator ) )
 	}, chat_id => debug( 'chat.close without existing chat', chat_id ) ) )
 
-	const handleReceiveCustomerMessage = ( action ) => {
-		debug( 'see if we should assign?', getChatStatus( action.chat.id, store.getState() ) )
-		if ( isChatStatusNew( action.chat.id, store.getState() ) ) {
-			store.dispatch( insertPendingChat( action.chat ) )
+	const handleReceiveCustomerMessage = ( { chat } ) => {
+		const state = store.getState()
+		debug( 'see if we should assign?', getChatStatus( chat.id, state ) )
+		const operator = getChatOperator( chat.id, state )
+		const isNew = isChatStatusNew( chat.id, state )
+		if ( !operator || isNew ) {
+			store.dispatch( insertPendingChat( chat ) )
 			return
 		}
 		// TODO: check if there is an operator in the room
@@ -226,11 +230,6 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 		const chats = getChatsForOperator( operator.id, store.getState() )
 		debug( 'found existing chats, reassign:', operator, chats )
 		operators.emit( 'reassign', operator, socket, chats )
-	}
-
-	const handleBroadcastChats = ( action ) => {
-		debug( 'state', getChats( store.getState() ) )
-		action.socket.emit( 'chats', getChats( store.getState() ) )
 	}
 
 	const handleTransferChat = ( action ) => {
@@ -314,15 +313,13 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 			case REASSIGN_CHATS:
 				handleReassignChats( action )
 				break;
-			case BROADCAST_CHATS:
-				handleBroadcastChats( action )
-				break
 			case TRANSFER_CHAT:
 				handleTransferChat( action )
 				break
 			case ASSIGN_CHAT:
 				handleAssignChat( action )
 				break
+			case OPERATOR_READY:
 			case ASSIGN_NEXT_CHAT:
 				handleAssignNextChat( action )
 				break

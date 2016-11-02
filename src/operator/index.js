@@ -139,13 +139,7 @@ const leaveChat = ( { store, operator, chat, room, events } ) => {
 
 export default ( io, events, store ) => {
 
-	const emitOnline = throttle( users => {
-		events.emit( 'available', users )
-	}, 100 )
-
 	const getIdentities = () => selectIdentities( store.getState() )
-
-	store.subscribe( () => emitOnline( getIdentities() ) )
 
 	events.io = io
 	events.store = store
