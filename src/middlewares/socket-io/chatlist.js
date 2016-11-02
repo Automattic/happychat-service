@@ -5,6 +5,9 @@ import {
 } from 'ramda'
 
 import {
+	OPERATOR_READY
+} from './index'
+import {
 	ASSIGN_CHAT,
 	ASSIGN_NEXT_CHAT,
 	CLOSE_CHAT,
@@ -310,6 +313,7 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 			case ASSIGN_CHAT:
 				handleAssignChat( action )
 				break
+			case OPERATOR_READY:
 			case ASSIGN_NEXT_CHAT:
 				handleAssignNextChat( action )
 				break
