@@ -90,7 +90,8 @@ export default ( io, events ) => {
 	} )
 
 	events.on( 'accept', ( chat, accepted ) => {
-		io.to( chatRoom( chat ) ).emit( 'accept', accepted )
+		// broadcast the status of accepting coneections
+		io.emit( 'accept', accepted )
 	} )
 
 	io.on( 'connection', ( socket ) => {

@@ -54,6 +54,8 @@ import {
 	STATUS_PENDING,
 } from '../../chat-list/reducer'
 import { operatorChatClose } from '../../operator/actions'
+import { selectTotalCapacity } from '../../operator/store'
+import { STATUS_AVAILABLE } from '../../operator'
 import { makeEventMessage } from '../../util'
 
 const debug = require( 'debug' )( 'happychat:chat-list:middleware' )
@@ -93,7 +95,7 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 	} )
 
 	customers.on( 'join', ( socket, chat ) => {
-		const notifyStatus = status => customers.emit( 'accept', chat, status )
+		const notifyStatus = status => customers.emit( 'accept', status )
 		const status = getChatStatus( chat.id, store.getState() )
 
 		if ( status === STATUS_ASSIGNED || status === STATUS_ASSIGNING ) {
@@ -101,17 +103,8 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 			notifyStatus( true )
 			return
 		}
-
-		withTimeout( new Promise( ( resolve, reject ) => {
-			operators.emit( 'accept', chat, asCallback( resolve, reject ) )
-		} ), timeout )
-		.then(
-			canAccept => notifyStatus( canAccept ),
-			e => {
-				debug( 'failed to query status', e )
-				notifyStatus( false )
-			}
-		)
+		const { load, capacity } = selectTotalCapacity( store.getState(), STATUS_AVAILABLE )
+		notifyStatus( load < capacity )
 	} )
 
 	customers.on( 'disconnect', ( chat ) => {

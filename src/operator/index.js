@@ -27,7 +27,7 @@ import {
 	operatorQueryAvailability
 } from './actions';
 
-const STATUS_AVAILABLE = 'available';
+export const STATUS_AVAILABLE = 'available';
 
 const debug = require( 'debug' )( 'happychat:operator' )
 
