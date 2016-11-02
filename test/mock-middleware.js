@@ -1,4 +1,4 @@
-import foreach from 'lodash/foreach'
+import foreach from 'lodash/forEach'
 import isMatch from 'lodash/isMatch'
 
 export default class WatchingMiddleware {
