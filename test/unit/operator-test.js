@@ -8,6 +8,7 @@ import map from 'lodash/map'
 import includes from 'lodash/includes'
 import reduce from 'lodash/reduce'
 import createStore from 'store'
+import { setAcceptsCustomers } from 'operator/actions'
 
 const debug = require( 'debug' )( 'happychat:test:operators' )
 

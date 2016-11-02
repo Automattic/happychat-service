@@ -16,6 +16,7 @@ export const OPERATOR_OPEN_CHAT_FOR_CLIENTS = 'OPERATOR_OPEN_CHAT_FOR_CLIENTS';
 export const OPERATOR_LEAVE_CHAT = 'OPERATOR_LEAVE_CHAT';
 export const OPERATOR_CLOSE_CHAT = 'OPERATOR_CLOSE_CHAT';
 export const OPERATOR_QUERY_AVAILABILITY = 'OPERATOR_QUERY_AVAILABILITY';
+export const SET_ACCEPTS_CUSTOMERS = 'SET_ACCEPTS_CUSTOMERS'
 
 export const updateIdentity = ( socket, user ) => (
 	{ socket, user, type: UPDATE_IDENTITY }
@@ -86,4 +87,8 @@ export const operatorChatClose = ( chat, room, operator ) => (
 
 export const operatorQueryAvailability = ( clients, chat, deferred ) => (
 	{ type: OPERATOR_QUERY_AVAILABILITY, clients, chat, deferred }
+)
+
+export const setAcceptsCustomers = ( accept ) => (
+	{ type: SET_ACCEPTS_CUSTOMERS, accept }
 )
