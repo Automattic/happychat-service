@@ -161,7 +161,7 @@ export default ( io, events, store ) => {
 		map( chats, ( chat ) => {
 			const room = `customers/${ chat.id }`
 			debug( 'reassigning chat', user, chat )
-			assignChat( { operator: user, chat, room, events } )
+			assignChat( { operator: user, chat, room, events, store } )
 			.then( () => {
 				debug( 'opened chat for operator:', user.id )
 			} )
