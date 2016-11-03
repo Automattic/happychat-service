@@ -164,7 +164,8 @@ const join = ( { socket, store, user, io } ) => {
 export default ( io, events ) => ( store ) => {
 	io.on( 'connection', ( socket ) => {
 		debug( 'operator connecting' )
-		onConnection( { socket, events } )(
+		onConnection(
+			{ socket, events },
 			user => join( { socket, store, user, io } )
 		)
 	} )

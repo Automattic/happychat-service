@@ -41,8 +41,11 @@ export default ( io ) => {
 	events.on( 'receive', ( message ) => io.emit( 'message', message ) )
 
 	io.on( 'connection', ( socket ) => {
-		debug( 'connection' )
-		onConnection( { socket, events } )( () => onAuthorized( { socket, events } )() )
+		debug( 'agent connection' )
+		onConnection(
+			{ socket, events },
+			onAuthorized( { socket, events } )
+		)
 	} )
 	return events
 }
