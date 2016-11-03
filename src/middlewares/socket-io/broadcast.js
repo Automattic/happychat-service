@@ -6,7 +6,7 @@ import { selectSocketIdentity } from '../../operator/store'
 
 const debug = require( 'debug' )( 'happychat:socket-io:broadcast' )
 
-const REMOTE_ACTION_TYPE = 'REMOTE_ACTION_TYPE'
+export const REMOTE_ACTION_TYPE = 'REMOTE_ACTION_TYPE'
 
 const join = ( io, socket ) => new Promise( ( resolve, reject ) => {
 	socket.join( 'broadcast', e => {

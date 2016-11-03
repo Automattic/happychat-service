@@ -16,6 +16,7 @@ import {
 	statusView,
 	chatView,
 	operatorView,
+	membersView,
 	STATUS_ABANDONED,
 	STATUS_MISSED,
 	STATUS_NEW,
@@ -25,7 +26,7 @@ import {
 
 const selectChatlist = view( lensProp( 'chatlist' ) )
 const mapToChat = map( chatView )
-
+const mapToMembers = map( membersView )
 const matchingStatus = status => filter( compose( equals( status ), statusView ) )
 
 /*
@@ -47,6 +48,7 @@ export const getChatsForOperator = ( operator_id, state ) => compose(
 	selectChatlist
 )( state )
 
+export const getChatMembers = compose( mapToMembers, values, selectChatlist )
 export const getAllChats = compose( mapToChat, values, selectChatlist )
 export const getChatsWithStatus = ( status, state ) => compose(
 	mapToChat,

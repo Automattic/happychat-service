@@ -14,8 +14,6 @@ import {
 
 import {
 	updateAvailability,
-	incrementLoad,
-	decrementLoad,
 	operatorReceive,
 	operatorChatOnline,
 	operatorIdentifyClientRequest,
@@ -150,14 +148,7 @@ export default ( io, events, store ) => {
 		// TODO: test for user availability
 		assignChat( { store, operator: toUser, chat, room, events } )
 		.then(
-			() => {
-				store.dispatch( incrementLoad( toUser ) );
-				if ( from ) {
-					const fromUser = selectUser( store.getState(), from.id )
-					store.dispatch( decrementLoad( fromUser ) );
-				}
-				return complete( null, toUser.id )
-			},
+			() => complete( null, toUser.id ),
 			e => debug( 'failed to assign transfered chat', e )
 		)
 	} )
@@ -188,7 +179,6 @@ export default ( io, events, store ) => {
 				debug( 'failed to recover chats', e )
 				return
 			}
-			store.dispatch( incrementLoad( user, chats.length ) )
 			callback()
 		} )
 	} )
@@ -208,7 +198,6 @@ export default ( io, events, store ) => {
 
 	events.on( 'leave', ( chat, room, operator ) => {
 		leaveChat( { store, operator, chat, room, events } )
-		store.dispatch( decrementLoad( operator ) )
 	} )
 
 	// Assigning a new chat to an available operator
@@ -221,7 +210,6 @@ export default ( io, events, store ) => {
 		.then( pickAvailable( socket => selectSocketIdentity( store.getState(), socket ) ) )
 		.then( operator => {
 			debug( 'assigning chat to ', operator )
-			store.dispatch( incrementLoad( operator ) );
 			return assignChat( { store, operator, chat, room, events } )
 		} )
 		.then( operator => callback( null, operator ) )

@@ -8,8 +8,11 @@ import reject from 'lodash/reject'
 import omit from 'lodash/omit'
 import reduce from 'lodash/reduce'
 import { combineReducers } from 'redux'
-
-const debug = require( 'debug' )( 'happychat:operator:store' )
+import {
+	mapObjIndexed,
+	defaultTo,
+	merge
+} from 'ramda'
 
 import {
 	UPDATE_IDENTITY,
@@ -17,11 +20,9 @@ import {
 	REMOVE_USER_SOCKET,
 	UPDATE_USER_STATUS,
 	UPDATE_USER_CAPACITY,
-	INCREMENT_USER_LOAD,
-	DECREMENT_USER_LOAD,
 	UPDATE_AVAILABILITY,
-	OPERATOR_CLOSE_CHAT,
-	SET_SYSTEM_ACCEPTS_CUSTOMERS
+	SET_SYSTEM_ACCEPTS_CUSTOMERS,
+	SET_USER_LOADS
 } from './actions'
 
 import {
@@ -83,8 +84,6 @@ const userPropUpdater = prop => ( action, state ) => {
 }
 const setStatus = userPropUpdater( 'status' );
 const setCapacity = userPropUpdater( 'capacity' );
-const setLoad = userPropUpdater( 'load' );
-const getLoad = ( user, state ) => get( state, `${user.id}.load`, 0 )
 
 const setOpAvailability = ( opsStatuses, state ) => {
 	return opsStatuses.reduce( ( collection, { id, load, capacity } ) => {
@@ -110,17 +109,11 @@ const identities = ( state = {}, action ) => {
 			return omit( state, user.id )
 		case UPDATE_AVAILABILITY:
 			return setOpAvailability( action.availability, state );
-		case INCREMENT_USER_LOAD:
-			const incrementedLoad = getLoad( user, state ) + action.amount;
-			return setLoad( { user, load: incrementedLoad }, state );
-		case DECREMENT_USER_LOAD:
-		case OPERATOR_CLOSE_CHAT:
-			if ( !user ) {
-				debug( action.type, 'without user' )
-				return state;
-			}
-			const decrementCurrentLoad = getLoad( user, state ) - 1;
-			return setLoad( { user, load: decrementCurrentLoad }, state );
+		case SET_USER_LOADS:
+			return mapObjIndexed( ( operator, id ) => merge(
+				operator,
+				{ load: defaultTo( 0, action.loads[id] ) }
+			), state )
 		default:
 			return state
 	}

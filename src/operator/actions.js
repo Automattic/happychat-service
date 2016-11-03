@@ -3,8 +3,6 @@ export const REMOVE_USER = 'REMOVE_USER'
 export const REMOVE_USER_SOCKET = 'REMOVE_USER_SOCKET'
 export const UPDATE_USER_STATUS = 'UPDATE_USER_STATUS'
 export const UPDATE_USER_CAPACITY = 'UPDATE_USER_CAPACITY';
-export const INCREMENT_USER_LOAD = 'INCREMENT_USER_LOAD';
-export const DECREMENT_USER_LOAD = 'DECREMENT_USER_LOAD';
 export const UPDATE_AVAILABILITY = 'UPDATE_AVAILABILITY';
 export const OPERATOR_RECEIVE = 'OPERATOR_RECEIVE';
 export const OPERATOR_RECEIVE_TYPING = 'OPERATOR_RECEIVE_TYPING';
@@ -16,7 +14,8 @@ export const OPERATOR_OPEN_CHAT_FOR_CLIENTS = 'OPERATOR_OPEN_CHAT_FOR_CLIENTS';
 export const OPERATOR_LEAVE_CHAT = 'OPERATOR_LEAVE_CHAT';
 export const OPERATOR_CLOSE_CHAT = 'OPERATOR_CLOSE_CHAT';
 export const OPERATOR_QUERY_AVAILABILITY = 'OPERATOR_QUERY_AVAILABILITY';
-export const SET_SYSTEM_ACCEPTS_CUSTOMERS = 'SET_SYSTEM_ACCEPTS_CUSTOMERS'
+export const SET_SYSTEM_ACCEPTS_CUSTOMERS = 'SET_SYSTEM_ACCEPTS_CUSTOMERS';
+export const SET_USER_LOADS = 'SET_USER_LOADS';
 
 export const updateIdentity = ( socket, user ) => (
 	{ socket, user, type: UPDATE_IDENTITY }
@@ -36,13 +35,9 @@ export const updateCapacity = ( user, capacity ) => (
 	{ user, capacity, type: UPDATE_USER_CAPACITY }
 )
 
-export const incrementLoad = ( user, amount = 1 ) => (
-	{ user, type: INCREMENT_USER_LOAD, amount }
-)
-
-export const decrementLoad = ( user ) => (
-	{ user, type: DECREMENT_USER_LOAD }
-)
+export const setUserLoads = ( loads ) => ( {
+	type: SET_USER_LOADS, loads
+} )
 
 export const updateAvailability = ( availability ) => (
 	{ type: UPDATE_AVAILABILITY, availability }
