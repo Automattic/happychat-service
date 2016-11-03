@@ -15,10 +15,9 @@ import {
 import {
 	INSERT_PENDING_CHAT,
 	SET_CHAT_OPERATOR,
-	SET_CHAT_STATUS,
-	SET_CHATS_ABANDONED,
 	SET_OPERATOR_CHATS_ABANDONED,
 	SET_CHATS_RECOVERED,
+	SET_CHAT_CUSTOMER_DISCONNECT,
 	ASSIGN_CHAT,
 	SET_CHAT_MISSED,
 	CLOSE_CHAT
@@ -72,9 +71,6 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 				setStatus( STATUS_ASSIGNED ),
 				setOperator( action.operator )
 			)( state )
-		case SET_CHAT_STATUS:
-			return setStatus( action.status, state )
-		case SET_CHATS_ABANDONED:
 		case SET_OPERATOR_CHATS_ABANDONED:
 			return setStatus( STATUS_ABANDONED, state )
 		case SET_CHATS_RECOVERED:
@@ -88,6 +84,8 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 		case OPERATOR_CHAT_JOIN:
 		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
 			return setMembers( set( lensProp( action.operator.id ), true, membersView( state ) ), state )
+		case SET_CHAT_CUSTOMER_DISCONNECT:
+			return setStatus( STATUS_CUSTOMER_DISCONNECT, state )
 	}
 	return state
 }
@@ -106,9 +104,9 @@ export default ( state = {}, action ) => {
 		case SET_CHAT_OPERATOR:
 		case OPERATOR_CHAT_JOIN:
 		case OPERATOR_CHAT_LEAVE:
+		case SET_CHAT_CUSTOMER_DISCONNECT:
 			const chatIdLens = lensProp( action.chat_id )
 			return set( chatIdLens, chat( view( chatIdLens, state ), action ) )( state )
-		case SET_CHAT_STATUS:
 		case INSERT_PENDING_CHAT:
 		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
 		case ASSIGN_CHAT:
@@ -116,7 +114,6 @@ export default ( state = {}, action ) => {
 			return set( lens, chat( view( lens, state ), action ) )( state )
 		case CLOSE_CHAT:
 			return dissoc( action.chat_id, state )
-		case SET_CHATS_ABANDONED:
 		case SET_CHATS_RECOVERED:
 			return reduce(
 				( chats, chat_id ) => set(

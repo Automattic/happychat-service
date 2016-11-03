@@ -1,7 +1,8 @@
 import {
 	merge,
 	map,
-	ifElse
+	ifElse,
+	isEmpty
 } from 'ramda'
 
 import {
@@ -17,7 +18,7 @@ import {
 	RECOVER_CHATS,
 	SET_CHAT_MISSED,
 	SET_CHAT_OPERATOR,
-	SET_CHAT_STATUS,
+	SET_CHAT_CUSTOMER_DISCONNECT,
 	TRANSFER_CHAT,
 	assignChat,
 	assignNextChat,
@@ -28,9 +29,9 @@ import {
 	recoverChats,
 	setChatMissed,
 	setChatOperator,
-	setChatStatus,
 	setChatsRecovered,
 	setOperatorChatsAbandoned,
+	setChatCustomerDisconnect,
 	transferChat
 } from '../../chat-list/actions'
 import {
@@ -47,7 +48,6 @@ import {
 	isAssigningChat,
 } from '../../chat-list/selectors'
 import {
-	STATUS_ASSIGNED,
 	STATUS_CUSTOMER_DISCONNECT,
 	STATUS_MISSED,
 	STATUS_PENDING,
@@ -79,8 +79,8 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 		const state = store.getState()
 		const status = getChatStatus( chat.id, state )
 		const operator = getChatOperator( chat.id, state )
-		if ( operator && status === STATUS_CUSTOMER_DISCONNECT ) {
-			store.dispatch( setChatStatus( chat, STATUS_ASSIGNED ) )
+		if ( operator && !isEmpty( operator ) && status === STATUS_CUSTOMER_DISCONNECT ) {
+			store.dispatch( setChatOperator( chat.id, operator ) )
 			return
 		}
 	} )
@@ -97,7 +97,6 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 
 	customers.on( 'join', ( socketid, chat, socket ) => {
 		// when a customer joins inform of status update
-		debug( 'socket?', socket )
 		socket.emit( 'accept', isSystemAcceptingCustomers( store.getState() ) )
 	} )
 
@@ -106,8 +105,7 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 			debug( 'Customer disconnected without starting chat', chat.id )
 			return;
 		}
-		store.dispatch( setChatStatus( chat, STATUS_CUSTOMER_DISCONNECT ) )
-
+		store.dispatch( setChatCustomerDisconnect( chat.id ) )
 		setTimeout( () => {
 			const status = getChatStatus( chat.id, store.getState() )
 			if ( status !== STATUS_CUSTOMER_DISCONNECT ) {
@@ -253,9 +251,7 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 			operators.emit( 'assign', chat, customer_room_name, asCallback( resolve, reject ) )
 		} ), timeout )
 		.then(
-			( op ) => {
-				store.dispatch( setChatOperator( chat.id, op ) )
-			},
+			( op ) => store.dispatch( setChatOperator( chat.id, op ) ),
 			e => store.dispatch( setChatMissed( chat.id, e ) )
 		)
 	}
@@ -269,6 +265,7 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 		if ( haveMissedChat( store.getState() ) ) {
 			debug( 'assign missed chat' )
 			store.dispatch( assignChat( getNextMissedChat( store.getState() ) ) )
+			return
 		}
 
 		if ( havePendingChat( store.getState() ) ) {
@@ -314,10 +311,9 @@ export default ( { customers, operators, events, timeout = 1000, customerDisconn
 			case ASSIGN_NEXT_CHAT:
 				handleAssignNextChat( action )
 				break
-			case SET_CHAT_STATUS:
-				debug( SET_CHAT_STATUS, action.chat.id, action.status )
-				events.emit( 'chat.status', action.status, action.chat )
-				break
+			case SET_CHAT_CUSTOMER_DISCONNECT:
+				events.emit( 'chat.status', STATUS_CUSTOMER_DISCONNECT, getChat( action.chat_id, store.getState() ) )
+				break;
 			case INSERT_PENDING_CHAT:
 				events.emit( 'chat.status', STATUS_PENDING, action.chat )
 				store.dispatch( assignNextChat() )

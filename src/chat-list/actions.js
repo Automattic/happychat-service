@@ -7,11 +7,10 @@ export const RECEIVE_CUSTOMER_MESSAGE = 'RECEIVE_CUSTOMER_MESSAGE'
 export const RECOVER_CHATS = 'RECOVER_CHATS'
 export const SET_CHAT_MISSED = 'SET_CHAT_MISSED'
 export const SET_CHAT_OPERATOR = 'SET_CHAT_OPERATOR'
-export const SET_CHAT_STATUS = 'SET_CHAT_STATUS'
-export const SET_CHATS_ABANDONED = 'SET_CHATS_ABANDONED'
 export const SET_CHATS_RECOVERED = 'SET_CHATS_RECOVERED'
 export const SET_OPERATOR_CHATS_ABANDONED = 'SET_OPERATOR_CHATS_ABANDONED'
 export const TRANSFER_CHAT = 'TRANSFER_CHAT'
+export const SET_CHAT_CUSTOMER_DISCONNECT = 'SET_CHAT_CUSTOMER_DISCONNECT'
 
 export const receiveCustomerMessage = ( chat, message ) => ( {
 	type: RECEIVE_CUSTOMER_MESSAGE, chat, message
@@ -19,10 +18,6 @@ export const receiveCustomerMessage = ( chat, message ) => ( {
 
 export const reassignChats = ( operator, socket ) => ( {
 	type: REASSIGN_CHATS, operator, socket
-} )
-
-export const setChatsAbandoned = ( chat_ids ) => ( {
-	type: SET_CHATS_ABANDONED, chat_ids
 } )
 
 export const setOperatorChatsAbandoned = ( operator_id ) => ( {
@@ -41,10 +36,6 @@ export const closeChat = ( chat_id, operator ) => ( {
 	type: CLOSE_CHAT, chat_id, operator
 } )
 
-export const setChatStatus = ( chat, status ) => ( {
-	type: SET_CHAT_STATUS, chat, status
-} )
-
 export const setChatMissed = ( chat_id, error ) => ( {
 	type: SET_CHAT_MISSED, chat_id, error
 } )
@@ -59,6 +50,10 @@ export const transferChat = ( chat_id, from, to ) => ( {
 
 export const setChatsRecovered = ( chat_ids ) => ( {
 	type: SET_CHATS_RECOVERED, chat_ids
+} )
+
+export const setChatCustomerDisconnect = ( chat_id ) => ( {
+	type: SET_CHAT_CUSTOMER_DISCONNECT, chat_id
 } )
 
 export const assignNextChat = () => ( {
