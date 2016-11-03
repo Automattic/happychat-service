@@ -48,11 +48,9 @@ export const getSystemAcceptsCustomers = ( { operators: { system: { acceptsCusto
 
 export const isSystemAcceptingCustomers = state => {
 	const systemAcceptsCustomers = getSystemAcceptsCustomers( state )
-	debug( 'is system on?', systemAcceptsCustomers )
 	if ( ! systemAcceptsCustomers ) {
 		return false
 	}
-	debug( 'is there capacity?', systemAcceptsCustomers )
 	const { load, capacity } = selectTotalCapacity( state )
 	return load < capacity
 }
@@ -132,7 +130,6 @@ const sockets = ( state = {}, action ) => {
 const system = ( state = { acceptsCustomers: false }, action ) => {
 	switch ( action.type ) {
 		case SET_SYSTEM_ACCEPTS_CUSTOMERS:
-			debug( 'accepts customers?', action )
 			return assign( {}, state, { acceptsCustomers: action.isEnabled } )
 	}
 	return state
