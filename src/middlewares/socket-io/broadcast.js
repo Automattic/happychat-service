@@ -19,7 +19,7 @@ const join = ( io, socket ) => new Promise( ( resolve, reject ) => {
 } )
 
 const broadcastVersion = ( io, version, nextVersion, patch ) => {
-	debug( 'patch', version, JSON.stringify( patch, null, '\t' ) )
+	debug( 'patch', version )
 	io.in( 'broadcast' ).emit( 'broadcast.update', version, nextVersion, patch )
 }
 
