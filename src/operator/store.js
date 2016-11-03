@@ -44,6 +44,13 @@ export const selectTotalCapacity = ( { operators: { identities } }, matchingStat
 	{ load: 0, capacity: 0 }
 )
 
+export const getAvailableCapacity = state => {
+	const { load, capacity } = selectTotalCapacity( state )
+	return capacity - load
+}
+
+export const haveAvailableCapacity = state => getAvailableCapacity( state ) > 0
+
 export const getSystemAcceptsCustomers = ( { operators: { system: { acceptsCustomers } } } ) => acceptsCustomers
 
 export const isSystemAcceptingCustomers = state => {
