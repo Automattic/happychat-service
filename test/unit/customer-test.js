@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events'
-import customer from 'customer'
 import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
+import createStore from 'store'
 
 const debug = require( 'debug' )( 'happychat:test:customer' )
 
@@ -15,16 +15,28 @@ describe( 'Customer Service', () => {
 		session_id: 'abdefgh-chat'
 	}
 	let auth
+	let store
 	beforeEach( () => {
-		events = new EventEmitter();
-		( { server, socket, client } = mockIO() )
+		// export default ( { io, customers, operators, chatlist, middlewares = [], timeout = undefined }, state ) => createStore(
+		const { server: io } = mockIO()
+		events = customerEvents = new EventEmitter();
+		store = createStore( {
+			io: io,
+			customers: customerEvents,
+			operators: new EventEmitter(),
+			chatlist: new EventEmitter(),
+			timeout: 10
+		} )
+		server = io.of( '/customer' );
+		( { client, socket } = server.newClient() )
 		auth = ( next = () => {} ) => {
-			customer( server, events ).on( 'connection', ( _socket, authUser ) => {
+			// customer( customerIO, customerEvents )
+			customerEvents.on( 'connection', ( _socket, authUser ) => {
 				authUser( null, mockUser )
 				client.on( 'init', () => next() )
 			} )
 			server.emit( 'connection', socket )
-			return events
+			return customerEvents
 		}
 	} )
 
@@ -109,31 +121,19 @@ describe( 'Customer Service', () => {
 		} )
 	} )
 
-	it( 'should allow connections', () => {
-		let connected = false
-		customer( { on: ( event, listener ) => {
-			equal( event, 'connection' )
-			equal( typeof( listener ), 'function' )
-			connected = true
-		} }, events )
-		ok( connected )
-	} )
-
 	it( 'should emit connection', ( done ) => {
-		const customers = customer( server, events )
-		customers.on( 'connection', () => {
+		customerEvents.on( 'connection', () => {
 			done()
 		} )
 		server.emit( 'connection', socket )
 	} )
 
 	it( 'should authenticate and init client', ( done ) => {
-		customer( server, events ).once( 'connection', ( _socket, authUser ) => {
+		customerEvents.once( 'connection', ( _socket, authUser ) => {
 			authUser( null, { id: 'user1', username: 'user1', session_id: 'session' } )
 		} )
 
 		client.once( 'init', () => {
-			debug( 'socket rooms', socket.rooms )
 			contains( socket.rooms, 'session/session' )
 			done()
 		} )
@@ -143,7 +143,6 @@ describe( 'Customer Service', () => {
 
 	it( 'should notify user join and leave', ( done ) => {
 		socket.id = 'socket-id'
-		events = auth()
 
 		events.on( 'disconnect-socket', ( { socketIdentifier, chat, user } ) => {
 			equal( socketIdentifier.id, mockUser.id )
@@ -161,13 +160,15 @@ describe( 'Customer Service', () => {
 		events.on( 'join', ( { id, socket_id } ) => {
 			equal( id, mockUser.id )
 			equal( socket_id, 'socket-id' )
-
+			debug( 'disconnecting' )
 			server.disconnect( { client, socket } )
 		} )
+
+		auth()
 	} )
 
 	it( 'should fail to authenticate with invalid token', ( done ) => {
-		customer( server, events ).once( 'connection', ( _socket, authorize ) => authorize( new Error( 'nope' ) ) )
+		events.once( 'connection', ( _socket, authorize ) => authorize( new Error( 'nope' ) ) )
 		client.on( 'unauthorized', () => done() )
 		server.emit( 'connection', socket )
 	} )

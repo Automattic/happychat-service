@@ -11,7 +11,7 @@ export default ( { io, customers, operators, chatlist, middlewares = [], timeout
 	state,
 	applyMiddleware(
 		operatorMiddleware( io.of( '/operator' ), operators ),
-		chatlistMiddleware( { customers, operators, events: chatlist, timeout, customerDisconnectTimeout: timeout } ),
+		chatlistMiddleware( { io, customers, operators, events: chatlist, timeout, customerDisconnectTimeout: timeout } ),
 		broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
 		...middlewares
 	)

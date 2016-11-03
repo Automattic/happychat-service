@@ -56,9 +56,28 @@ import { operatorChatClose } from '../../operator/actions'
 import {
 	isSystemAcceptingCustomers
 } from '../../operator/store'
-import { makeEventMessage } from '../../util'
+import { makeEventMessage, onConnection, timestamp } from '../../util'
 
 const debug = require( 'debug' )( 'happychat:chat-list:middleware' )
+
+const chatRoom = ( { id } ) => `session/${ id }`
+
+// limit the information for the user
+const identityForUser = ( { id, name, username, picture } ) => ( { id, name, username, picture } )
+
+const whenNoClients = ( io, room ) => new Promise( ( resolve, reject ) => {
+	io.in( room ).clients( ( error, clients ) => {
+		if ( error ) {
+			return reject( error )
+		}
+
+		if ( clients.length > 0 ) {
+			return reject( new Error( 'Have other connected clients' ) )
+		}
+
+		resolve()
+	} )
+} )
 
 const withTimeout = ( promise, ms = 1000 ) => Promise.race( [
 	promise,
@@ -74,7 +93,77 @@ const asCallback = ( resolve, reject ) => ( e, value ) => {
 	resolve( value )
 }
 
-export default ( { customers, operators, events, timeout = 1000, customerDisconnectTimeout = 90000 } ) => store => {
+const customerRoom = ( { session_id } ) => `session/${ session_id }`
+
+const init = ( { user, socket, events, io, } ) => () => {
+	const socketIdentifier = { id: user.id, socket_id: socket.id, session_id: user.session_id }
+	const chat = {
+		user_id: user.id,
+		id: user.session_id,
+		username: user.username,
+		name: user.name,
+		picture: user.picture
+	}
+
+	debug( 'chat initialized', chat )
+
+	socket.on( 'message', ( { text, id, meta } ) => {
+		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
+		debug( 'received customer message', message )
+		// all customer connections for this user receive the message
+		// io.to( user.id ).emit( 'message', message )
+		events.emit( 'message', chat, message )
+	} )
+
+	socket.on( 'typing', ( text ) => {
+		events.emit( 'typing', chat, user, text );
+	} )
+
+	socket.on( 'disconnect', () => {
+		debug( 'socket.on.disconnect', user.id, socketIdentifier );
+
+		events.emit( 'disconnect-socket', { socketIdentifier, user, chat, socket } )
+
+		whenNoClients( io, chatRoom( chat ) )
+			.then( () => {
+				events.emit( 'disconnect', chat, user )
+			} )
+	} )
+
+	socket.emit( 'init', user )
+	debug( 'user joined' )
+	events.emit( 'join', socketIdentifier, chat, socket )
+}
+
+const join = ( { events, io, user, socket } ) => {
+	debug( 'user joined', user )
+	socket.join( customerRoom( user ), init( { user, socket, events, io } ) )
+}
+
+export default ( { io, customers, operators, events, timeout = 1000, customerDisconnectTimeout = 90000 } ) => store => {
+	const customer_io = io.of( '/customer' )
+	.on( 'connection', socket => {
+		debug( 'customer connecting' )
+		onConnection(
+			{ socket, events: customers },
+			user => join( { socket, events: customers, user, io: customer_io } )
+		)
+	} )
+
+	customers.on( 'receive', ( chat, message ) => {
+		debug( 'sending message to customer', chat.id, message.text )
+		customer_io.to( chatRoom( chat ) ).emit( 'message', message )
+	} )
+
+	customers.on( 'receive.typing', ( chat, user, text ) => {
+		// customers shouldn't know who is typing or what they're typing
+		customer_io.to( chatRoom( chat ) ).emit( 'typing', text && !isEmpty( text ) )
+	} )
+
+	customers.on( 'accept', ( accepted ) => {
+		customer_io.emit( 'accept', accepted )
+	} )
+
 	customers.on( 'join', ( socketIdentifier, chat ) => {
 		const state = store.getState()
 		const status = getChatStatus( chat.id, state )

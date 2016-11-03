@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events'
 import IO from 'socket.io'
-import customer from './customer'
 import agent from './agent'
 import operator from './operator'
 import buildController from './controller'
@@ -14,18 +13,18 @@ export default ( server, { customerAuthenticator, agentAuthenticator, operatorAu
 	const io = new IO( server )
 
 	const operatorEvents = new EventEmitter()
-	const customerEvents = new EventEmitter()
+	const customers = new EventEmitter()
 	const chatlistEvents = new EventEmitter()
 
 	const store = createStore( {
 		io,
 		operators: operatorEvents,
-		customers: customerEvents,
+		customers,
 		chatlist: chatlistEvents
 	} );
 
 	const agents = agent( io.of( '/agent' ) ).on( 'connection', agentAuthenticator )
-	const customers = customer( io.of( '/customer' ), customerEvents ).on( 'connection', customerAuthenticator )
+	customers.on( 'connection', customerAuthenticator )
 	const operators = operator( io.of( '/operator' ), operatorEvents, store ).on( 'connection', operatorAuthenticator )
 
 	const controller = buildController( {
