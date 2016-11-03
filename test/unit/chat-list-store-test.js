@@ -19,8 +19,6 @@ import {
 	// actions
 	insertPendingChat,
 	closeChat,
-	setChatStatus,
-	setChatsAbandoned,
 	setChatsRecovered,
 	setOperatorChatsAbandoned
 } from 'chat-list/actions'
@@ -138,29 +136,6 @@ describe( 'ChatList reducer', () => {
 			deepEqual( state, { chatlist: { 'other-chat': 'b' } } )
 		},
 		{ 'some-chat': 'a', 'other-chat': 'b'}
-	) )
-
-	it( 'should set chat status', dispatchAction(
-		setChatStatus( { id: 'chat-id' }, STATUS_PENDING ),
-		state => equal( getChatStatus( 'chat-id', state ), STATUS_PENDING )
-	) )
-
-	it( 'should set chats abandoned', dispatchAction(
-		setChatsAbandoned( [ 'a', 2, '3' ] ),
-		state => {
-			deepEqual( state, { chatlist: {
-				a: [ STATUS_ABANDONED, 'a', 'op' ],
-				2: [ STATUS_ABANDONED, '2', 'op' ],
-				3: [ STATUS_ABANDONED, '3', 'op' ],
-				4: [ STATUS_PENDING, '4', 'op' ]
-			} } )
-		},
-		{
-			a: [ STATUS_MISSED, 'a', 'op' ],
-			2: [ STATUS_MISSED, '2', 'op' ],
-			3: [ STATUS_MISSED, '3', 'op' ],
-			4: [ STATUS_PENDING, '4', 'op' ]
-		}
 	) )
 
 	it( 'should set operator chats abandoned', dispatchAction(
