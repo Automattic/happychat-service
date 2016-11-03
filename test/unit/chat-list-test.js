@@ -336,8 +336,10 @@ describe( 'ChatList component', () => {
 					deepEqual( chat, __chat )
 				} ) )
 
-				operators.once( 'message', tick( () => {
-					throw new Error( 'operator should not be sent a message' )
+				operators.on( 'message', tick( ( _chat, _operator, message ) => {
+					if ( message.meta.event_type === 'customer-leave' ) {
+						throw new Error( 'operator should not be sent a message' )
+					}
 				} ) )
 
 				const socket = new EventEmitter()
