@@ -240,6 +240,7 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 	}, chat_id => debug( 'chat.join without existing chat', chat_id ) ) )
 
 	operators.on( 'chat.transfer', ( chat_id, from, to ) => {
+		// TODO: remove this and move to handleTransferChat directly?
 		store.dispatch( transferChat( chat_id, from, to ) )
 	} )
 
@@ -324,6 +325,7 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 		} ), timeout )
 		.then(
 			id => {
+				store.dispatch( setChatOperator( chat.id, to ) )
 				events.emit( 'transfer', chat, id )
 			},
 			e => {
