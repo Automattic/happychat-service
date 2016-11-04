@@ -157,7 +157,7 @@ describe( 'ChatList reducer', () => {
 	) )
 
 	it( 'should set chats recovered', dispatchAction(
-		setChatsRecovered( [ 'a', '3' ] ),
+		setChatsRecovered( [ 'a', '3' ], { id: 'op-id' } ),
 		state => {
 			deepEqual( state, { chatlist: {
 				a: [ STATUS_ASSIGNED, 'a', { id: 'op-id' } ],

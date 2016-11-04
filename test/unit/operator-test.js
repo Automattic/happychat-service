@@ -215,7 +215,7 @@ describe( 'Operators', () => {
 			} )
 
 			it( 'should emit transfer request', () => {
-				const userb = { id: 'a-user', displayName: 'Jem', status: 'online', load: 2, capacity: 4 }
+				const userb = { id: 'a-user', displayName: 'Jem', status: 'online', load: 0, capacity: 4 }
 				const connectionb = server.newClient()
 				return connectOperator( connectionb, userb )
 				.then( () => new Promise( resolve => {
@@ -432,7 +432,6 @@ describe( 'Operators', () => {
 		it( 'should report accepting customers', () => {
 			const { load, capacity } = selectTotalCapacity( store.getState(), STATUS_AVAILABLE )
 			ok( load < capacity )
-			equal( load, 5 )
 			equal( capacity, 17 )
 		} )
 
