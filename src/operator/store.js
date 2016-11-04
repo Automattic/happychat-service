@@ -11,7 +11,8 @@ import { combineReducers } from 'redux'
 import {
 	mapObjIndexed,
 	defaultTo,
-	merge
+	merge,
+	both
 } from 'ramda'
 
 import {
@@ -53,14 +54,7 @@ export const haveAvailableCapacity = state => getAvailableCapacity( state ) > 0
 
 export const getSystemAcceptsCustomers = ( { operators: { system: { acceptsCustomers } } } ) => acceptsCustomers
 
-export const isSystemAcceptingCustomers = state => {
-	const systemAcceptsCustomers = getSystemAcceptsCustomers( state )
-	if ( ! systemAcceptsCustomers ) {
-		return false
-	}
-	const { load, capacity } = selectTotalCapacity( state )
-	return load < capacity
-}
+export const isSystemAcceptingCustomers = both( haveAvailableCapacity, getSystemAcceptsCustomers )
 
 // Reducers
 const user_sockets = ( state = {}, action ) => {

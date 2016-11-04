@@ -19,6 +19,8 @@ import {
 	SET_CHAT_MISSED,
 	SET_CHAT_OPERATOR,
 	SET_CHAT_CUSTOMER_DISCONNECT,
+	NOTIFY_SYSTEM_STATUS_CHANGE,
+	NOTIFY_CHAT_STATUS_CHANGED,
 	TRANSFER_CHAT,
 	assignChat,
 	assignNextChat,
@@ -58,9 +60,10 @@ import {
 } from '../../operator/store'
 import { makeEventMessage, onConnection, timestamp } from '../../util'
 
-const debug = require( 'debug' )( 'happychat:chat-list:middleware' )
+const debug = require( 'debug' )( 'happychat:middleware:chat-list' )
 
-const chatRoom = ( { id } ) => `session/${ id }`
+const chatRoomId = id => `session/${id}`
+const chatRoom = ( { id } ) => chatRoomId( id )
 
 // limit the information for the user
 const identityForUser = ( { id, name, username, picture } ) => ( { id, name, username, picture } )
@@ -131,7 +134,6 @@ const init = ( { user, socket, events, io, } ) => () => {
 	} )
 
 	socket.emit( 'init', user )
-	debug( 'user joined' )
 	events.emit( 'join', socketIdentifier, chat, socket )
 }
 
@@ -298,7 +300,7 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 		let chats = getOperatorAbandonedChats( operator.id, store.getState() )
 		// TODO: should this time out?
 		operators.emit( 'recover', { user: operator, socket: socket, room: `operators/${ operator.id }` }, chats, () => {
-			store.dispatch( setChatsRecovered( map( ( { id } ) => id, chats ) ) )
+			store.dispatch( setChatsRecovered( map( ( { id } ) => id, chats ), operator ) )
 		} )
 	}
 
@@ -368,6 +370,17 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 
 	return next => action => {
 		debug( 'received', action.type )
+		switch ( action.type ) {
+			case NOTIFY_SYSTEM_STATUS_CHANGE:
+				debug( 'NOTIFY_SYSTEM_STATUS_CHANGE', action.enabled )
+				customer_io.emit( 'accept', action.enabled )
+				break;
+			case NOTIFY_CHAT_STATUS_CHANGED:
+				debug( 'NOTIFY_CHAT_STATUS_CHANGED', action.chat_id )
+				const status = getChatStatus( action.chat_id, store.getState() );
+				customer_io.in( chatRoomId( action.chat_id ) ).emit( 'status', status )
+				break;
+		}
 		const lastState = store.getState()
 		const result = next( action )
 		switch ( action.type ) {

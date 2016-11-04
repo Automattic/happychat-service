@@ -67,14 +67,13 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 				setChat( action.chat )
 			)( state )
 		case SET_CHAT_OPERATOR:
+		case SET_CHATS_RECOVERED:
 			return compose(
 				setStatus( STATUS_ASSIGNED ),
 				setOperator( action.operator )
 			)( state )
 		case SET_OPERATOR_CHATS_ABANDONED:
 			return setStatus( STATUS_ABANDONED, state )
-		case SET_CHATS_RECOVERED:
-			return setStatus( STATUS_ASSIGNED, state )
 		case ASSIGN_CHAT:
 			return setStatus( STATUS_ASSIGNING, state )
 		case SET_CHAT_MISSED:
