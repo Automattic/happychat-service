@@ -9,7 +9,15 @@ import includes from 'lodash/includes'
 import reduce from 'lodash/reduce'
 import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
-import { operatorReceive, operatorChatClose, setAcceptsCustomers } from 'operator/actions'
+import {
+	operatorReceive,
+	operatorChatClose,
+	setAcceptsCustomers,
+	operatorTransfer,
+	operatorRecover,
+	operatorOpen,
+	operatorAssign
+} from 'operator/actions'
 import { selectTotalCapacity } from 'operator/store'
 import { STATUS_AVAILABLE } from 'operator'
 
@@ -37,6 +45,7 @@ describe( 'Operators', () => {
 		( { socket, client } = server.newClient( socketid ) )
 		watchingMiddleware = new WatchingMiddleware()
 
+		// Need to add a real socket io middleware here
 		store = createStore( { io, operators: events, customers: new EventEmitter(), chatlist: new EventEmitter(), middlewares: [ watchingMiddleware.middleware() ] } )
 		operators = operator( server, events, store )
 		operators.on( 'connection', ( s, callback ) => s.emit( 'identify', callback ) )
@@ -61,10 +70,14 @@ describe( 'Operators', () => {
 		} )
 
 		it( 'should recover chats for an operator', ( done ) => {
-			operators.emit( 'recover', { user: op }, [ { id: 'something' } ], tick( () => {
+			// operators.emit( 'recover', { user: op }, [ { id: 'something' } ], tick( () => {
+			// 	equal( operators.io.rooms['customers/something'].length, 1 )
+			// 	done()
+			// } ) )
+			store.dispatch( operatorRecover( { user: op }, [ { id: 'something' } ], tick( () => {
 				equal( operators.io.rooms['customers/something'].length, 1 )
 				done()
-			} ) )
+			} ) ) );
 		} )
 
 		it( 'should emit disconnect event when last operator socket disconnects', ( done ) => {
@@ -119,7 +132,9 @@ describe( 'Operators', () => {
 					done()
 				} )
 			} ) )
-			operators.emit( 'open', { id: 'chat-id' }, 'customers/chat-id', { id: 'user-id' } )
+
+			// operators.emit( 'open', { id: 'chat-id' }, 'customers/chat-id', { id: 'user-id' } )
+			store.dispatch( operatorOpen( { id: 'chat-id' }, 'customers/chat-id', { id: 'user-id' } ) );
 		} )
 
 		it( 'should fail to remote dispatch', done => {
@@ -172,14 +187,22 @@ describe( 'Operators', () => {
 					callback( { load: 0, status: 'available', capacity: 5, id: userb.id } )
 				} )
 
-				operators.emit( 'assign', { id: 'chat-id' }, 'customer/room-name', ( error, assigned ) => {
+				// operators.emit( 'assign', { id: 'chat-id' }, 'customer/room-name', ( error, assigned ) => {
+				// 	ok( ! error )
+				// 	ok( a_open )
+				// 	ok( b_open )
+				// 	equal( assigned.id, 'user-id' )
+				// 	ok( includes( socket.rooms, 'customer/room-name' ) )
+				// 	done()
+				// } )
+				store.dispatch( operatorAssign( { id: 'chat-id' }, 'customer/room-name', ( error, assigned ) => {
 					ok( ! error )
 					ok( a_open )
 					ok( b_open )
 					equal( assigned.id, 'user-id' )
 					ok( includes( socket.rooms, 'customer/room-name' ) )
 					done()
-				} )
+				} ) )
 			} )
 		} )
 
@@ -191,9 +214,12 @@ describe( 'Operators', () => {
 				} )
 			} ) )
 
-			operators.emit( 'assign', { id: 'chat-id' }, 'customer/room-name', tick( ( e ) => {
+			// operators.emit( 'assign', { id: 'chat-id' }, 'customer/room-name', tick( ( e ) => {
+			// 	done( e )
+			// } ) )
+			store.dispatch( operatorAssign( { id: 'chat-id' }, 'customer/room-name', tick( ( e ) => {
 				done( e )
-			} ) )
+			} ) ) )
 		} )
 
 		describe( 'with assigned chat', () => {
@@ -201,9 +227,12 @@ describe( 'Operators', () => {
 			beforeEach( () => new Promise( ( resolve, reject ) => {
 				client.once( 'available', ( pendingChat, available ) => available( { status: 'available', load: 0, capacity: 1 } ) )
 				client.once( 'chat.open', () => resolve() )
-				operators.emit( 'assign', chat, `customers/${ chat.id }`, error => {
+				// operators.emit( 'assign', chat, `customers/${ chat.id }`, error => {
+				// 	if ( error ) return reject( error )
+				// } )
+				store.dispatch( operatorAssign( chat, `customers/${ chat.id }`, error => {
 					if ( error ) return reject( error )
-				} )
+				} ) )
 			} ) )
 
 			it( 'should emit chat.close from operator connection', ( done ) => {
@@ -254,7 +283,8 @@ describe( 'Operators', () => {
 					debug( 'fuck!' )
 					debug( 'doing it!', connections )
 					operators.once( 'chat.transfer', ( id, from, to ) => {
-						operators.emit( 'transfer', chat, from, to, () => {} )
+						store.dispatch( operatorTransfer( chat, from, to, () => {} ) )
+						// operators.emit( 'transfer', chat, from, to, () => {} )
 					} )
 					connections[0].client.once( 'chat.open', ( _chat ) => {
 						deepEqual( _chat, chat )
@@ -300,7 +330,8 @@ describe( 'Operators', () => {
 				if ( e ) return reject( e )
 				resolve( chats )
 			} )
-			ops.emit( 'open', chat, `customers/${ chat.id }`, opUser )
+			// ops.emit( 'open', chat, `customers/${ chat.id }`, opUser )
+			store.dispatch( operatorOpen( chat, `customers/${ chat.id }`, opUser ) );
 		} )
 
 		beforeEach( () => {
@@ -361,12 +392,18 @@ describe( 'Operators', () => {
 		]
 
 		const assign = ( chat_id ) => new Promise( ( resolve, reject ) => {
-			operators.emit( 'assign', { id: chat_id }, `customer/${chat_id}`, ( error, assigned ) => {
+			// operators.emit( 'assign', { id: chat_id }, `customer/${chat_id}`, ( error, assigned ) => {
+			// 	if ( error ) {
+			// 		return reject( error )
+			// 	}
+			// 	resolve( assigned )
+			// } )
+			store.dispatch( operatorAssign( { id: chat_id }, `customer/${chat_id}`, ( error, assigned ) => {
 				if ( error ) {
 					return reject( error )
 				}
 				resolve( assigned )
-			} )
+			} ) )
 		} )
 
 		const connectAll = () => Promise.all( ops.map(
@@ -433,14 +470,6 @@ describe( 'Operators', () => {
 			const { load, capacity } = selectTotalCapacity( store.getState(), STATUS_AVAILABLE )
 			ok( load < capacity )
 			equal( capacity, 17 )
-		} )
-
-		it( 'should handle identities event', done => {
-			operators.emit( 'identities', identities => {
-				equal( identities.length, 6 )
-				equal( identities[0].id, 'hermione' )
-				done()
-			} )
 		} )
 	} )
 } )

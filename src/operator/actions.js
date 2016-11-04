@@ -16,6 +16,12 @@ export const OPERATOR_CLOSE_CHAT = 'OPERATOR_CLOSE_CHAT';
 export const OPERATOR_QUERY_AVAILABILITY = 'OPERATOR_QUERY_AVAILABILITY';
 export const SET_SYSTEM_ACCEPTS_CUSTOMERS = 'SET_SYSTEM_ACCEPTS_CUSTOMERS';
 export const SET_USER_LOADS = 'SET_USER_LOADS';
+export const OPERATOR_TRANSFER = 'OPERATOR_TRANSFER';
+export const OPERATOR_REASSIGN = 'OPERATOR_REASSIGN';
+export const OPERATOR_ASSIGN = 'OPERATOR_ASSIGN';
+export const OPERATOR_RECOVER = 'OPERATOR_RECOVER';
+export const OPERATOR_OPEN = 'OPERATOR_OPEN';
+export const OPERATOR_LEAVE = 'OPERATOR_LEAVE';
 
 export const updateIdentity = ( socket, user ) => (
 	{ socket, user, type: UPDATE_IDENTITY }
@@ -86,4 +92,28 @@ export const operatorQueryAvailability = ( clients, chat, deferred ) => (
 
 export const setAcceptsCustomers = ( isEnabled ) => (
 	{ type: SET_SYSTEM_ACCEPTS_CUSTOMERS, isEnabled }
+)
+
+export const operatorTransfer = ( chat, from, to, complete ) => (
+	{ type: OPERATOR_TRANSFER, chat, from, to, complete }
+);
+
+export const operatorReassign = ( user, socket, chats ) => (
+	{ type: OPERATOR_REASSIGN, user, socket, chats }
+)
+
+export const operatorAssign = ( chat, room, callback ) => (
+	{ type: OPERATOR_ASSIGN, chat, room, callback }
+)
+
+export const operatorRecover = ( user, chats, callback ) => (
+	{ type: OPERATOR_RECOVER, user, chats, callback }
+)
+
+export const operatorOpen = ( chat, room, operator ) => (
+	{ type: OPERATOR_OPEN, chat, room, operator }
+)
+
+export const operatorLeave = ( chat, room, operator ) => (
+	{ type: OPERATOR_LEAVE, chat, room, operator }
 )

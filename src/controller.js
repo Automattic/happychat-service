@@ -5,6 +5,7 @@ import assign from 'lodash/assign'
 import { ChatLog } from './chat-log'
 import { getChats } from './chat-list/selectors'
 import { operatorReceive, operatorReceiveTyping } from './operator/actions'
+import { selectIdentities } from './operator/store'
 
 const debug = require( 'debug' )( 'happychat:controller' )
 
@@ -77,18 +78,13 @@ export default ( { customers, agents, operators, store } ) => {
 	} )
 
 	agents.on( 'system.info', done => {
-		Promise.all( [
-			new Promise( ( resolve ) => operators.emit( 'identities', resolve ) ),
-			Promise.resolve( getChats( store.getState() ) ),
-		] ).then( values => {
-			debug( 'system.info, got values', values );
-
-			const [ _operators, _chats ] = values
-			done( {
-				chats: _chats,
-				operators: _operators,
-			} )
-		} ).catch( err => debug( 'failed system.info', err ) )
+		const _operators = selectIdentities( store.getState() );
+		const _chats = getChats( store.getState() );
+		debug( 'system.info, got values', [ _operators, _chats ] );
+		done( {
+			chats: _chats,
+			operators: _operators,
+		} )
 	} )
 
 	toAgents( customers, 'join', 'customer.join' )
