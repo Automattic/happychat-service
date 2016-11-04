@@ -3,7 +3,6 @@ export const REMOVE_USER = 'REMOVE_USER'
 export const REMOVE_USER_SOCKET = 'REMOVE_USER_SOCKET'
 export const UPDATE_USER_STATUS = 'UPDATE_USER_STATUS'
 export const UPDATE_USER_CAPACITY = 'UPDATE_USER_CAPACITY';
-export const UPDATE_AVAILABILITY = 'UPDATE_AVAILABILITY';
 export const OPERATOR_RECEIVE = 'OPERATOR_RECEIVE';
 export const OPERATOR_RECEIVE_TYPING = 'OPERATOR_RECEIVE_TYPING';
 export const OPERATOR_CHAT_ONLINE = 'OPERATOR_CHAT_ONLINE';
@@ -44,10 +43,6 @@ export const updateCapacity = ( user, capacity ) => (
 export const setUserLoads = ( loads ) => ( {
 	type: SET_USER_LOADS, loads
 } )
-
-export const updateAvailability = ( availability ) => (
-	{ type: UPDATE_AVAILABILITY, availability }
-)
 
 export const operatorReceive = ( id, message ) => (
 	{ type: OPERATOR_RECEIVE, id, message }

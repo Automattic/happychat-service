@@ -91,7 +91,7 @@ export default ( { customers, agents, operators, store } ) => {
 	toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 
 	customers.on( 'join', ( socketIdentifier, user, socket ) => {
-		debug( 'emitting chat log' )
+		debug( 'emitting chat log to customer' )
 		log.customer.findLog( user.id )
 		.then( ( messages ) => socket.emit( 'log', messages ) )
 	} )

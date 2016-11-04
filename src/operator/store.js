@@ -21,14 +21,13 @@ import {
 	REMOVE_USER_SOCKET,
 	UPDATE_USER_STATUS,
 	UPDATE_USER_CAPACITY,
-	UPDATE_AVAILABILITY,
 	SET_SYSTEM_ACCEPTS_CUSTOMERS,
 	SET_USER_LOADS
 } from './actions'
 
 import {
 	STATUS_AVAILABLE
-} from './index'
+} from '../middlewares/socket-io'
 
 // Selectors
 export const selectIdentities = ( { operators: { identities } } ) => values( identities )
@@ -84,16 +83,6 @@ const userPropUpdater = prop => ( action, state ) => {
 const setStatus = userPropUpdater( 'status' );
 const setCapacity = userPropUpdater( 'capacity' );
 
-const setOpAvailability = ( opsStatuses, state ) => {
-	return opsStatuses.reduce( ( collection, { id, load, capacity } ) => {
-		if ( !id ) {
-			return collection;
-		}
-		const updatedUser = assign( {}, get( state, id ), { load, capacity } )
-		return assign( {}, collection, set( {}, id, updatedUser ) )
-	}, state );
-}
-
 const identities = ( state = {}, action ) => {
 	const { user } = action
 	switch ( action.type ) {
@@ -106,8 +95,6 @@ const identities = ( state = {}, action ) => {
 			return setCapacity( action, state );
 		case REMOVE_USER:
 			return omit( state, user.id )
-		case UPDATE_AVAILABILITY:
-			return setOpAvailability( action.availability, state );
 		case SET_USER_LOADS:
 			return mapObjIndexed( ( operator, id ) => merge(
 				operator,

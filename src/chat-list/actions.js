@@ -70,6 +70,6 @@ export const notifySystemStatusChange = enabled => ( {
 	type: NOTIFY_SYSTEM_STATUS_CHANGE, enabled
 } )
 
-export const notifyChatStatusChanged = chat_id => ( {
-	type: NOTIFY_CHAT_STATUS_CHANGED, chat_id
+export const notifyChatStatusChanged = ( chat_id, status, lastStatus ) => ( {
+	type: NOTIFY_CHAT_STATUS_CHANGED, chat_id, status, lastStatus
 } )

@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events'
 import { ok, equal, deepEqual, doesNotThrow } from 'assert'
-import operator from 'operator'
 import mockio from '../mock-io'
 import { tick } from '../tick'
 import { parallel } from 'async'
@@ -19,7 +18,7 @@ import {
 	operatorAssign
 } from 'operator/actions'
 import { selectTotalCapacity } from 'operator/store'
-import { STATUS_AVAILABLE } from 'operator'
+import { STATUS_AVAILABLE } from 'middlewares/socket-io'
 
 const debug = require( 'debug' )( 'happychat:test:operators' )
 
@@ -27,7 +26,7 @@ describe( 'Operators', () => {
 	let operators
 	let socketid = 'socket-id'
 	let user
-	let socket, client, server, events, store, io, watchingMiddleware
+	let socket, client, server, store, io, watchingMiddleware
 
 	const connectOperator = ( { socket: useSocket, client: useClient }, authUser = { id: 'user-id', displayName: 'name' } ) => new Promise( ( resolve ) => {
 		useClient
@@ -39,15 +38,14 @@ describe( 'Operators', () => {
 	} )
 
 	beforeEach( () => {
-		events = new EventEmitter();
+		operators = new EventEmitter();
 		( { server: io } = mockio( socketid ) )
 		server = io.of( '/operator' );
 		( { socket, client } = server.newClient( socketid ) )
 		watchingMiddleware = new WatchingMiddleware()
 
 		// Need to add a real socket io middleware here
-		store = createStore( { io, operators: events, customers: new EventEmitter(), chatlist: new EventEmitter(), middlewares: [ watchingMiddleware.middleware() ] } )
-		operators = operator( server, events, store )
+		store = createStore( { io, operators, customers: new EventEmitter(), chatlist: new EventEmitter(), middlewares: [ watchingMiddleware.middleware() ] } )
 		operators.on( 'connection', ( s, callback ) => s.emit( 'identify', callback ) )
 	} )
 

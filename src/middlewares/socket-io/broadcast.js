@@ -53,18 +53,21 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 			socket.removeListener( 'broadcast.state', stateListener )
 			socket.removeListener( 'broadcast.dispatch', dispatchListener )
 		} )
-		return Promise.resolve( socket )
 	}
 
-	const sendState = socket => {
-		debug( 'sending state' )
-		socket.emit( 'broadcast.state', version, currentState )
+	const sendState = socket => socket.emit( 'broadcast.state', version, currentState )
+
+	const handleOperatorReady = action => {
+		debug( 'setting up broadcast', action.socket.id )
+		join( io, action.socket )
+			.catch( e => debug( 'Failed to add user socket to broadcast', action.user.id, e ) )
+		listen( action.socket )
+		sendState( action.socket )
 	}
 
 	return next => action => {
 		switch ( action.type ) {
 			case REMOTE_ACTION_TYPE:
-				debug( 'handling REMOTE_ACTION_TYPE' )
 				return new Promise( ( resolve, reject ) => {
 					try {
 						if ( action.action.version && action.action.version !== version ) {
@@ -80,10 +83,7 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 				} )
 			// when the socket joins operators initialize them
 			case OPERATOR_READY:
-				join( io, action.socket )
-				.then( listen )
-				.then( sendState )
-				.catch( e => debug( 'Failed to add user socket to broadcast', action.user.id, e ) )
+				handleOperatorReady( action )
 				break;
 		}
 

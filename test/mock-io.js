@@ -87,6 +87,9 @@ class Server extends EventEmitter {
 			process.nextTick( complete )
 		}
 		socket.close = () => {}
+		client.disconnect = socket.disconnect = () => {
+			this.disconnect( { socket, client } )
+		}
 		return { socket, client }
 	}
 

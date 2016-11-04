@@ -50,7 +50,10 @@ describe( 'Operator', () => {
 	it( 'should join chat', () => service.startClients()
 		.then( emitCustomerMessage )
 		.then( operatorJoinChat )
-		.then( chat => ok( chat ) )
+	.then( chat => {
+		ok( chat )
+		debug( 'check the store', service.service.store.getState().chatlist['session-id'] )
+	} )
 	)
 
 	describe( 'when in a chat', () => {

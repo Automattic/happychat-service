@@ -47,8 +47,6 @@ describe( 'Operator Transfer', () => {
 
 	it( 'should log transfer between operators', () => connectOperators( operators )
 		.then( ( [a, b] ) => connectCustomer().then( customerClient => {
-			let messages = []
-			b.once( 'log', ( chat, log ) => messages = concat( messages, log ) )
 			return Promise.resolve()
 			// get chat assigned to operator a
 			.then( () => new Promise( resolve => {
@@ -59,9 +57,9 @@ describe( 'Operator Transfer', () => {
 				// have operator a transfer to operator b
 				debug( 'a opened chat', chat )
 				a.emit( 'chat.transfer', chat.id, 'b' )
-				b.once( 'chat.open', () => resolve( [a, b] ) )
+				b.once( 'log', ( _, log ) => resolve( log ) )
 			} ) )
-			.then( ( [first] ) => new Promise( resolve => {
+			.then( messages => {
 				// check to make sure the transfer event message is in the log
 				debug( 'wtf', messages )
 				let transfer = find( messages, ( { type, meta } ) => type === 'event' && meta.event_type === 'transfer' )
@@ -69,8 +67,7 @@ describe( 'Operator Transfer', () => {
 				const expectedTo = Object.assign( {}, operators[1], { load: 0 } )
 				deepEqual( transfer.meta.from, operators[0] )
 				deepEqual( transfer.meta.to, expectedTo )
-				resolve()
-			} ) )
+			} )
 		} ) )
 	)
 } )
