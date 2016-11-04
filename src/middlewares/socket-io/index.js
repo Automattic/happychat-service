@@ -58,13 +58,13 @@ const operatorTyping = ( id, userIdentity, text ) => (
 	{ type: OPERATOR_TYPING, id, userIdentity, text }
 )
 
-const OPERATOR_CHAT_JOIN = 'OPERATOR_CHAT_JOIN';
-const operatorChatJoin = ( chat_id, user ) => (
+export const OPERATOR_CHAT_JOIN = 'OPERATOR_CHAT_JOIN';
+export const operatorChatJoin = ( chat_id, user ) => (
 	{ type: OPERATOR_CHAT_JOIN, chat_id, user }
 )
 
-const OPERATOR_CHAT_LEAVE = 'OPERATOR_CHAT_LEAVE';
-const operatorChatLeave = ( chat_id, user ) => (
+export const OPERATOR_CHAT_LEAVE = 'OPERATOR_CHAT_LEAVE';
+export const operatorChatLeave = ( chat_id, user ) => (
 	{ type: OPERATOR_CHAT_LEAVE, chat_id, user }
 )
 

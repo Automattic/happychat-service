@@ -23,12 +23,12 @@ import {
 	CLOSE_CHAT
 } from './actions'
 import {
-	OPERATOR_CHAT_LEAVE,
-	OPERATOR_CHAT_JOIN,
 	OPERATOR_OPEN_CHAT_FOR_CLIENTS
 } from '../operator/actions'
-
-const debug = require( 'debug' )( 'happychat:chat-list:reducer' )
+import {
+	OPERATOR_CHAT_LEAVE,
+	OPERATOR_CHAT_JOIN,
+} from '../middlewares/socket-io/index';
 
 export const STATUS_NEW = 'new'
 export const STATUS_PENDING = 'pending'
@@ -79,8 +79,9 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 		case SET_CHAT_MISSED:
 			return setStatus( STATUS_MISSED, state )
 		case OPERATOR_CHAT_LEAVE:
-			return setMembers( dissoc( action.operator.id, membersView( state ) ), state )
+			return setMembers( dissoc( action.user.id, membersView( state ) ), state )
 		case OPERATOR_CHAT_JOIN:
+			return setMembers( set( lensProp( action.user.id ), true, membersView( state ) ), state )
 		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
 			return setMembers( set( lensProp( action.operator.id ), true, membersView( state ) ), state )
 		case SET_CHAT_CUSTOMER_DISCONNECT:

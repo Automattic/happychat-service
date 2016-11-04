@@ -25,6 +25,10 @@ import {
 import {
 	operatorOpenChatForClients
 } from 'operator/actions';
+import {
+	operatorChatJoin,
+	operatorChatLeave
+} from 'middlewares/socket-io'
 
 import { createStore, combineReducers } from 'redux'
 
@@ -136,6 +140,24 @@ describe( 'ChatList reducer', () => {
 			deepEqual( state, { chatlist: { 'other-chat': 'b' } } )
 		},
 		{ 'some-chat': 'a', 'other-chat': 'b'}
+	) )
+
+	it( 'should add operator as member', dispatchAction(
+		operatorChatJoin( 'id', { id: 'user' } ),
+		state => {
+			const [ , , , , members ] = state.chatlist.id
+			deepEqual( members, { user: true } )
+		},
+		{ id: [ 'open', { id: 'id' }, {}, 1, {} ] }
+	) )
+
+	it( 'should add operator as member', dispatchAction(
+		operatorChatLeave( 'id', { id: 'user' } ),
+		state => {
+			const [ , , , , members ] = state.chatlist.id
+			deepEqual( members, {} )
+		},
+		{ id: [ 'open', { id: 'id' }, {}, 1, { user: true } ] }
 	) )
 
 	it( 'should set operator chats abandoned', dispatchAction(
