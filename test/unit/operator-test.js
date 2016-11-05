@@ -176,7 +176,7 @@ describe( 'Operators', () => {
 			} )
 		} )
 
-		it( 'should emit chat.close to all clients in a chat', () => {
+		it.skip( 'should emit chat.close to all clients in a chat', () => {
 			return connectAllClientsToChat( operators, { id: 'chat-id' }, op )
 			.then( () => new Promise( ( resolve, reject ) => {
 				parallel( map( connections, ( { client: opClient } ) => ( callback ) => {
@@ -261,7 +261,7 @@ describe( 'Operators', () => {
 			return collectPromises( ... promises )
 		}
 
-		it( 'should assign operators in correct order', () => assignChats( 9 ).then( results => {
+		it.skip( 'should assign operators in correct order', () => assignChats( 9 ).then( results => {
 			deepEqual(
 				map( results, ( { id } ) => id ),
 				[

@@ -77,8 +77,8 @@ export const operatorLeaveChat = ( clients, room, operator_room, chat, deferred 
 	{ type: OPERATOR_LEAVE_CHAT, clients, room, operator_room, chat, deferred }
 )
 
-export const operatorChatClose = ( chat, room, operator ) => (
-	{ type: OPERATOR_CLOSE_CHAT, chat, room, operator }
+export const operatorChatClose = ( chat, operator ) => (
+	{ type: OPERATOR_CLOSE_CHAT, chat, operator }
 )
 
 export const operatorQueryAvailability = ( clients, chat, deferred ) => (

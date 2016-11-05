@@ -170,9 +170,9 @@ describe( 'ChatList component', () => {
 
 		it( 'should allow operator to close chat', ( done ) => {
 			watchingMiddleware.watchForType( OPERATOR_CLOSE_CHAT, ( action ) => {
+				console.error( 'action', action )
 				equal( action.operator.id, operator_id )
 				deepEqual( action.chat, chat )
-				equal( action.room, `customers/${chat.id}` )
 				ok( ! getChat( chat.id, store.getState() ) )
 				done()
 			} )

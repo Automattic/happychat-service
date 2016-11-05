@@ -5,7 +5,7 @@ import createStore from 'store'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
 import { RECEIVE_CUSTOMER_MESSAGE } from '../../src/chat-list/actions';
-import { OPERATOR_RECEIVE, OPERATOR_RECEIVE_TYPING } from '../../src/operator/actions';
+import { OPERATOR_RECEIVE, OPERATOR_RECEIVE_TYPING, updateIdentity } from '../../src/operator/actions';
 
 describe( 'Controller', () => {
 	let customers, agents, operators, store, watchingMiddleware
@@ -205,11 +205,13 @@ describe( 'Controller', () => {
 
 	describe( 'agents system.info', () => {
 		it( 'should handle system.info event', done => {
-			operators.once( 'identities', cb => cb( [ 'operator' ] ) )
-
+			// need to insert operator
+			const socket = new EventEmitter();
+			socket.id = 'fake';
+			store.dispatch( updateIdentity( socket, { id: 'operator' } ) )
 			agents.emit( 'system.info', data => {
 				deepEqual( data.chats, [] )
-				deepEqual( data.operators, [ 'operator' ] )
+				deepEqual( data.operators, [ { id: 'operator', load: 0, capacity: 0 } ] )
 				done()
 			} )
 		} )

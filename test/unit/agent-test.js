@@ -50,7 +50,6 @@ describe( 'Agent Service', () => {
 			} )
 		} )
 
-		// ONE WAY TO KEEP CI FROM BLOWING UP
 		it( 'should send messsage to customer', ( done ) => {
 			service.once( 'message', ( { id, text, session_id, timestamp } ) => {
 				debug( 'help' )
