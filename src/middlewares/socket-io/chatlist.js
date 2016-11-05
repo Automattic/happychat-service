@@ -330,7 +330,7 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 	const handleCloseChat = ( action, lastState ) => {
 		let chat = getChat( action.chat_id, lastState )
 		const room_name = `customers/${ chat.id }`
-		store.dispatch( operatorChatClose( chat, room_name, action.operator ) )
+		store.dispatch( operatorChatClose( chat, action.operator ) )
 		operators.emit( 'message', chat, action.operator, merge( makeEventMessage( 'chat closed', chat.id ), {
 			meta: { event_type: 'close', by: action.operator }
 		} ) )

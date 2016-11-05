@@ -24,7 +24,7 @@ describe( 'ChatList component', () => {
 	let watchingMiddleware
 	let io
 
-	const emitCustomerMessage = ( id = 'chat-id', text = 'hello' ) => {
+	const emitCustomerMessage = ( text = 'hello', id = 'chat-id' ) => {
 		customers.emit( 'message', { id }, { text } )
 	}
 
@@ -149,6 +149,15 @@ describe( 'ChatList component', () => {
 
 		it( 'should store assigned operator', () => {
 			equal( getChatOperator( chat.id, store.getState() ).id, operator_id )
+		} )
+
+		it( 'should send message from customer', done => {
+			client.once( 'chat.message', ( _chat, message ) => {
+				deepEqual( _chat, chat )
+				deepEqual( message, { text: 'hola mundo' } )
+				done()
+			} )
+			emitCustomerMessage( 'hola mundo', 'the-id' )
 		} )
 
 		it( 'should mark chats as abandoned when operator is completely disconnected', ( done ) => {

@@ -11,10 +11,10 @@ export default ( { io, customers, operators, chatlist, middlewares = [], timeout
 	combineReducers( { operators: operatorReducer(), chatlist: chatlistReducer } ),
 	state,
 	applyMiddleware(
+		...middlewares,
 		operatorMiddleware( io.of( '/operator' ), operators ),
 		chatlistMiddleware( { io, customers, operators, events: chatlist, timeout, customerDisconnectTimeout: timeout } ),
 		broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
 		...operatorLoadMiddleware,
-		...middlewares
 	)
 )
