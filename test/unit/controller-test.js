@@ -5,10 +5,10 @@ import createStore from 'store'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
 import {
-	RECEIVE_CUSTOMER_MESSAGE,
 	AGENT_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_MESSAGE,
 	agentInboundMessage,
+	customerInboundMessage,
 	operatorInboundMessage
 } from 'chat-list/actions';
 import { OPERATOR_RECEIVE_TYPING, updateIdentity } from 'operator/actions';
@@ -72,7 +72,10 @@ describe( 'Controller', () => {
 				equal( session_id, 'user-id' )
 				done()
 			} )
-			customers.emit( 'message', { id: 'user-id', session_id: 'user-id' }, { session_id: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 } )
+			store.dispatch( customerInboundMessage(
+				'user-id',
+				{ session_id: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
+			) )
 		} )
 
 		it( 'should notify agents', ( done ) => {
@@ -86,18 +89,24 @@ describe( 'Controller', () => {
 				equal( text, 'hello' )
 				done()
 			} )
-			customers.emit( 'message', { id: 'user-id', session_id: 'user-id' }, { session_id: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 } )
+			store.dispatch( customerInboundMessage(
+				'user-id',
+				{ session_id: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
+			) )
 		} )
 
 		it( 'should notify operators', ( done ) => {
-			watchingMiddleware.watchForType( RECEIVE_CUSTOMER_MESSAGE, ( action ) => {
+			watchingMiddleware.watchForType( OPERATOR_RECEIVE_MESSAGE, ( action ) => {
 				equal( action.message.id, 'message-id' )
 				equal( action.message.session_id, 'user-id' )
 				equal( action.message.text, 'hello' )
 				done()
 			} )
 
-			customers.emit( 'message', { id: 'user-id', session_id: 'user-id' }, { session_id: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 } )
+			store.dispatch( customerInboundMessage(
+				'user-id',
+				{ session_id: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
+			) )
 		} )
 	} )
 

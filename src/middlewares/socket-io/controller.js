@@ -5,11 +5,11 @@ import get from 'lodash/get'
 import set from 'lodash/set'
 
 import { operatorReceiveTyping } from '../../operator/actions'
-import { getChat } from '../../chat-list/selectors'
 import {
 	operatorReceiveMessage,
 	agentReceiveMessage,
 	AGENT_INBOUND_MESSAGE,
+	CUSTOMER_INBOUND_MESSAGE,
 	OPERATOR_INBOUND_MESSAGE
 } from '../../chat-list/actions'
 
@@ -121,9 +121,11 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 	toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 
 	customers.on( 'join', ( socketIdentifier, user, socket ) => {
-		debug( 'emitting chat log to customer' )
 		log.customer.findLog( user.id )
-		.then( ( messages ) => socket.emit( 'log', messages ) )
+		.then( ( messages ) => {
+			debug( 'emitting chat log to customer', messages.length )
+			socket.emit( 'log', messages ) 
+		} )
 	} )
 
 	operators.on( 'join', ( chat, operator, socket ) => {
@@ -143,12 +145,16 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 		customers.emit( 'receive.typing', chat, user, text )
 	} )
 
-	customers.on( 'message', ( chat, message ) => {
+	const handleCustomerInboundMessage = ( action ) => {
+		const { chat_id, message } = action
+		const chat = { id: chat_id }
 		// broadcast the message to
-		debug( 'customer message', chat.id, message.id, message.text )
+		debug( 'customer message action', action, chat.id, message.id, message.text )
 		const origin = 'customer'
+		debug( 'run the middleware and log message' )
 		runMiddleware( { origin, destination: 'customer', chat, message } )
 		.then( m => new Promise( ( resolve, reject ) => {
+			debug( 'logging customer message' )
 			log.customer.recordCustomerMessage( chat, m )
 			.then( () => resolve( m ), reject )
 		} ) )
@@ -168,7 +174,7 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 		} ) )
 		.then( m => store.dispatch( operatorReceiveMessage( chat.id, m ) ) )
 		.catch( e => debug( 'middleware failed', e ) )
-	} )
+	}
 
 	const handleOperatorInboundMessage = action => {
 		const { chat_id, user: operator, message } = action
@@ -230,6 +236,9 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 				break;
 			case OPERATOR_INBOUND_MESSAGE:
 				handleOperatorInboundMessage( action )
+				break;
+			case CUSTOMER_INBOUND_MESSAGE:
+				handleCustomerInboundMessage( action )
 				break;
 		}
 		return next( action )

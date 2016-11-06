@@ -2,11 +2,13 @@ import { EventEmitter } from 'events'
 import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
 import createStore from 'store'
+import WatchingMiddleware from '../mock-middleware'
+import { RECEIVE_CUSTOMER_MESSAGE } from 'chat-list/actions'
 
 const debug = require( 'debug' )( 'happychat:test:customer' )
 
 describe( 'Customer Service', () => {
-	let server, socket, client, customerEvents, events
+	let server, socket, client, customerEvents, events, watching
 	const mockUser = {
 		id: 'abdefgh',
 		username: 'ridley',
@@ -19,13 +21,15 @@ describe( 'Customer Service', () => {
 		// export default ( { io, customers, operators, chatlist, middlewares = [], timeout = undefined }, state ) => createStore(
 		const { server: io } = mockIO()
 		events = customerEvents = new EventEmitter();
+		watching = new WatchingMiddleware()
 		createStore( {
 			io: io,
 			customers: customerEvents,
 			operators: new EventEmitter(),
 			chatlist: new EventEmitter(),
 			agents: new EventEmitter(),
-			timeout: 10
+			timeout: 10,
+			middlewares: [ watching.middleware() ]
 		} )
 		server = io.of( '/customer' );
 		( { client, socket } = server.newClient() )
@@ -46,7 +50,9 @@ describe( 'Customer Service', () => {
 		} )
 
 		it( 'should receive message and broadcast it', ( done ) => {
-			customerEvents.once( 'message', ( chat, { id, text, timestamp, user, meta, session_id } ) => {
+			watching.watchForType( RECEIVE_CUSTOMER_MESSAGE, action => {
+				const { chat, message } = action
+				const { id, text, timestamp, user, meta, session_id } = message
 				equal( chat.id, mockUser.session_id )
 				equal( chat.user_id, mockUser.id )
 				equal( session_id, mockUser.session_id )

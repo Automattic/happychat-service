@@ -39,7 +39,8 @@ import {
 	setChatsRecovered,
 	setOperatorChatsAbandoned,
 	setChatCustomerDisconnect,
-	operatorInboundMessage
+	operatorInboundMessage,
+	customerInboundMessage
 } from '../../chat-list/actions'
 import {
 	getChat,
@@ -61,7 +62,7 @@ import {
 } from '../../chat-list/reducer'
 import {
 	REMOVE_USER,
-	operatorChatClose,
+	operatorChatClose
 } from '../../operator/actions'
 import {
 	isSystemAcceptingCustomers,
@@ -101,7 +102,7 @@ const withTimeout = ( promise, ms = 1000 ) => Promise.race( [
 
 const customerRoom = ( { session_id } ) => `session/${ session_id }`
 
-const init = ( { user, socket, events, io, } ) => () => {
+const init = ( { user, socket, events, io, store } ) => () => {
 	const socketIdentifier = { id: user.id, socket_id: socket.id, session_id: user.session_id }
 	const chat = {
 		user_id: user.id,
@@ -118,7 +119,7 @@ const init = ( { user, socket, events, io, } ) => () => {
 		debug( 'received customer message', message )
 		// all customer connections for this user receive the message
 		// io.to( user.id ).emit( 'message', message )
-		events.emit( 'message', chat, message )
+		store.dispatch( receiveCustomerMessage( chat, message ) )
 	} )
 
 	socket.on( 'typing', ( text ) => {
@@ -140,9 +141,9 @@ const init = ( { user, socket, events, io, } ) => () => {
 	events.emit( 'join', socketIdentifier, chat, socket )
 }
 
-const join = ( { events, io, user, socket } ) => {
+const join = ( { events, io, user, socket, store } ) => {
 	debug( 'user joined', user )
-	socket.join( customerRoom( user ), init( { user, socket, events, io } ) )
+	socket.join( customerRoom( user ), init( { user, socket, events, io, store } ) )
 }
 
 const getClients = ( server, room ) => new Promise( ( resolve, reject ) => {
@@ -161,7 +162,7 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 		debug( 'customer connecting' )
 		onConnection(
 			{ socket, events: customers },
-			user => join( { socket, events: customers, user, io: customer_io } )
+			user => join( { socket, events: customers, user, io: customer_io, store } )
 		)
 	} )
 
@@ -234,10 +235,6 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 		() => failure( chat_id, operator )
 	)( getChat( chat_id, store.getState() ) )
 
-	customers.on( 'message', ( chat, message ) => {
-		store.dispatch( receiveCustomerMessage( chat, message ) )
-	} )
-
 	customers.on( 'join', ( socketid, chat, socket ) => {
 		// when a customer joins inform of status update
 		socket.emit( 'accept', isSystemAcceptingCustomers( store.getState() ) )
@@ -305,7 +302,8 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 		store.dispatch( closeChat( chat.id, operator ) )
 	}, chat_id => debug( 'chat.close without existing chat', chat_id ) )( action.chat_id, action.user )
 
-	const handleReceiveCustomerMessage = ( { chat } ) => {
+	const handleReceiveCustomerMessage = ( { chat, message } ) => {
+		store.dispatch( customerInboundMessage( chat.id, message ) )
 		const state = store.getState()
 		debug( 'see if we should assign?', getChatStatus( chat.id, state ) )
 		const operator = getChatOperator( chat.id, state )

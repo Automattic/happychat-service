@@ -11,7 +11,8 @@ import {
 	OPERATOR_RECEIVE_MESSAGE,
 	SET_OPERATOR_CHATS_ABANDONED,
 	SET_CHAT_MISSED,
-	SET_CHATS_RECOVERED
+	SET_CHATS_RECOVERED,
+	receiveCustomerMessage
 } from 'chat-list/actions';
 import { OPERATOR_CHAT_TRANSFER } from 'middlewares/socket-io'
 import { getChat, getChatStatus, getChatOperator } from 'chat-list/selectors'
@@ -31,7 +32,7 @@ describe( 'ChatList component', () => {
 	const watchForType = ( ... args ) => watchingMiddleware.watchForType( ... args )
 
 	const emitCustomerMessage = ( text = 'hello', id = 'chat-id' ) => {
-		customers.emit( 'message', { id }, { text } )
+		store.dispatch( receiveCustomerMessage( { id }, { text } ) )
 	}
 
 	const chatlistWithState = ( state ) => {
