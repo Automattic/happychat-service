@@ -45,7 +45,9 @@ import {
 	customerInboundMessage,
 	customerTyping,
 	customerJoin,
-	operatorJoinChat
+	operatorJoinChat,
+	customerSocketDisconnect,
+	customerDisconnect
 } from '../../chat-list/actions'
 import {
 	getChat,
@@ -134,12 +136,10 @@ const init = ( { user, socket, events, io, store } ) => () => {
 	socket.on( 'disconnect', () => {
 		debug( 'socket.on.disconnect', user.id, socketIdentifier );
 
-		events.emit( 'disconnect-socket', { socketIdentifier, user, chat, socket } )
+		store.dispatch( customerSocketDisconnect( socket, chat, user ) )
 
 		whenNoClients( io, chatRoom( chat ) )
-			.then( () => {
-				events.emit( 'disconnect', chat, user )
-			} )
+			.then( () => store.dispatch( customerDisconnect( chat, user ) ) )
 	} )
 
 	socket.emit( 'init', user )

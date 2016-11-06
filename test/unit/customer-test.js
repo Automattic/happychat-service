@@ -7,6 +7,8 @@ import {
 	CUSTOMER_TYPING,
 	CUSTOMER_INBOUND_MESSAGE,
 	CUSTOMER_JOIN,
+	CUSTOMER_SOCKET_DISCONNECT,
+	CUSTOMER_DISCONNECT,
 	customerReceiveTyping,
 	customerReceiveMessage
 } from 'chat-list/actions'
@@ -159,17 +161,20 @@ describe( 'Customer Service', () => {
 
 	it( 'should notify user join and leave', ( done ) => {
 		socket.id = 'socket-id'
-
-		events.on( 'disconnect-socket', ( { socketIdentifier, chat, user } ) => {
-			equal( socketIdentifier.id, mockUser.id )
-			equal( socketIdentifier.socket_id, 'socket-id' )
-			equal( chat.user_id, mockUser.id )
+		let disconnectSocketFired = false
+		watchForType( CUSTOMER_SOCKET_DISCONNECT, action => {
+			const { chat, socket: s, user } = action
+			disconnectSocketFired = true
 			equal( user.id, mockUser.id )
+			equal( s.id, 'socket-id' )
+			equal( chat.user_id, mockUser.id )
 		} )
 
-		events.on( 'disconnect', ( chat, user ) => {
+		watchForType( CUSTOMER_DISCONNECT, action => {
+			const { chat, user } = action
 			equal( chat.user_id, mockUser.id )
 			equal( user.id, mockUser.id )
+			ok( disconnectSocketFired )
 			done()
 		} )
 
@@ -199,7 +204,7 @@ describe( 'Customer Service', () => {
 		} )
 
 		it( 'should not fire disconnect until all clients leave', ( done ) => {
-			events.once( 'disconnect', () => {
+			watchForType( CUSTOMER_DISCONNECT, () => {
 				server.in( `session/${ mockUser.session_id }` ).clients( ( e, clients ) => {
 					equal( clients.length, 0 )
 					done()
@@ -209,9 +214,8 @@ describe( 'Customer Service', () => {
 			watchForType( CUSTOMER_JOIN, () => {
 				server.in( `session/${ mockUser.session_id }` ).clients( ( e, clients ) => {
 					equal( clients.length, 2 )
-
-					server.disconnect( { client, socket } )
-					server.disconnect( { client: connection2.client, socket: connection2.socket } )
+					client.disconnect()
+					process.nextTick( () => connection2.client.disconnect() )
 				} )
 			} )
 		} )

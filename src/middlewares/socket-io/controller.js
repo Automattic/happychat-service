@@ -15,7 +15,8 @@ import {
 	OPERATOR_INBOUND_MESSAGE,
 	CUSTOMER_TYPING,
 	CUSTOMER_JOIN,
-	OPERATOR_JOIN
+	OPERATOR_JOIN,
+	CUSTOMER_DISCONNECT
 } from '../../chat-list/actions'
 
 const debug = require( 'debug' )( 'happychat:controller' )
@@ -122,7 +123,11 @@ export default ( { customers, agents, middlewares } ) => store => {
 		.catch( e => debug( e.message ) )
 	} )
 
-	toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
+	const handleCustomerDisconnect = action => {
+		agents.emit( 'customer.disconnect', action.chat, action.user )
+	}
+
+	// toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 	const handleCustomerJoin = action => {
 		const { user, socket, chat } = action
 		log.customer.findLog( chat.id )
@@ -264,6 +269,9 @@ export default ( { customers, agents, middlewares } ) => store => {
 				break;
 			case OPERATOR_JOIN:
 				handleOperatorJoin( action )
+				break;
+			case CUSTOMER_DISCONNECT:
+				handleCustomerDisconnect( action )
 				break;
 		}
 		return next( action )

@@ -13,7 +13,8 @@ import {
 	customerInboundMessage,
 	operatorInboundMessage,
 	customerTyping,
-	customerJoin
+	customerJoin,
+	customerDisconnect
 } from 'chat-list/actions';
 import {
 	OPERATOR_RECEIVE_TYPING,
@@ -66,7 +67,7 @@ describe( 'Controller', () => {
 				equal( displayName, 'Furiosa' )
 				done()
 			} )
-			customers.emit( 'disconnect', { id: 'chat-id' }, mockUser )
+			store.dispatch( customerDisconnect( { id: 'chat-id' }, mockUser ) )
 		} )
 	} )
 
