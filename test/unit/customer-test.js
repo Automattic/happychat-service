@@ -6,6 +6,7 @@ import WatchingMiddleware from '../mock-middleware'
 import {
 	CUSTOMER_TYPING,
 	CUSTOMER_INBOUND_MESSAGE,
+	CUSTOMER_JOIN,
 	customerReceiveTyping,
 	customerReceiveMessage
 } from 'chat-list/actions'
@@ -172,8 +173,9 @@ describe( 'Customer Service', () => {
 			done()
 		} )
 
-		events.on( 'join', ( { id, socket_id } ) => {
-			equal( id, mockUser.id )
+		watchForType( CUSTOMER_JOIN, action => {
+			const { user, socket: { id: socket_id } } = action
+			equal( user.id, mockUser.id )
 			equal( socket_id, 'socket-id' )
 			debug( 'disconnecting' )
 			server.disconnect( { client, socket } )
@@ -204,7 +206,7 @@ describe( 'Customer Service', () => {
 				} )
 			} )
 
-			events.once( 'join', () => {
+			watchForType( CUSTOMER_JOIN, () => {
 				server.in( `session/${ mockUser.session_id }` ).clients( ( e, clients ) => {
 					equal( clients.length, 2 )
 

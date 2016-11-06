@@ -12,7 +12,8 @@ import {
 	SET_OPERATOR_CHATS_ABANDONED,
 	SET_CHAT_MISSED,
 	SET_CHATS_RECOVERED,
-	customerInboundMessage
+	customerInboundMessage,
+	customerJoin
 } from 'chat-list/actions';
 import { OPERATOR_CHAT_TRANSFER } from 'middlewares/socket-io'
 import { getChat, getChatStatus, getChatOperator } from 'chat-list/selectors'
@@ -136,7 +137,7 @@ describe( 'ChatList component', () => {
 			done()
 		} )
 
-		customers.emit( 'join', { session_id: 'session-id' }, { id: 'session-id' }, socket )
+		store.dispatch( customerJoin( socket, { id: 'session-id' }, { id: 'user-id' } ) )
 	} )
 
 	describe( 'with active chat', () => {

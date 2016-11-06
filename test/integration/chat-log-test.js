@@ -70,8 +70,8 @@ describe( 'Chat logs', () => {
 	} )
 	afterEach( () => service.stop() )
 
-	it( 'should deliver logs when customer joins chat', () => {
-		return service.startClients()
+	it( 'should deliver logs when customer joins chat', () =>
+		service.startClients()
 		.then( afterInit )
 		.then( sendMessages( mockMessages ) )
 		.then( disconnect )
@@ -85,7 +85,7 @@ describe( 'Chat logs', () => {
 				map( mockMessages, m => 'test: ' + m )
 			)
 		} )
-	} )
+	)
 
 	it.skip( 'should deliver logs to operator when joining chat', () => {
 		return service.startClients()

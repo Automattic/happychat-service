@@ -21,6 +21,7 @@ import {
 	CUSTOMER_RECEIVE_TYPING,
 	CUSTOMER_INBOUND_MESSAGE,
 	CUSTOMER_RECEIVE_MESSAGE,
+	CUSTOMER_JOIN,
 	INSERT_PENDING_CHAT,
 	REASSIGN_CHATS,
 	RECOVER_CHATS,
@@ -42,7 +43,8 @@ import {
 	setChatCustomerDisconnect,
 	operatorInboundMessage,
 	customerInboundMessage,
-	customerTyping
+	customerTyping,
+	customerJoin
 } from '../../chat-list/actions'
 import {
 	getChat,
@@ -140,7 +142,7 @@ const init = ( { user, socket, events, io, store } ) => () => {
 	} )
 
 	socket.emit( 'init', user )
-	events.emit( 'join', socketIdentifier, chat, socket )
+	store.dispatch( customerJoin( socket, chat, user ) )
 }
 
 const join = ( { events, io, user, socket, store } ) => {
@@ -218,11 +220,9 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 		customer_io.to( chatRoomId( id ) ).emit( 'typing', text && !isEmpty( text ) )
 	}
 
-	customers.on( 'accept', ( accepted ) => {
-		customer_io.emit( 'accept', accepted )
-	} )
-
-	customers.on( 'join', ( socketIdentifier, chat ) => {
+	const handleCustomerJoin = action => {
+		const { chat, socket } = action
+		socket.emit( 'accept', isSystemAcceptingCustomers( store.getState() ) )
 		const state = store.getState()
 		const status = getChatStatus( chat.id, state )
 		const operator = getChatOperator( chat.id, state )
@@ -230,18 +230,13 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 			store.dispatch( setChatOperator( chat.id, operator ) )
 			return
 		}
-	} )
+	}
 
 	const whenChatExists = ( success, failure = () => {} ) => ( chat_id, operator ) => ifElse(
 		chat => !! chat,
 		chat => success( chat, operator ),
 		() => failure( chat_id, operator )
 	)( getChat( chat_id, store.getState() ) )
-
-	customers.on( 'join', ( socketid, chat, socket ) => {
-		// when a customer joins inform of status update
-		socket.emit( 'accept', isSystemAcceptingCustomers( store.getState() ) )
-	} )
 
 	customers.on( 'disconnect', ( chat ) => {
 		if ( isChatStatusNew( chat.id, store.getState() ) ) {
@@ -501,6 +496,9 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 				return next( action )
 			case CUSTOMER_RECEIVE_MESSAGE:
 				handleCustomerReceiveMessage( action )
+				return next( action );
+			case CUSTOMER_JOIN:
+				handleCustomerJoin( action );
 				return next( action );
 		}
 		const lastState = store.getState()
