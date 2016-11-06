@@ -20,6 +20,11 @@ export const OPERATOR_ASSIGN = 'OPERATOR_ASSIGN';
 export const OPERATOR_RECOVER = 'OPERATOR_RECOVER';
 export const OPERATOR_OPEN = 'OPERATOR_OPEN';
 export const OPERATOR_LEAVE = 'OPERATOR_LEAVE';
+export const OPERATOR_TYPING = 'OPERATOR_TYPING';
+
+export const operatorTyping = ( id, user, text ) => (
+	{ type: OPERATOR_TYPING, id, user, text }
+)
 
 export const updateIdentity = ( socket, user ) => (
 	{ socket, user, type: UPDATE_IDENTITY }

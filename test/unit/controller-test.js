@@ -9,9 +9,13 @@ import {
 	OPERATOR_RECEIVE_MESSAGE,
 	agentInboundMessage,
 	customerInboundMessage,
-	operatorInboundMessage
+	operatorInboundMessage,
 } from 'chat-list/actions';
-import { OPERATOR_RECEIVE_TYPING, updateIdentity } from 'operator/actions';
+import {
+	OPERATOR_RECEIVE_TYPING,
+	updateIdentity,
+	operatorTyping
+} from 'operator/actions';
 
 const debug = require( 'debug' )( 'happychat:test:controller' )
 
@@ -224,7 +228,7 @@ describe( 'Controller', () => {
 				done()
 			} )
 
-			operators.emit( 'typing', { id: 'chat-id' }, { id: 'user-id' }, 'typing a message...' )
+			store.dispatch( operatorTyping( 'chat-id', { id: 'user-id' }, 'typing a message...' ) )
 		} )
 
 		it( 'should notify customers', ( done ) => {
@@ -235,7 +239,7 @@ describe( 'Controller', () => {
 				done()
 			} )
 
-			operators.emit( 'typing', { id: 'chat-id' }, { id: 'user-id' }, 'typing a message...' )
+			store.dispatch( operatorTyping( 'chat-id', { id: 'user-id' }, 'typing a message...' ) )
 		} )
 	} )
 

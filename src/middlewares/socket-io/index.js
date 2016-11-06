@@ -11,6 +11,7 @@ import {
 	removeUserSocket,
 	removeUser,
 	updateIdentity,
+	operatorTyping,
 } from '../../operator/actions'
 
 import {
@@ -26,11 +27,6 @@ const identityForUser = ( { id, displayName, avatarURL } ) => (
 )
 
 const customerRoom = id => `customers/${ id }`;
-
-const OPERATOR_TYPING = 'OPERATOR_TYPING';
-const operatorTyping = ( id, userIdentity, text ) => (
-	{ type: OPERATOR_TYPING, id, userIdentity, text }
-)
 
 export const OPERATOR_CHAT_JOIN = 'OPERATOR_CHAT_JOIN';
 export const operatorChatJoin = ( chat_id, user ) => (
@@ -66,7 +62,6 @@ const join = ( { socket, store, user, io } ) => {
 
 	socket.on( 'status', ( status, done ) => {
 		store.dispatch( updateUserStatus( user, status ) );
-		// events.emit( 'status', user, status )
 		done()
 	} )
 
@@ -106,10 +101,9 @@ const join = ( { socket, store, user, io } ) => {
 	} )
 
 	socket.on( 'chat.typing', ( chat_id, text ) => {
-		const userIdentity = identityForUser( user )
-		debug( 'received operator `typing` event', userIdentity.id, chat_id, text );
-		store.dispatch( operatorTyping( chat_id, userIdentity, text ) );
-		// events.emit( 'typing', { id: chat_id }, userIdentity, text );
+		const identity = identityForUser( user )
+		debug( 'received operator `typing` event', identity.id, chat_id, text );
+		store.dispatch( operatorTyping( chat_id, identity, text ) );
 	} )
 
 	socket.on( 'chat.join', ( chat_id ) => {
@@ -129,7 +123,6 @@ const join = ( { socket, store, user, io } ) => {
 		debug( 'transfer', chat_id, 'to', user_id )
 		const toUser = selectIdentity( user_id )
 		store.dispatch( operatorChatTransfer( chat_id, user, toUser ) );
-		// events.emit( 'chat.transfer', chat_id, user, toUser )
 	} )
 }
 
@@ -144,9 +137,6 @@ export default ( io, events ) => ( store ) => {
 
 	return ( next ) => ( action ) => {
 		switch ( action.type ) {
-			case OPERATOR_TYPING:
-				events.emit( 'typing', { id: action.id }, action.userIdentity, action.text );
-				break;
 			case OPERATOR_RECEIVE_MESSAGE:
 				io.in( customerRoom( action.id ) ).emit( 'chat.message', { id: action.id }, action.message )
 				break;

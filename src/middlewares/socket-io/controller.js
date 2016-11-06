@@ -4,7 +4,7 @@ import assign from 'lodash/assign'
 import get from 'lodash/get'
 import set from 'lodash/set'
 
-import { operatorReceiveTyping } from '../../operator/actions'
+import { operatorReceiveTyping, OPERATOR_TYPING } from '../../operator/actions'
 import {
 	operatorReceiveMessage,
 	agentReceiveMessage,
@@ -140,10 +140,12 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 		store.dispatch( operatorReceiveTyping( chat, user, text ) );
 	} )
 
-	operators.on( 'typing', ( chat, user, text ) => {
+	const handleOperatorTyping = action => {
+		const { id, user, text } = action
+		const chat = { id }
 		store.dispatch( operatorReceiveTyping( chat, user, text ) );
 		customers.emit( 'receive.typing', chat, user, text )
-	} )
+	}
 
 	const handleCustomerInboundMessage = ( action ) => {
 		const { chat_id, message } = action
@@ -239,6 +241,9 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 				break;
 			case CUSTOMER_INBOUND_MESSAGE:
 				handleCustomerInboundMessage( action )
+				break;
+			case OPERATOR_TYPING:
+				handleOperatorTyping( action )
 				break;
 		}
 		return next( action )

@@ -11,7 +11,8 @@ import {
 	setAcceptsCustomers,
 	operatorOpen,
 	operatorAssign,
-	REMOVE_USER
+	REMOVE_USER,
+	OPERATOR_RECEIVE_TYPING
 } from 'operator/actions'
 import { selectTotalCapacity } from 'operator/selectors'
 import { OPERATOR_INBOUND_MESSAGE } from 'chat-list/actions'
@@ -90,9 +91,10 @@ describe( 'Operators', () => {
 		} )
 
 		it( 'should handle `chat.typing` from client and pass to events', ( done ) => {
-			operators.on( 'typing', ( chat, typingUser, text ) => {
+			watchForType( OPERATOR_RECEIVE_TYPING, action => {
+				const { chat, user, text } = action
 				equal( chat.id, 'chat-id' )
-				equal( typingUser.id, op.id )
+				equal( user.id, op.id )
 				equal( text, 'typing a message...' )
 				done()
 			} )
