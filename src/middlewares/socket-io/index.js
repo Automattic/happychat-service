@@ -1,6 +1,8 @@
 import { onConnection, timestamp } from '../../util'
 import {
-	OPERATOR_RECEIVE,
+	OPERATOR_RECEIVE_MESSAGE
+} from '../../chat-list/actions'
+import {
 	OPERATOR_RECEIVE_TYPING,
 	OPERATOR_CLOSE_CHAT,
 	updateUserStatus,
@@ -8,7 +10,7 @@ import {
 	removeUserSocket,
 	removeUser,
 	updateIdentity,
-} from '../../operator/actions';
+} from '../../operator/actions'
 
 import {
 	selectUser,
@@ -151,7 +153,7 @@ export default ( io, events ) => ( store ) => {
 			case OPERATOR_TYPING:
 				events.emit( 'typing', { id: action.id }, action.userIdentity, action.text );
 				break;
-			case OPERATOR_RECEIVE:
+			case OPERATOR_RECEIVE_MESSAGE:
 				io.in( customerRoom( action.id ) ).emit( 'chat.message', { id: action.id }, action.message )
 				break;
 			case OPERATOR_RECEIVE_TYPING:

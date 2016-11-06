@@ -4,9 +4,12 @@ import assign from 'lodash/assign'
 import createStore from 'store'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
-import { OPERATOR_RECEIVE } from 'operator/actions';
-import middlewareInterface from 'middleware-interface';
-import { agentInboundMessage, AGENT_RECEIVE_MESSAGE } from 'chat-list/actions'
+import middlewareInterface from 'middleware-interface'
+import {
+	agentInboundMessage,
+	AGENT_RECEIVE_MESSAGE,
+	OPERATOR_RECEIVE_MESSAGE
+} from 'chat-list/actions'
 
 describe( 'Controller middleware', () => {
 	let customers, agents, operators, watchingMiddleware
@@ -94,7 +97,7 @@ describe( 'Controller middleware', () => {
 			next( assign( {}, message, { text: 'intercepted' } ) )
 		} )
 
-		watchingMiddleware.watchForType( OPERATOR_RECEIVE, ( action ) => {
+		watchingMiddleware.watchForType( OPERATOR_RECEIVE_MESSAGE, ( action ) => {
 			equal( action.message.text, 'intercepted' )
 			done()
 		} )
@@ -117,7 +120,7 @@ describe( 'Controller middleware', () => {
 		} )
 		.middleware( ( { message } ) => assign( {}, message, { text: message.text + ' world' } ) )
 
-		watchingMiddleware.watchForType( OPERATOR_RECEIVE, ( action ) => {
+		watchingMiddleware.watchForType( OPERATOR_RECEIVE_MESSAGE, ( action ) => {
 			equal( action.message.text, 'goodbye world' )
 			done()
 		} )

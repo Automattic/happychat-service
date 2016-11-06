@@ -15,6 +15,7 @@ export const NOTIFY_SYSTEM_STATUS_CHANGE = 'NOTIFY_SYSTEM_STATUS_CHANGE'
 export const NOTIFY_CHAT_STATUS_CHANGED = 'NOTIFY_CHAT_STATUS_CHANGED'
 export const AGENT_INBOUND_MESSAGE = 'AGENT_INBOUND_MESSAGE'
 export const AGENT_RECEIVE_MESSAGE = 'AGENT_RECEIVE_MESSAGE'
+export const OPERATOR_RECEIVE_MESSAGE = 'OPERATOR_RECEIVE_MESSAGE';
 
 export const receiveCustomerMessage = ( chat, message ) => ( {
 	type: RECEIVE_CUSTOMER_MESSAGE, chat, message
@@ -83,3 +84,7 @@ export const agentInboundMessage = ( agent, message ) => ( {
 export const agentReceiveMessage = message => ( {
 	type: AGENT_RECEIVE_MESSAGE, message
 } )
+
+export const operatorReceiveMessage = ( id, message ) => (
+	{ type: OPERATOR_RECEIVE_MESSAGE, id, message }
+)

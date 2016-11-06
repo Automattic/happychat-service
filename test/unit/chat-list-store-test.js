@@ -115,17 +115,6 @@ describe( 'ChatList reducer', () => {
 		} } ) )
 	} )
 
-	it( 'should update chat member set', dispatchAction(
-		operatorOpenChatForClients( { id: 1 }, [], 'room', { id: 'chat-id' } ),
-		state => {
-			deepEqual(
-				state,
-				{ chatlist: { 'chat-id': [ null, null, null, null, { 1: true } ] } }
-			)
-		},
-		{ 'chat-id': [ null, null, null, null, {} ] }
-	) )
-
 	it( 'should insert pending chat', dispatchAction(
 		insertPendingChat( { id: 'chat-id' } ),
 		state => {

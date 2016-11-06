@@ -4,8 +4,8 @@ import controllerMiddleware from 'middlewares/socket-io/controller'
 import createStore from 'store'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
-import { RECEIVE_CUSTOMER_MESSAGE, AGENT_RECEIVE_MESSAGE, agentInboundMessage } from 'chat-list/actions';
-import { OPERATOR_RECEIVE, OPERATOR_RECEIVE_TYPING, updateIdentity } from 'operator/actions';
+import { RECEIVE_CUSTOMER_MESSAGE, AGENT_RECEIVE_MESSAGE, OPERATOR_RECEIVE_MESSAGE, agentInboundMessage } from 'chat-list/actions';
+import { OPERATOR_RECEIVE_TYPING, updateIdentity } from 'operator/actions';
 
 const debug = require( 'debug' )( 'happychat:test:controller' )
 
@@ -149,7 +149,7 @@ describe( 'Controller', () => {
 	describe( 'operator message', () => {
 		it( 'should notify operators', ( done ) => {
 			watchingMiddleware.watchForAction( {
-				type: OPERATOR_RECEIVE,
+				type: OPERATOR_RECEIVE_MESSAGE,
 				id: 'chat-id',
 				message: { id: 'message-id' }
 			}, () => done() );
