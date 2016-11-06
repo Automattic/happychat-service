@@ -6,7 +6,13 @@ import mockio from '../mock-io'
 import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
 import { OPERATOR_CLOSE_CHAT } from 'operator/actions';
-import { ASSIGN_CHAT, SET_OPERATOR_CHATS_ABANDONED, SET_CHAT_MISSED, SET_CHATS_RECOVERED } from 'chat-list/actions';
+import {
+	ASSIGN_CHAT,
+	OPERATOR_RECEIVE_MESSAGE,
+	SET_OPERATOR_CHATS_ABANDONED,
+	SET_CHAT_MISSED,
+	SET_CHATS_RECOVERED
+} from 'chat-list/actions';
 import { OPERATOR_CHAT_TRANSFER } from 'middlewares/socket-io'
 import { getChat, getChatStatus, getChatOperator } from 'chat-list/selectors'
 
@@ -21,6 +27,8 @@ describe( 'ChatList component', () => {
 	let events
 	let watchingMiddleware
 	let io
+
+	const watchForType = ( ... args ) => watchingMiddleware.watchForType( ... args )
 
 	const emitCustomerMessage = ( text = 'hello', id = 'chat-id' ) => {
 		customers.emit( 'message', { id }, { text } )
@@ -168,7 +176,6 @@ describe( 'ChatList component', () => {
 
 		it( 'should allow operator to close chat', ( done ) => {
 			watchingMiddleware.watchForType( OPERATOR_CLOSE_CHAT, ( action ) => {
-				console.error( 'action', action )
 				equal( action.operator.id, operator_id )
 				deepEqual( action.chat, chat )
 				ok( ! getChat( chat.id, store.getState() ) )
@@ -215,11 +222,8 @@ describe( 'ChatList component', () => {
 		it( 'should log message when chat is transferred', done => {
 			const newOperator = { id: 'new-operator' }
 			return connectOperator( newOperator ).then( () => {
-				events.once( 'miss', () => {
-					done( new Error( 'failed to transfer chat' ) )
-				} )
-				operators.once( 'transfer', ( cht, from, op, success ) => success( null, op ) )
-				operators.once( 'message', tick( ( { id: chat_id }, operator, message ) => {
+				watchForType( OPERATOR_RECEIVE_MESSAGE, action => {
+					const { id: chat_id, message } = action
 					equal( chat_id, chat.id )
 					ok( message.id )
 					ok( message.timestamp )
@@ -229,7 +233,7 @@ describe( 'ChatList component', () => {
 					deepEqual( message.meta.from.id, operator_id )
 					equal( message.meta.event_type, 'transfer' )
 					done()
-				} ) )
+				} )
 				client.emit( 'chat.transfer', chat.id, newOperator.id )
 			} )
 		} )
@@ -237,37 +241,39 @@ describe( 'ChatList component', () => {
 		it( 'should send message when operator joins', done => {
 			const newOperator = { id: 'joining-operator' }
 			return connectOperator( newOperator ).then( connection => {
-				operators.once( 'message', tick( ( { id: chat_id }, operator, message ) => {
+				watchForType( OPERATOR_RECEIVE_MESSAGE, action => {
+					const { id: chat_id, message } = action
 					equal( chat_id, chat.id )
 					ok( message.id )
 					deepEqual( message.meta.operator.id, newOperator.id )
 					equal( message.meta.event_type, 'join' )
 					done()
-				} ) )
+				} )
 				connection.client.emit( 'chat.join', chat.id )
 			} )
 		} )
 
 		it( 'should send message when operator leaves', done => {
-			operators.once( 'message', tick( ( { id: chat_id }, operator, message ) => {
+			watchForType( OPERATOR_RECEIVE_MESSAGE, action => {
+				const { id: chat_id, message } = action
 				equal( chat_id, chat.id )
 				deepEqual( message.meta.operator.id, operator_id )
 				equal( message.meta.event_type, 'leave' )
 				ok( message )
 				done()
-			} ) )
+			} )
 			client.emit( 'chat.leave', chat.id )
 		} )
 
 		it( 'should send a message when operator closes chat', done => {
-			operators.once( 'message', tick( ( _chat, operator, message ) => {
-				equal( operator.id, operator_id )
-				deepEqual( _chat, chat )
+			watchForType( OPERATOR_RECEIVE_MESSAGE, action => {
+				const { id: chat_id, message } = action
+				deepEqual( chat_id, chat.id )
 				equal( message.type, 'event' )
 				equal( message.meta.by.id, operator_id )
 				equal( message.meta.event_type, 'close' )
 				done()
-			} ) )
+			} )
 			client.emit( 'chat.close', chat.id )
 		} )
 	} )
@@ -302,17 +308,17 @@ describe( 'ChatList component', () => {
 		} )
 
 		it( 'should send a message when customer disconnects', ( done ) => {
-			operators.once( 'message', tick( ( _chat, _operator, message ) => {
+			watchForType( OPERATOR_RECEIVE_MESSAGE, action => {
+				const { id, message } = action
 				equal(
-					getChatStatus( _chat.id, store.getState() ),
+					getChatStatus( id, store.getState() ),
 					'customer-disconnect'
 				)
-				equal( _operator.id, operator_id )
-				deepEqual( _chat, chat )
+				equal( id, chat.id )
 				equal( message.type, 'event' )
 				equal( message.meta.event_type, 'customer-leave' )
 				done()
-			} ) )
+			} )
 
 			customers.emit( 'disconnect', chat, user )
 		} )
@@ -327,11 +333,12 @@ describe( 'ChatList component', () => {
 					deepEqual( chat, __chat )
 				} ) )
 
-				operators.on( 'message', tick( ( _, _operator, message ) => {
+				watchForType( OPERATOR_RECEIVE_MESSAGE, action => {
+					const { message } = action
 					if ( message.meta.event_type === 'customer-leave' ) {
 						throw new Error( 'operator should not be sent a message' )
 					}
-				} ) )
+				} )
 
 				const socket = new EventEmitter()
 				customers.emit( 'join', { id: user.id, socket_id: 'socket-id', session_id: 'session-id' }, chat, socket )

@@ -39,6 +39,7 @@ import {
 	setChatsRecovered,
 	setOperatorChatsAbandoned,
 	setChatCustomerDisconnect,
+	operatorInboundMessage
 } from '../../chat-list/actions'
 import {
 	getChat,
@@ -255,11 +256,10 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 			}
 
 			const operator = getChatOperator( chat.id, store.getState() )
-			operators.emit( 'message', chat, operator,
-				merge( makeEventMessage( 'customer left', chat.id ), {
-					meta: { event_type: 'customer-leave' }
-				} )
-			)
+			store.dispatch( operatorInboundMessage( chat.id, operator, merge(
+				makeEventMessage( 'customer left', chat.id ),
+				{ meta: { event_type: 'customer-leave' } }
+			) ) )
 		}, customerDisconnectTimeout )
 	} )
 
@@ -277,9 +277,10 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 		debug( 'operator joining chat', chat.id, operator )
 		emitChatOpenToOperator( chat, operator )
 		// TODO: send a message over dispatch
-		operators.emit( 'message', chat, operator, merge( makeEventMessage( 'operator joined', chat.id ), {
-			meta: { operator, event_type: 'join' }
-		} ) )
+		store.dispatch( operatorInboundMessage( chat.id, operator, merge(
+			makeEventMessage( 'operator joined', chat.id ),
+			{	meta: { operator, event_type: 'join' } }
+		) ) )
 	}, chat_id => debug( 'chat.join without existing chat', chat_id ) )( action.chat_id, action.user )
 
 	const handleOperatorChatLeave = action => whenChatExists( ( chat, operator ) => {
@@ -291,9 +292,10 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 			() => {
 				// send redux action to update loads
 				debug( 'removed operator from chat', operator.id )
-				operators.emit( 'message', chat, operator, merge( makeEventMessage( 'operator left', chat.id ), {
-					meta: { operator, event_type: 'leave' }
-				} ) )
+				store.dispatch( operatorInboundMessage( chat.id, operator, merge(
+					makeEventMessage( 'operator left', chat.id ),
+					{ meta: { operator, event_type: 'leave' } }
+				) ) )
 			},
 			e => debug( 'failed to remove operator from chat', e )
 		)
@@ -328,18 +330,20 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 	const handleCloseChat = ( action, lastState ) => {
 		let chat = getChat( action.chat_id, lastState )
 		store.dispatch( operatorChatClose( chat, action.operator ) )
-		operators.emit( 'message', chat, action.operator, merge( makeEventMessage( 'chat closed', chat.id ), {
-			meta: { event_type: 'close', by: action.operator }
-		} ) )
+		store.dispatch( operatorInboundMessage( chat.id, action.operator, merge(
+			makeEventMessage( 'chat closed', chat.id ),
+			{ meta: { event_type: 'close', by: action.operator } }
+		) ) )
 	}
 
 	const handleSetChatOperator = ( action ) => {
 		let { operator, chat_id } = action
 		let chat = getChat( action.chat_id, store.getState() )
 		events.emit( 'found', chat, operator )
-		operators.emit( 'message', chat, operator, merge( makeEventMessage( 'operator assigned', chat_id ), {
-			meta: { operator, event_type: 'assigned' }
-		} ) )
+		store.dispatch( operatorInboundMessage( chat.id, operator, merge(
+			makeEventMessage( 'operator assigned', chat_id ),
+			{ meta: { operator, event_type: 'assigned' } }
+		) ) )
 	}
 
 	const handleTransferChat = ( action ) => {
@@ -350,9 +354,10 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 			if ( !toUser ) {
 				return reject( new Error( 'operator not available' ) )
 			}
-			operators.emit( 'message', chat, user, merge( makeEventMessage( 'chat transferred', chat_id ), {
-				meta: { from: user, to: toUser, event_type: 'transfer' }
-			} ) )
+			store.dispatch( operatorInboundMessage( chat.id, user, merge(
+				makeEventMessage( 'chat transferred', chat_id ),
+				{ meta: { from: user, to: toUser, event_type: 'transfer' } }
+			) ) )
 			emitChatOpenToOperator( chat, toUser )
 			.then( resolve, reject )
 		} ), timeout )

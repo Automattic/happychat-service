@@ -14,6 +14,7 @@ import {
 	REMOVE_USER
 } from 'operator/actions'
 import { selectTotalCapacity } from 'operator/selectors'
+import { OPERATOR_INBOUND_MESSAGE } from 'chat-list/actions'
 import { STATUS_AVAILABLE, OPERATOR_READY } from 'middlewares/socket-io'
 
 describe( 'Operators', () => {
@@ -71,7 +72,11 @@ describe( 'Operators', () => {
 		} )
 
 		it( 'should emit message', ( done ) => {
-			operators.on( 'message', ( { id: chat_id }, { id, displayName, avatarURL, priv }, { text, user: author } ) => {
+			watchForType( OPERATOR_INBOUND_MESSAGE, action => {
+				const { message, chat_id, user } = action
+				const { id, displayName, avatarURL, priv } = user
+				const { text, user: author } = message
+
 				ok( id )
 				ok( displayName )
 				ok( avatarURL )

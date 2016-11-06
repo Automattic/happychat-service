@@ -4,7 +4,13 @@ import controllerMiddleware from 'middlewares/socket-io/controller'
 import createStore from 'store'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
-import { RECEIVE_CUSTOMER_MESSAGE, AGENT_RECEIVE_MESSAGE, OPERATOR_RECEIVE_MESSAGE, agentInboundMessage } from 'chat-list/actions';
+import {
+	RECEIVE_CUSTOMER_MESSAGE,
+	AGENT_RECEIVE_MESSAGE,
+	OPERATOR_RECEIVE_MESSAGE,
+	agentInboundMessage,
+	operatorInboundMessage
+} from 'chat-list/actions';
 import { OPERATOR_RECEIVE_TYPING, updateIdentity } from 'operator/actions';
 
 const debug = require( 'debug' )( 'happychat:test:controller' )
@@ -154,7 +160,9 @@ describe( 'Controller', () => {
 				message: { id: 'message-id' }
 			}, () => done() );
 
-			operators.emit( 'message', { id: 'chat-id' }, mockUser, { id: 'message-id', user: mockUser } )
+			store.dispatch( operatorInboundMessage(
+				'chat-id', mockUser, { id: 'message-id', user: mockUser }
+			) )
 		} )
 
 		it( 'should notify agents', ( done ) => {
@@ -168,7 +176,9 @@ describe( 'Controller', () => {
 				equal( type, 'type' )
 				done()
 			} )
-			operators.emit( 'message', { id: 'chat-id' }, mockUser, { id: 'message-id', user: mockUser, timestamp: 12345, type: 'type' } )
+			store.dispatch( operatorInboundMessage(
+				'chat-id', mockUser, { id: 'message-id', user: mockUser, timestamp: 12345, type: 'type' }
+			) )
 		} )
 
 		it( 'should notify customers', ( done ) => {
@@ -177,7 +187,9 @@ describe( 'Controller', () => {
 				equal( message.id, 'message-id' )
 				done()
 			} )
-			operators.emit( 'message', { id: 'chat-id' }, mockUser, { id: 'message-id', user: mockUser, timestamp: 12345 } )
+			store.dispatch( operatorInboundMessage(
+				'chat-id', mockUser, { id: 'message-id', user: mockUser, timestamp: 12345 }
+			) )
 		} )
 	} )
 

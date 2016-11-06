@@ -5,7 +5,13 @@ import get from 'lodash/get'
 import set from 'lodash/set'
 
 import { operatorReceiveTyping } from '../../operator/actions'
-import { operatorReceiveMessage, agentReceiveMessage, AGENT_INBOUND_MESSAGE } from '../../chat-list/actions'
+import { getChat } from '../../chat-list/selectors'
+import {
+	operatorReceiveMessage,
+	agentReceiveMessage,
+	AGENT_INBOUND_MESSAGE,
+	OPERATOR_INBOUND_MESSAGE
+} from '../../chat-list/actions'
 
 const debug = require( 'debug' )( 'happychat:controller' )
 
@@ -164,8 +170,11 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 		.catch( e => debug( 'middleware failed', e ) )
 	} )
 
-	operators.on( 'message', ( chat, operator, message ) => {
-		debug( 'operator message', chat, message.text )
+	const handleOperatorInboundMessage = action => {
+		const { chat_id, user: operator, message } = action
+		// TODO: look up chat from store?
+		const chat = { id: chat_id }
+		debug( 'operator message', chat.id, message.id )
 		const origin = 'operator'
 
 		runMiddleware( { origin, destination: 'agent', chat, message, user: operator } )
@@ -186,9 +195,9 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 			.then( () => resolve( m ), reject )
 		} ) )
 		.then( m => customers.emit( 'receive', chat, m ) )
-	} )
+	}
 
-	const handleInboundAgentMessage = action => {
+	const handleAgentInboundMessage = action => {
 		const { message } = action
 		const chat = { id: message.session_id }
 		const format = ( m ) => assign( {}, { author_type: 'agent' }, m )
@@ -217,7 +226,10 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 	return next => action => {
 		switch ( action.type ) {
 			case AGENT_INBOUND_MESSAGE:
-				handleInboundAgentMessage( action )
+				handleAgentInboundMessage( action )
+				break;
+			case OPERATOR_INBOUND_MESSAGE:
+				handleOperatorInboundMessage( action )
 				break;
 		}
 		return next( action )

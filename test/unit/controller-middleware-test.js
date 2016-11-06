@@ -7,6 +7,7 @@ import WatchingMiddleware from '../mock-middleware'
 import middlewareInterface from 'middleware-interface'
 import {
 	agentInboundMessage,
+	operatorInboundMessage,
 	AGENT_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_MESSAGE
 } from 'chat-list/actions'
@@ -102,12 +103,11 @@ describe( 'Controller middleware', () => {
 			done()
 		} )
 
-		operators.emit(
-			'message',
-			{ id: 'chat-id' },
+		store.dispatch( operatorInboundMessage(
+			'chat-id',
 			{ id: 'op-id' },
 			{ id: 'message-id', user: { id: 'op-id' }, timestamp: 12345 }
-		)
+		) )
 	} )
 
 	it( 'should still succeed when middlewares fail', ( done ) => {

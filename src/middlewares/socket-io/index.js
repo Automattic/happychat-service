@@ -1,6 +1,7 @@
 import { onConnection, timestamp } from '../../util'
 import {
-	OPERATOR_RECEIVE_MESSAGE
+	OPERATOR_RECEIVE_MESSAGE,
+	operatorInboundMessage
 } from '../../chat-list/actions'
 import {
 	OPERATOR_RECEIVE_TYPING,
@@ -25,11 +26,6 @@ const identityForUser = ( { id, displayName, avatarURL } ) => (
 )
 
 const customerRoom = id => `customers/${ id }`;
-
-const OPERATOR_MESSAGE = 'OPERATOR_MESSAGE';
-const operatorMessage = ( id, user, message ) => (
-	{ type: OPERATOR_MESSAGE, id, user, message }
-)
 
 const OPERATOR_TYPING = 'OPERATOR_TYPING';
 const operatorTyping = ( id, userIdentity, text ) => (
@@ -105,7 +101,8 @@ const join = ( { socket, store, user, io } ) => {
 		const message = { id: id, session_id: chat_id, text, timestamp: timestamp(), user: userIdentity, meta }
 		// all customer connections for this user receive the message
 		debug( 'broadcasting message', user.id, id, message )
-		store.dispatch( operatorMessage( chat_id, user, message ) );
+		// store.dispatch( operatorMessage( chat_id, user, message ) );
+		store.dispatch( operatorInboundMessage( chat_id, user, message ) )
 	} )
 
 	socket.on( 'chat.typing', ( chat_id, text ) => {
@@ -147,9 +144,6 @@ export default ( io, events ) => ( store ) => {
 
 	return ( next ) => ( action ) => {
 		switch ( action.type ) {
-			case OPERATOR_MESSAGE:
-				events.emit( 'message', { id: action.id }, action.user, action.message );
-				break;
 			case OPERATOR_TYPING:
 				events.emit( 'typing', { id: action.id }, action.userIdentity, action.text );
 				break;
