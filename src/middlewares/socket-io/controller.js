@@ -122,7 +122,6 @@ export default ( { customers, agents, middlewares } ) => store => {
 		.catch( e => debug( e.message ) )
 	} )
 
-	toAgents( customers, 'join', 'customer.join' )
 	toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 	const handleCustomerJoin = action => {
 		const { user, socket, chat } = action
@@ -131,6 +130,7 @@ export default ( { customers, agents, middlewares } ) => store => {
 			debug( 'emitting chat log to customer', user, messages.length, log.customer )
 			socket.emit( 'log', messages )
 		} )
+		agents.emit( 'customer.join', user, chat, socket )
 	}
 
 	const handleOperatorJoin = action => {

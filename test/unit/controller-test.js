@@ -12,7 +12,8 @@ import {
 	agentInboundMessage,
 	customerInboundMessage,
 	operatorInboundMessage,
-	customerTyping
+	customerTyping,
+	customerJoin
 } from 'chat-list/actions';
 import {
 	OPERATOR_RECEIVE_TYPING,
@@ -55,7 +56,7 @@ describe( 'Controller', () => {
 				equal( displayName, 'Furiosa' )
 				done()
 			} )
-			customers.emit( 'join', socketIdentifier, mockUser, new EventEmitter() )
+			store.dispatch( customerJoin( new EventEmitter(), mockUser, socketIdentifier ) )
 		} )
 
 		it( 'notifies agent when user disconnects', ( done ) => {
