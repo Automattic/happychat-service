@@ -57,7 +57,7 @@ describe( 'Customer Service', () => {
 		} )
 
 		it( 'should receive message and broadcast it', ( done ) => {
-			watching.watchForType( CUSTOMER_INBOUND_MESSAGE, action => {
+			watchForType( CUSTOMER_INBOUND_MESSAGE, action => {
 				const { chat, message } = action
 				const { id, text, timestamp, user, meta, session_id } = message
 				equal( chat.id, mockUser.session_id )
@@ -90,7 +90,7 @@ describe( 'Customer Service', () => {
 		} )
 
 		it( 'should handle `typing` from client and pass to events', ( done ) => {
-			watching.watchForType( CUSTOMER_TYPING, action => {
+			watchForType( CUSTOMER_TYPING, action => {
 				const { id, user, text } = action
 				equal( id, mockUser.session_id )
 				equal( user.id, mockUser.id )
