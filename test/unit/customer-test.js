@@ -3,12 +3,12 @@ import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
 import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
-import { RECEIVE_CUSTOMER_MESSAGE, CUSTOMER_TYPING } from 'chat-list/actions'
+import { RECEIVE_CUSTOMER_MESSAGE, CUSTOMER_TYPING, customerReceiveTyping } from 'chat-list/actions'
 
 const debug = require( 'debug' )( 'happychat:test:customer' )
 
 describe( 'Customer Service', () => {
-	let server, socket, client, customerEvents, events, watching
+	let server, socket, client, customerEvents, events, watching, store
 	const mockUser = {
 		id: 'abdefgh',
 		username: 'ridley',
@@ -22,7 +22,7 @@ describe( 'Customer Service', () => {
 		const { server: io } = mockIO()
 		events = customerEvents = new EventEmitter();
 		watching = new WatchingMiddleware()
-		createStore( {
+		store = createStore( {
 			io: io,
 			customers: customerEvents,
 			operators: new EventEmitter(),
@@ -97,7 +97,7 @@ describe( 'Customer Service', () => {
 				done()
 			} )
 
-			customerEvents.emit( 'receive.typing', { id: mockUser.session_id }, mockUser, 'typing' )
+			store.dispatch( customerReceiveTyping( mockUser.session_id, mockUser, 'typing' ) )
 		} )
 
 		it( 'should handle `receive.typing` from events (with String object)', ( done ) => {
@@ -105,8 +105,7 @@ describe( 'Customer Service', () => {
 				equal( isTyping, true )
 				done()
 			} )
-
-			customerEvents.emit( 'receive.typing', { id: mockUser.session_id }, mockUser, new String( 'typing' ) )
+			store.dispatch( customerReceiveTyping( mockUser.session_id, mockUser, new String( 'typing' ) ) )
 		} )
 
 		it( 'should handle `receive.typing` from events (with no text)', ( done ) => {
@@ -114,8 +113,7 @@ describe( 'Customer Service', () => {
 				equal( isTyping, false )
 				done()
 			} )
-
-			customerEvents.emit( 'receive.typing', { id: mockUser.session_id }, mockUser, false )
+			store.dispatch( customerReceiveTyping( mockUser.session_id, mockUser, false ) )
 		} )
 
 		it.skip( 'should handle accept event', done => {

@@ -18,6 +18,7 @@ import {
 	ASSIGN_CHAT,
 	ASSIGN_NEXT_CHAT,
 	CLOSE_CHAT,
+	CUSTOMER_RECEIVE_TYPING,
 	INSERT_PENDING_CHAT,
 	REASSIGN_CHATS,
 	RECEIVE_CUSTOMER_MESSAGE,
@@ -211,10 +212,10 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 		customer_io.to( chatRoom( chat ) ).emit( 'message', message )
 	} )
 
-	customers.on( 'receive.typing', ( chat, user, text ) => {
-		// customers shouldn't know who is typing or what they're typing
-		customer_io.to( chatRoom( chat ) ).emit( 'typing', text && !isEmpty( text ) )
-	} )
+	const handleCustomeReceiveTyping = action => {
+		const { id, text } = action
+		customer_io.to( chatRoomId( id ) ).emit( 'typing', text && !isEmpty( text ) )
+	}
 
 	customers.on( 'accept', ( accepted ) => {
 		customer_io.emit( 'accept', accepted )
@@ -382,7 +383,7 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 		}
 
 		// TODO: assign to next operator on failure
-		const [ next, ... rest] = list
+		const [ next, ... rest ] = list
 
 		// TODO: timeout?
 		emitChatOpenToOperator( chat, next ).then(
@@ -455,7 +456,6 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 	}
 
 	return next => action => {
-		debug( 'received', action.type )
 		switch ( action.type ) {
 			case NOTIFY_SYSTEM_STATUS_CHANGE:
 				debug( 'NOTIFY_SYSTEM_STATUS_CHANGE', action.enabled )
@@ -495,6 +495,9 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 				return next( action )
 			case SET_CHAT_OPERATOR:
 				handleSetChatOperator( action )
+				return next( action )
+			case CUSTOMER_RECEIVE_TYPING:
+				handleCustomeReceiveTyping( action )
 				return next( action )
 		}
 		const lastState = store.getState()

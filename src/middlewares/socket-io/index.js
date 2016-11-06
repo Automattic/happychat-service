@@ -141,7 +141,8 @@ export default ( io, events ) => ( store ) => {
 				io.in( customerRoom( action.id ) ).emit( 'chat.message', { id: action.id }, action.message )
 				break;
 			case OPERATOR_RECEIVE_TYPING:
-				io.in( customerRoom( action.id ) ).emit( 'chat.typing', action.chat, action.user, action.text )
+				const chat = { id: action.id }
+				io.in( customerRoom( action.id ) ).emit( 'chat.typing', chat, action.user, action.text )
 				break;
 			case OPERATOR_CLOSE_CHAT:
 				io.in( action.room ).emit( 'chat.close', action.chat, action.operator )

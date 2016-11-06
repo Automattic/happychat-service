@@ -48,10 +48,9 @@ export const setUserLoads = ( loads ) => ( {
 	type: SET_USER_LOADS, loads
 } )
 
-export const operatorReceiveTyping = ( chat, user, text ) => {
-	const { id } = chat;
-	return { type: OPERATOR_RECEIVE_TYPING, id, chat, user, text }
-}
+export const operatorReceiveTyping = ( id, user, text ) => (
+	{ type: OPERATOR_RECEIVE_TYPING, id, user, text }
+)
 
 export const operatorClientQuery = ( id, deferred ) => (
 	{ type: OPERATOR_CLIENT_QUERY, id, deferred }

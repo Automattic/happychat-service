@@ -7,6 +7,7 @@ import WatchingMiddleware from '../mock-middleware'
 import {
 	AGENT_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_MESSAGE,
+	CUSTOMER_RECEIVE_TYPING,
 	agentInboundMessage,
 	customerInboundMessage,
 	operatorInboundMessage,
@@ -210,7 +211,7 @@ describe( 'Controller', () => {
 	describe( 'customer `typing`', () => {
 		it( 'should notify operators', ( done ) => {
 			watchingMiddleware.watchForType( OPERATOR_RECEIVE_TYPING, ( action ) => {
-				equal( action.chat.id, 'chat-id' )
+				equal( action.id, 'chat-id' )
 				equal( action.user.id, 'user-id' )
 				equal( action.text, 'typing a message...' )
 				done()
@@ -223,7 +224,7 @@ describe( 'Controller', () => {
 	describe( 'operator `typing`', () => {
 		it( 'should notify operators', ( done ) => {
 			watchingMiddleware.watchForType( OPERATOR_RECEIVE_TYPING, ( action ) => {
-				equal( action.chat.id, 'chat-id' )
+				equal( action.id, 'chat-id' )
 				equal( action.user.id, 'user-id' )
 				equal( action.text, 'typing a message...' )
 				done()
@@ -233,8 +234,9 @@ describe( 'Controller', () => {
 		} )
 
 		it( 'should notify customers', ( done ) => {
-			customers.on( 'receive.typing', ( chat, user, text ) => {
-				equal( chat.id, 'chat-id' )
+			watchingMiddleware.watchForType( CUSTOMER_RECEIVE_TYPING, action => {
+				const { id, user, text } = action
+				equal( id, 'chat-id' )
 				equal( user.id, 'user-id' )
 				equal( text, 'typing a message...' )
 				done()

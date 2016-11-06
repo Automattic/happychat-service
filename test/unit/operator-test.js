@@ -92,8 +92,8 @@ describe( 'Operators', () => {
 
 		it( 'should handle `chat.typing` from client and pass to events', ( done ) => {
 			watchForType( OPERATOR_RECEIVE_TYPING, action => {
-				const { chat, user, text } = action
-				equal( chat.id, 'chat-id' )
+				const { id, user, text } = action
+				equal( id, 'chat-id' )
 				equal( user.id, op.id )
 				equal( text, 'typing a message...' )
 				done()

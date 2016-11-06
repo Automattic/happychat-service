@@ -9,10 +9,25 @@ import operatorReducer from './operator/reducer'
 import chatlistReducer from './chat-list/reducer'
 import canRemoteDispatch from './operator/canRemoteDispatch'
 
+const debug = require( 'debug' )( 'happychat:store' )
+const logger = () => next => action => {
+	debug( 'ACTION_START', action.type )
+	debug( 'ACTION', action )
+	try {
+		const result = next( action )
+		debug( 'ACTION_END', action.type )
+		return result
+	} catch ( e ) {
+		debug( 'ACTION_ERROR', action.type, e )
+		throw ( e )
+	}
+}
+
 export default ( { io, customers, operators, chatlist, agents, messageMiddlewares = [], middlewares = [], timeout = undefined }, state ) => createStore(
 	combineReducers( { operators: operatorReducer, chatlist: chatlistReducer } ),
 	state,
 	applyMiddleware(
+		logger,
 		...middlewares,
 		controllerMiddleware( { customers, agents, operators, middlewares: messageMiddlewares } ),
 		operatorMiddleware( io.of( '/operator' ), operators ),

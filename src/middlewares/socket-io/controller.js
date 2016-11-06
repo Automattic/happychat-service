@@ -8,6 +8,7 @@ import { operatorReceiveTyping, OPERATOR_TYPING } from '../../operator/actions'
 import {
 	operatorReceiveMessage,
 	agentReceiveMessage,
+	customerReceiveTyping,
 	AGENT_INBOUND_MESSAGE,
 	CUSTOMER_INBOUND_MESSAGE,
 	OPERATOR_INBOUND_MESSAGE,
@@ -125,7 +126,7 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 		log.customer.findLog( user.id )
 		.then( ( messages ) => {
 			debug( 'emitting chat log to customer', messages.length )
-			socket.emit( 'log', messages ) 
+			socket.emit( 'log', messages )
 		} )
 	} )
 
@@ -138,17 +139,14 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 	} )
 
 	const handleCustomerTyping = action => {
-		debug( 'action', action )
 		const { id, user, text } = action
-		const chat = { id }
-		store.dispatch( operatorReceiveTyping( chat, user, text ) );
+		store.dispatch( operatorReceiveTyping( id, user, text ) );
 	}
 
 	const handleOperatorTyping = action => {
 		const { id, user, text } = action
-		const chat = { id }
-		store.dispatch( operatorReceiveTyping( chat, user, text ) );
-		customers.emit( 'receive.typing', chat, user, text )
+		store.dispatch( operatorReceiveTyping( id, user, text ) );
+		store.dispatch( customerReceiveTyping( id, user, text ) )
 	}
 
 	const handleCustomerInboundMessage = ( action ) => {
