@@ -1,4 +1,3 @@
-import isFunction from 'lodash/isFunction'
 import isEmpty from 'lodash/isEmpty'
 import assign from 'lodash/assign'
 import get from 'lodash/get'
@@ -66,21 +65,7 @@ const formatAgentMessage = ( author_type, author_id, session_id, { id, timestamp
 	meta
 } )
 
-const pure = ( ... args ) => args
-
-const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
-	if ( isFunction( dstEvent ) ) {
-		mapArgs = dstEvent
-		dstEvent = event
-	}
-	if ( !dstEvent ) {
-		dstEvent = event
-	}
-	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
-}
-
-export default ( { customers, agents, middlewares } ) => store => {
-	const toAgents = forward( agents )
+export default ( { agents, middlewares } ) => store => {
 	const log = { operator: new ChatLog(), customer: new ChatLog() }
 
 	const runMiddleware = ( { origin, destination, chat, user, message } ) => new Promise( ( resolveMiddleware ) => {

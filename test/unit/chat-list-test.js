@@ -13,7 +13,8 @@ import {
 	SET_CHAT_MISSED,
 	SET_CHATS_RECOVERED,
 	customerInboundMessage,
-	customerJoin
+	customerJoin,
+	customerDisconnect
 } from 'chat-list/actions';
 import { OPERATOR_CHAT_TRANSFER } from 'middlewares/socket-io'
 import { getChat, getChatStatus, getChatOperator } from 'chat-list/selectors'
@@ -322,7 +323,7 @@ describe( 'ChatList component', () => {
 				done()
 			} )
 
-			customers.emit( 'disconnect', chat, user )
+			store.dispatch( customerDisconnect( chat, user ) )
 		} )
 
 		it( 'should revert back to assigned when customer disconnects and returns', ( done ) => {
@@ -343,13 +344,13 @@ describe( 'ChatList component', () => {
 				} )
 
 				const socket = new EventEmitter()
-				customers.emit( 'join', { id: user.id, socket_id: 'socket-id', session_id: 'session-id' }, chat, socket )
+				store.dispatch( customerJoin( socket, chat, { id: user.id, socket_id: 'socket-id', session_id: 'session-id' } ) )
 
 				// call done() after timeout to verify that operator message isn't sent
 				setTimeout( () => done(), TIMEOUT + 1 )
 			} ) )
 
-			customers.emit( 'disconnect', chat, user )
+			store.dispatch( customerDisconnect( chat, user ) )
 		} )
 	} )
 } )

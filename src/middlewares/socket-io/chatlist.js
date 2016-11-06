@@ -21,6 +21,7 @@ import {
 	CUSTOMER_RECEIVE_TYPING,
 	CUSTOMER_INBOUND_MESSAGE,
 	CUSTOMER_RECEIVE_MESSAGE,
+	CUSTOMER_DISCONNECT,
 	CUSTOMER_JOIN,
 	INSERT_PENDING_CHAT,
 	REASSIGN_CHATS,
@@ -109,7 +110,7 @@ const withTimeout = ( promise, ms = 1000 ) => Promise.race( [
 
 const customerRoom = ( { session_id } ) => `session/${ session_id }`
 
-const init = ( { user, socket, events, io, store } ) => () => {
+const init = ( { user, socket, io, store } ) => () => {
 	const socketIdentifier = { id: user.id, socket_id: socket.id, session_id: user.session_id }
 	const chat = {
 		user_id: user.id,
@@ -146,9 +147,9 @@ const init = ( { user, socket, events, io, store } ) => () => {
 	store.dispatch( customerJoin( socket, chat, user ) )
 }
 
-const join = ( { events, io, user, socket, store } ) => {
+const join = ( { io, user, socket, store } ) => {
 	debug( 'user joined', user )
-	socket.join( customerRoom( user ), init( { user, socket, events, io, store } ) )
+	socket.join( customerRoom( user ), init( { user, socket, io, store } ) )
 }
 
 const getClients = ( server, room ) => new Promise( ( resolve, reject ) => {
@@ -167,7 +168,7 @@ export default ( { io, customers, events, timeout = 1000, customerDisconnectTime
 		debug( 'customer connecting' )
 		onConnection(
 			{ socket, events: customers },
-			user => join( { socket, events: customers, user, io: customer_io, store } )
+			user => join( { socket, user, io: customer_io, store } )
 		)
 	} )
 
@@ -239,7 +240,8 @@ export default ( { io, customers, events, timeout = 1000, customerDisconnectTime
 		() => failure( chat_id, operator )
 	)( getChat( chat_id, store.getState() ) )
 
-	customers.on( 'disconnect', ( chat ) => {
+	const handleCustomerDisconnect = action => {
+		const { chat } = action
 		if ( isChatStatusNew( chat.id, store.getState() ) ) {
 			debug( 'Customer disconnected without starting chat', chat.id )
 			return;
@@ -257,7 +259,7 @@ export default ( { io, customers, events, timeout = 1000, customerDisconnectTime
 				{ meta: { event_type: 'customer-leave' } }
 			) ) )
 		}, customerDisconnectTimeout )
-	} )
+	}
 
 	const handleOperatorReady = ( { user, socket } ) => {
 		store.dispatch( recoverChats( user, socket ) )
@@ -497,10 +499,13 @@ export default ( { io, customers, events, timeout = 1000, customerDisconnectTime
 				return next( action )
 			case CUSTOMER_RECEIVE_MESSAGE:
 				handleCustomerReceiveMessage( action )
-				return next( action );
+				return next( action )
 			case CUSTOMER_JOIN:
-				handleCustomerJoin( action );
-				return next( action );
+				handleCustomerJoin( action )
+				return next( action )
+			case CUSTOMER_DISCONNECT:
+				handleCustomerDisconnect( action )
+				return next( action )
 		}
 		const lastState = store.getState()
 		const result = next( action )
