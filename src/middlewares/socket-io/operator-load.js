@@ -16,7 +16,7 @@ import {
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_CHAT_JOIN
 } from './index'
-import { haveAvailableCapacity, isSystemAcceptingCustomers } from '../../operator/store';
+import { haveAvailableCapacity, isSystemAcceptingCustomers } from '../../operator/selectors';
 import { setUserLoads, SET_USER_LOADS, OPERATOR_OPEN_CHAT_FOR_CLIENTS } from '../../operator/actions'
 import { REMOTE_ACTION_TYPE } from './broadcast'
 import {

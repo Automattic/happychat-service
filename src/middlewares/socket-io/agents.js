@@ -1,5 +1,4 @@
-import { EventEmitter } from 'events'
-import { onConnection } from './util'
+import { onConnection } from '../../util'
 
 const debug = require( 'debug' )( 'happychat:agent' )
 
@@ -34,18 +33,14 @@ const onAuthorized = ( { socket, events } ) => ( agent ) => {
 	socket.emit( 'init', agent )
 }
 
-export default ( io ) => {
-	const events = new EventEmitter()
-	events.io = io
-
-	events.on( 'receive', ( message ) => io.emit( 'message', message ) )
-
+export default ( io, agents ) => store => {
 	io.on( 'connection', ( socket ) => {
 		debug( 'agent connection' )
 		onConnection(
-			{ socket, events },
-			onAuthorized( { socket, events } )
+			{ socket, events: agents },
+			onAuthorized( { socket, events: agents } )
 		)
 	} )
-	return events
+	agents.on( 'receive', ( message ) => io.emit( 'message', message ) )
+	return next => action => next( action )
 }

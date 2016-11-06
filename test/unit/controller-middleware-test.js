@@ -1,41 +1,44 @@
 import { equal } from 'assert'
-import makeController from 'controller'
 import { EventEmitter } from 'events'
 import assign from 'lodash/assign'
 import createStore from 'store'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
-import { OPERATOR_RECEIVE } from '../../src/operator/actions';
+import { OPERATOR_RECEIVE } from 'operator/actions';
+import middlewareInterface from 'middleware-interface';
 
 describe( 'Controller middleware', () => {
-	let controller, customers, agents, operators, store, watchingMiddleware
+	let customers, agents, operators, store, watchingMiddleware
+	let compat
 
 	beforeEach( () => {
 		customers = new EventEmitter()
 		agents = new EventEmitter()
 		operators = new EventEmitter()
 		let chats = new EventEmitter()
+		compat = middlewareInterface()
 		watchingMiddleware = new WatchingMiddleware()
 		store = createStore( {
 			io: mockio().server,
 			customers,
 			operators,
+			agents,
 			chatlist: chats,
+			messageMiddlewares: compat.middlewares(),
 			middlewares: [ watchingMiddleware.middleware() ]
 		} )
-		controller = makeController( { customers, agents, operators, store } )
 	} )
 
 	it( 'should register middleware', () => {
-		controller
+		compat.external
 		.middleware( () => {} )
 		.middleware( () => {} )
 
-		equal( controller.middlewares.length, 2 )
+		equal( compat.middlewares().length, 2 )
 	} )
 
 	it( 'should pass customer message through middleware', ( done ) => {
-		controller.middleware( ( { origin, destination, message } ) => {
+		compat.external.middleware( ( { origin, destination, message } ) => {
 			equal( origin, 'customer' )
 			equal( destination, 'customer' )
 			equal( message.text, 'hello' )
@@ -53,7 +56,7 @@ describe( 'Controller middleware', () => {
 	} )
 
 	it( 'should pass customer message to operator', done => {
-		controller.middleware( ( { origin, destination } ) => {
+		compat.external.middleware( ( { origin, destination } ) => {
 			if ( origin === 'customer' && destination === 'operator' ) {
 				done()
 			}
@@ -66,7 +69,7 @@ describe( 'Controller middleware', () => {
 	} )
 
 	it( 'should support promise based middleware', ( done ) => {
-		controller.middleware( ( { origin, destination, message } ) => new Promise( ( resolve ) => {
+		compat.external.middleware( ( { origin, destination, message } ) => new Promise( ( resolve ) => {
 			equal( origin, 'agent' )
 			equal( destination, 'agent' )
 			resolve( assign( {}, message, { text: 'hello world' } ) )
@@ -82,7 +85,7 @@ describe( 'Controller middleware', () => {
 	} )
 
 	it( 'should support callback based middleware', ( done ) => {
-		controller.middleware( ( { origin, destination, message }, next ) => {
+		compat.external.middleware( ( { origin, destination, message }, next ) => {
 			equal( origin, 'operator' )
 			equal( destination, 'operator' )
 			next( assign( {}, message, { text: 'intercepted' } ) )
@@ -102,7 +105,7 @@ describe( 'Controller middleware', () => {
 	} )
 
 	it( 'should still succeed when middlewares fail', ( done ) => {
-		controller
+		compat.external
 		.middleware( ( { message } ) => new Promise( ( resolve ) => {
 			resolve( assign( {}, message, { text: 'goodbye' } ) )
 		} ) )
@@ -110,7 +113,6 @@ describe( 'Controller middleware', () => {
 			throw new Error( 'failed to work' )
 		} )
 		.middleware( ( { message } ) => assign( {}, message, { text: message.text + ' world' } ) )
-
 
 		watchingMiddleware.watchForType( OPERATOR_RECEIVE, ( action ) => {
 			equal( action.message.text, 'goodbye world' )
@@ -128,7 +130,7 @@ describe( 'Controller middleware', () => {
 		const failOnEmit = ( ... args ) => {
 			done( new Error( 'message emitted: ' + JSON.stringify( args, null, '\t' ) ) )
 		}
-		controller.middleware( () => false )
+		compat.external.middleware( () => false )
 
 		// if any of the namespaces send the message, fail the test
 		customers.on( 'receive', failOnEmit )

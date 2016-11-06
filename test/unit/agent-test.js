@@ -1,20 +1,24 @@
+import { EventEmitter } from 'events'
 import { ok, equal } from 'assert'
 import mockIO from '../mock-io'
-import agent from 'agent'
+import agentMiddleware from 'middlewares/socket-io/agents'
 
 const debug = require( 'debug' )( 'happychat:test:agent' )
 
 describe( 'Agent Service', () => {
-	let server, socket, client
+	let server, socket, client, io
 
 	beforeEach( () => {
-		( { server, socket, client } = mockIO() )
+		( { server: io, socket, client } = mockIO() )
 	} )
 
 	describe( 'when authenticated', () => {
-		let service
+		let middleware, events
 		beforeEach( ( next ) => {
-			service = agent( server ).once( 'connection', ( _, auth ) => auth() )
+			server = io.of( '/agent' )
+			events = new EventEmitter()
+			middleware = agentMiddleware( server, events )()
+			events.on( 'connection', ( socket, auth ) => auth() )
 			client.on( 'init', () => next() )
 			server.emit( 'connection', socket )
 		} )
@@ -39,7 +43,7 @@ describe( 'Agent Service', () => {
 				equal( type, 'message-type' )
 				done()
 			} )
-			service.emit( 'receive', {
+			events.emit( 'receive', {
 				id: 'fake-message-id',
 				timestamp: ( new Date() ).getTime(),
 				text: 'hello',
@@ -51,7 +55,7 @@ describe( 'Agent Service', () => {
 		} )
 
 		it( 'should send messsage to customer', ( done ) => {
-			service.once( 'message', ( { id, text, session_id, timestamp } ) => {
+			events.once( 'message', ( { id, text, session_id, timestamp } ) => {
 				debug( 'help' )
 				equal( id, 'fake-agent-message-id' )
 				equal( text, 'hello' )
@@ -74,7 +78,7 @@ describe( 'Agent Service', () => {
 		} )
 
 		it( 'should handle system.info event', ( done ) => {
-			service.once( 'system.info', ( callback ) => {
+			events.once( 'system.info', ( callback ) => {
 				callback( { foo: 'bar' } )
 			} )
 
@@ -85,16 +89,20 @@ describe( 'Agent Service', () => {
 		} )
 	} )
 
-	it( 'should initilize service', ( done ) => {
-		agent( server ).once( 'connection', ( _socket, auth ) => auth() )
-
+	it( 'should initialize service', ( done ) => {
+		let events = new EventEmitter()
+		debug( 'io', io.on )
+		agentMiddleware( io, events )()
+		events.once( 'connection', ( _socket, auth ) => auth() )
 		client.on( 'init', () => done() )
-		server.emit( 'connection', socket )
+		io.emit( 'connection', socket )
 	} )
 
 	it( 'should emit unauthenticated when failing authentication', ( done ) => {
-		agent( server ).once( 'connection', ( _socket, auth ) => auth( new Error( 'nope' ) ) )
+		let events = new EventEmitter()
+		agentMiddleware( io, events )()
+		events.once( 'connection', ( _socket, auth ) => auth( new Error( 'nope' ) ) )
 		client.on( 'unauthorized', () => done() )
-		server.emit( 'connection', socket )
+		io.emit( 'connection', socket )
 	} )
 } )

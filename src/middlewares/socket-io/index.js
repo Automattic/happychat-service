@@ -12,7 +12,7 @@ import {
 
 import {
 	selectUser,
-} from '../../operator/store';
+} from '../../operator/selectors';
 
 const debug = require( 'debug' )( 'happychat:middleware:operators' )
 

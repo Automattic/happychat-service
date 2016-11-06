@@ -1,6 +1,5 @@
 import { ok, equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
-import { isFunction, isArray } from 'lodash/lang'
 import { merge } from 'ramda'
 import { tick } from '../tick'
 import mockio from '../mock-io'
@@ -10,7 +9,6 @@ import { OPERATOR_CLOSE_CHAT } from 'operator/actions';
 import { ASSIGN_CHAT, SET_OPERATOR_CHATS_ABANDONED, SET_CHAT_MISSED, SET_CHATS_RECOVERED } from 'chat-list/actions';
 import { OPERATOR_CHAT_TRANSFER } from 'middlewares/socket-io'
 import { getChat, getChatStatus, getChatOperator } from 'chat-list/selectors'
-import controller from 'controller'
 
 const debug = require( 'debug' )( 'happychat:chat-list:test' )
 
@@ -35,10 +33,11 @@ describe( 'ChatList component', () => {
 		events = new EventEmitter()
 		watchingMiddleware = new WatchingMiddleware()
 		store = createStore(
-			{ io, operators, customers, chatlist: events, middlewares: [ watchingMiddleware.middleware() ], timeout: 100 },
+			{ io, operators, customers, chatlist: events, agents: new EventEmitter(),
+				middlewares: [ watchingMiddleware.middleware() ],
+				timeout: 100 },
 			state
 		)
-		controller( { customers, agents: new EventEmitter(), operators, store } )
 	}
 
 	beforeEach( () => {
@@ -134,14 +133,13 @@ describe( 'ChatList component', () => {
 	describe( 'with active chat', () => {
 		const operator_id = 'operator_id'
 		const chat = { id: 'the-id' }
-		let socket, client
+		let client
 
 		beforeEach( () => {
 			// TODO: the operator needs to be authenticated before it can close chats
 			chatlistWithState( { chatlist: { 'the-id': [ 'assigned', chat, { id: operator_id }, 1, {} ] } } )
 			return connectOperator( { id: operator_id } )
-			.then( ( { socket: s, client: c } ) => {
-				socket = s
+			.then( ( { client: c } ) => {
 				client = c
 				return Promise.resolve()
 			} )
@@ -180,7 +178,6 @@ describe( 'ChatList component', () => {
 		} )
 
 		it( 'should request chat transfer', ( done ) => {
-			const newOperator = { id: 'new-operator' }
 			watchingMiddleware.watchForType( OPERATOR_CHAT_TRANSFER, ( action ) => {
 				equal( action.chat_id, 'the-id' )
 				equal( action.user.id, operator_id )
@@ -279,13 +276,12 @@ describe( 'ChatList component', () => {
 		it( 'should reassign operator and make chats active', ( done ) => {
 			const operator_id = 'operator-id'
 			const chat_id = 'chat-id'
-			const socket = new EventEmitter()
 
 			chatlistWithState( { chatlist:
 				{ 'chat-id': [ 'abandoned', { id: chat_id }, { id: operator_id }, 1, {} ] }
 			} )
 
-			watchingMiddleware.watchForType( SET_CHATS_RECOVERED, action => {
+			watchingMiddleware.watchForType( SET_CHATS_RECOVERED, () => {
 				equal( getChatStatus( 'chat-id', store.getState() ), 'assigned' )
 				equal( getChatOperator( 'chat-id', store.getState() ).id, operator_id )
 				done()

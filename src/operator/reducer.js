@@ -3,16 +3,13 @@ import set from 'lodash/set'
 import get from 'lodash/get'
 import defaults from 'lodash/defaults'
 import concat from 'lodash/concat'
-import values from 'lodash/values'
 import reject from 'lodash/reject'
 import omit from 'lodash/omit'
-import reduce from 'lodash/reduce'
 import { combineReducers } from 'redux'
 import {
 	mapObjIndexed,
 	defaultTo,
 	merge,
-	both
 } from 'ramda'
 
 import {
@@ -24,36 +21,6 @@ import {
 	SET_SYSTEM_ACCEPTS_CUSTOMERS,
 	SET_USER_LOADS
 } from './actions'
-
-import {
-	STATUS_AVAILABLE
-} from '../middlewares/socket-io'
-
-// Selectors
-export const selectIdentities = ( { operators: { identities } } ) => values( identities )
-export const selectSocketIdentity = ( { operators: { sockets, identities } }, socket ) => get(
-	identities,
-	get( sockets, socket.id )
-)
-export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
-export const selectTotalCapacity = ( { operators: { identities } }, matchingStatus = STATUS_AVAILABLE ) => reduce( identities,
-	( { load: totalLoad, capacity: totalCapacity }, { load, capacity, status } ) => ( {
-		load: totalLoad + ( status === matchingStatus ? parseInt( load ) : 0 ),
-		capacity: totalCapacity + ( status === matchingStatus ? parseInt( capacity ) : 0 )
-	} ),
-	{ load: 0, capacity: 0 }
-)
-
-export const getAvailableCapacity = state => {
-	const { load, capacity } = selectTotalCapacity( state )
-	return capacity - load
-}
-
-export const haveAvailableCapacity = state => getAvailableCapacity( state ) > 0
-
-export const getSystemAcceptsCustomers = ( { operators: { system: { acceptsCustomers } } } ) => acceptsCustomers
-
-export const isSystemAcceptingCustomers = both( haveAvailableCapacity, getSystemAcceptsCustomers )
 
 // Reducers
 const user_sockets = ( state = {}, action ) => {
@@ -123,7 +90,7 @@ const system = ( state = { acceptsCustomers: false }, action ) => {
 	return state
 }
 
-export default () => combineReducers( {
+export default combineReducers( {
 	user_sockets,
 	identities,
 	sockets,

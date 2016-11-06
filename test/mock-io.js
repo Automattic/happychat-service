@@ -117,7 +117,7 @@ class Server extends EventEmitter {
 }
 
 export default ( socketid ) => {
-	const server = new Server()
+	const server = new Server( '/' )
 
 	server.namespaces = {}
 	server.of = ( name ) => {

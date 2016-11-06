@@ -1,3 +1,5 @@
+import get from 'lodash/get'
+import reduce from 'lodash/reduce'
 import {
 	filter,
 	compose,
@@ -5,14 +7,12 @@ import {
 	lensPath,
 	sort,
 	defaultTo,
-	values
+	values,
+	both
 } from 'ramda'
 import {
 	STATUS_AVAILABLE
 } from '../middlewares/socket-io'
-
-// iterate through the identities, select STATUS_AVAILABLE and load > 0
-const debug = require( 'debug' )( 'happychat:selector' );
 
 const weight = ( { load, capacity } ) => ( capacity - load ) / capacity
 const compare = ( a, b ) => {
@@ -39,3 +39,29 @@ export const getAvailableOperators = compose(
 	defaultTo( {} ),
 	view( lensPath( [ 'operators', 'identities' ] ) )
 )
+
+// Selectors
+export const selectIdentities = ( { operators: { identities } } ) => values( identities )
+export const selectSocketIdentity = ( { operators: { sockets, identities } }, socket ) => get(
+	identities,
+	get( sockets, socket.id )
+)
+export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
+export const selectTotalCapacity = ( { operators: { identities } }, matchingStatus = STATUS_AVAILABLE ) => reduce( identities,
+	( { load: totalLoad, capacity: totalCapacity }, { load, capacity, status } ) => ( {
+		load: totalLoad + ( status === matchingStatus ? parseInt( load ) : 0 ),
+		capacity: totalCapacity + ( status === matchingStatus ? parseInt( capacity ) : 0 )
+	} ),
+	{ load: 0, capacity: 0 }
+)
+
+export const getAvailableCapacity = state => {
+	const { load, capacity } = selectTotalCapacity( state )
+	return capacity - load
+}
+
+export const haveAvailableCapacity = state => getAvailableCapacity( state ) > 0
+
+export const getSystemAcceptsCustomers = ( { operators: { system: { acceptsCustomers } } } ) => acceptsCustomers
+
+export const isSystemAcceptingCustomers = both( haveAvailableCapacity, getSystemAcceptsCustomers )

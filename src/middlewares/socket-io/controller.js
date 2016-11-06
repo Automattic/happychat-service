@@ -2,10 +2,10 @@ import isFunction from 'lodash/isFunction'
 import isEmpty from 'lodash/isEmpty'
 import assign from 'lodash/assign'
 
-import { ChatLog } from './chat-log'
-import { getChats } from './chat-list/selectors'
-import { operatorReceive, operatorReceiveTyping } from './operator/actions'
-import { selectIdentities } from './operator/store'
+import { ChatLog } from '../../chat-log'
+import { getChats } from '../../chat-list/selectors'
+import { operatorReceive, operatorReceiveTyping } from '../../operator/actions'
+import { selectIdentities } from '../../operator/selectors'
 
 const debug = require( 'debug' )( 'happychat:controller' )
 
@@ -32,8 +32,7 @@ const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
 	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
 }
 
-export default ( { customers, agents, operators, store } ) => {
-	const middlewares = []
+export default ( { customers, agents, operators, middlewares } ) => store => {
 	const toAgents = forward( agents )
 	const log = { operator: new ChatLog(), customer: new ChatLog() }
 
@@ -183,17 +182,7 @@ export default ( { customers, agents, operators, store } ) => {
 		.then( m => customers.emit( 'receive', chat, format( m ) ) )
 	} )
 
-	const external = {
-		middleware: ( middleware ) => {
-			if ( middleware.length >= 2 ) {
-				middlewares.push( ( ... args ) => new Promise( resolve => middleware( ... args.concat( resolve ) ) ) )
-			} else {
-				middlewares.push( middleware )
-			}
-			return external
-		},
-		middlewares
+	return next => action => {
+		return next( action )
 	}
-
-	return external
 }

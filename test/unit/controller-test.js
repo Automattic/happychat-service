@@ -1,11 +1,11 @@
 import { equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
-import makeController from 'controller'
+import controllerMiddleware from 'middlewares/socket-io/controller'
 import createStore from 'store'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
-import { RECEIVE_CUSTOMER_MESSAGE } from '../../src/chat-list/actions';
-import { OPERATOR_RECEIVE, OPERATOR_RECEIVE_TYPING, updateIdentity } from '../../src/operator/actions';
+import { RECEIVE_CUSTOMER_MESSAGE } from 'chat-list/actions';
+import { OPERATOR_RECEIVE, OPERATOR_RECEIVE_TYPING, updateIdentity } from 'operator/actions';
 
 describe( 'Controller', () => {
 	let customers, agents, operators, store, watchingMiddleware
@@ -20,10 +20,11 @@ describe( 'Controller', () => {
 			io: mockio().server,
 			customers,
 			operators,
+			agents,
 			chatlist: chats,
 			middlewares: [ watchingMiddleware.middleware() ]
 		} )
-		makeController( { customers, agents, operators, store } )
+		controllerMiddleware( { customers, agents, operators, messageMiddlewares: [] } )
 	} )
 
 	const mockUser = { id: 'user-id', displayName: 'Furiosa' }

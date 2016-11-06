@@ -63,9 +63,7 @@ import {
 	operatorChatClose,
 } from '../../operator/actions'
 import {
-	isSystemAcceptingCustomers
-} from '../../operator/store'
-import {
+	isSystemAcceptingCustomers,
 	getAvailableOperators
 } from '../../operator/selectors'
 import { makeEventMessage, onConnection, timestamp } from '../../util'

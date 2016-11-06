@@ -17,7 +17,7 @@ import {
 	operatorAssign,
 	REMOVE_USER
 } from 'operator/actions'
-import { selectTotalCapacity } from 'operator/store'
+import { selectTotalCapacity } from 'operator/selectors'
 import { STATUS_AVAILABLE, OPERATOR_READY } from 'middlewares/socket-io'
 
 const debug = require( 'debug' )( 'happychat:test:operators' )
@@ -48,7 +48,10 @@ describe( 'Operators', () => {
 		( { socket, client } = server.newClient( socketid ) )
 		watchingMiddleware = new WatchingMiddleware()
 		// Need to add a real socket io middleware here
-		store = createStore( { io, operators, customers: new EventEmitter(), chatlist: new EventEmitter(), middlewares: [ watchingMiddleware.middleware() ] } )
+		store = createStore( {
+			io, operators, customers: new EventEmitter(), chatlist: new EventEmitter(),
+			agents: new EventEmitter(),
+			middlewares: [ watchingMiddleware.middleware() ] } )
 		operators.on( 'connection', ( s, callback ) => s.emit( 'identify', callback ) )
 	} )
 

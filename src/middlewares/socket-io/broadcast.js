@@ -2,7 +2,7 @@ import jsondiff from 'simperium-jsondiff'
 import { v4 as uuid } from 'uuid'
 import { OPERATOR_READY } from './index'
 import { isEmpty } from 'ramda'
-import { selectSocketIdentity } from '../../operator/store'
+import { selectSocketIdentity } from '../../operator/selectors'
 
 const debug = require( 'debug' )( 'happychat:socket-io:broadcast' )
 

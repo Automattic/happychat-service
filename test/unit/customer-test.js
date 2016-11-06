@@ -25,6 +25,7 @@ describe( 'Customer Service', () => {
 			customers: customerEvents,
 			operators: new EventEmitter(),
 			chatlist: new EventEmitter(),
+			agents: new EventEmitter(),
 			timeout: 10
 		} )
 		server = io.of( '/customer' );
