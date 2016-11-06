@@ -8,7 +8,7 @@ import { OPERATOR_RECEIVE } from 'operator/actions';
 import middlewareInterface from 'middleware-interface';
 
 describe( 'Controller middleware', () => {
-	let customers, agents, operators, store, watchingMiddleware
+	let customers, agents, operators, watchingMiddleware
 	let compat
 
 	beforeEach( () => {
@@ -18,7 +18,7 @@ describe( 'Controller middleware', () => {
 		let chats = new EventEmitter()
 		compat = middlewareInterface()
 		watchingMiddleware = new WatchingMiddleware()
-		store = createStore( {
+		createStore( {
 			io: mockio().server,
 			customers,
 			operators,

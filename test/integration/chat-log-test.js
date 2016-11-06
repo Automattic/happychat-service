@@ -42,11 +42,6 @@ describe( 'Chat logs', () => {
 		return reduce( rest, ( p, msg ) => p.then( sendMessage( msg ) ), sendMessage( first )( customer ) )
 	}
 
-	const setOperatorOnline = ( client ) => new Promise( ( resolve ) => {
-		debug( 'setting operator to online status' )
-		client.emit( 'status', 'online', () => resolve( client ) )
-	} )
-
 	const acceptAllAssignments = ( client ) => new Promise( ( resolve ) => {
 		debug( 'set accepting all chats' )
 		client.once( 'identify', ( callback ) => {

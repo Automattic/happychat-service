@@ -1,18 +1,14 @@
 import { EventEmitter } from 'events'
-import { ok, equal, deepEqual, doesNotThrow } from 'assert'
+import { ok, equal, deepEqual } from 'assert'
 import mockio from '../mock-io'
-import { tick } from '../tick'
 import { parallel } from 'async'
 import map from 'lodash/map'
-import includes from 'lodash/includes'
 import reduce from 'lodash/reduce'
 import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
 import {
-	operatorReceive,
 	operatorChatClose,
 	setAcceptsCustomers,
-	operatorTransfer,
 	operatorOpen,
 	operatorAssign,
 	REMOVE_USER
@@ -20,12 +16,9 @@ import {
 import { selectTotalCapacity } from 'operator/selectors'
 import { STATUS_AVAILABLE, OPERATOR_READY } from 'middlewares/socket-io'
 
-const debug = require( 'debug' )( 'happychat:test:operators' )
-
 describe( 'Operators', () => {
 	let operators
 	let socketid = 'socket-id'
-	let user
 	let socket, client, server, store, io, watchingMiddleware
 
 	const connectOperator = ( { socket: useSocket, client: useClient }, authUser = { id: 'user-id', displayName: 'name' } ) => new Promise( ( resolve ) => {
@@ -67,13 +60,7 @@ describe( 'Operators', () => {
 
 	describe( 'when authenticated and online', () => {
 		let op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var', status: 'online', load: 1, capacity: 3 }
-		beforeEach( ( done ) => {
-			connectOperator( { socket, client }, op )
-			.then( ( { user: operatorUser } ) => {
-				user = operatorUser
-				done()
-			} )
-		} )
+		beforeEach( () => connectOperator( { socket, client }, op ) )
 
 		it( 'should remove user when last socket disconnects', ( done ) => {
 			watchForType( REMOVE_USER, action => {

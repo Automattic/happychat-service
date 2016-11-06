@@ -13,12 +13,12 @@ describe( 'Agent Service', () => {
 	} )
 
 	describe( 'when authenticated', () => {
-		let middleware, events
+		let events
 		beforeEach( ( next ) => {
 			server = io.of( '/agent' )
 			events = new EventEmitter()
-			middleware = agentMiddleware( server, events )()
-			events.on( 'connection', ( socket, auth ) => auth() )
+			agentMiddleware( server, events )()
+			events.on( 'connection', ( _socket, auth ) => auth() )
 			client.on( 'init', () => next() )
 			server.emit( 'connection', socket )
 		} )
