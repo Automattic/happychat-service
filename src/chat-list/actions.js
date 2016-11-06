@@ -13,6 +13,8 @@ export const TRANSFER_CHAT = 'TRANSFER_CHAT'
 export const SET_CHAT_CUSTOMER_DISCONNECT = 'SET_CHAT_CUSTOMER_DISCONNECT'
 export const NOTIFY_SYSTEM_STATUS_CHANGE = 'NOTIFY_SYSTEM_STATUS_CHANGE'
 export const NOTIFY_CHAT_STATUS_CHANGED = 'NOTIFY_CHAT_STATUS_CHANGED'
+export const AGENT_INBOUND_MESSAGE = 'AGENT_INBOUND_MESSAGE'
+export const AGENT_RECEIVE_MESSAGE = 'AGENT_RECEIVE_MESSAGE'
 
 export const receiveCustomerMessage = ( chat, message ) => ( {
 	type: RECEIVE_CUSTOMER_MESSAGE, chat, message
@@ -72,4 +74,12 @@ export const notifySystemStatusChange = enabled => ( {
 
 export const notifyChatStatusChanged = ( chat_id, status, lastStatus ) => ( {
 	type: NOTIFY_CHAT_STATUS_CHANGED, chat_id, status, lastStatus
+} )
+
+export const agentInboundMessage = ( agent, message ) => ( {
+	type: AGENT_INBOUND_MESSAGE, agent, message
+} )
+
+export const agentReceiveMessage = message => ( {
+	type: AGENT_RECEIVE_MESSAGE, message
 } )

@@ -6,10 +6,11 @@ import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
 import { OPERATOR_RECEIVE } from 'operator/actions';
 import middlewareInterface from 'middleware-interface';
+import { agentInboundMessage, AGENT_RECEIVE_MESSAGE } from 'chat-list/actions'
 
 describe( 'Controller middleware', () => {
 	let customers, agents, operators, watchingMiddleware
-	let compat
+	let compat, store
 
 	beforeEach( () => {
 		customers = new EventEmitter()
@@ -18,7 +19,7 @@ describe( 'Controller middleware', () => {
 		let chats = new EventEmitter()
 		compat = middlewareInterface()
 		watchingMiddleware = new WatchingMiddleware()
-		createStore( {
+		store = createStore( {
 			io: mockio().server,
 			customers,
 			operators,
@@ -74,14 +75,16 @@ describe( 'Controller middleware', () => {
 			equal( destination, 'agent' )
 			resolve( assign( {}, message, { text: 'hello world' } ) )
 		} ) )
-		agents.on( 'receive', ( message ) => {
+
+		watchingMiddleware.watchForType( AGENT_RECEIVE_MESSAGE, ( action ) => {
+			const { message } = action
 			equal( message.text, 'hello world' )
 			done()
 		} )
-		agents.emit(
-			'message',
+
+		store.dispatch( agentInboundMessage( 'agent',
 			{ id: 'message-id', context: 'chat-id', timestamp: 12345, author_id: 'author' }
-		)
+		) )
 	} )
 
 	it( 'should support callback based middleware', ( done ) => {

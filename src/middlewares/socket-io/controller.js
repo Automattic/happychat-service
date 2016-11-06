@@ -4,9 +4,8 @@ import assign from 'lodash/assign'
 import get from 'lodash/get'
 import set from 'lodash/set'
 
-import { getChats } from '../../chat-list/selectors'
 import { operatorReceive, operatorReceiveTyping } from '../../operator/actions'
-import { selectIdentities } from '../../operator/selectors'
+import { agentReceiveMessage, AGENT_INBOUND_MESSAGE } from '../../chat-list/actions'
 
 const debug = require( 'debug' )( 'happychat:controller' )
 
@@ -112,16 +111,6 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 		.catch( e => debug( e.message ) )
 	} )
 
-	agents.on( 'system.info', done => {
-		const _operators = selectIdentities( store.getState() );
-		const _chats = getChats( store.getState() );
-		debug( 'system.info, got values', [ _operators, _chats ] );
-		done( {
-			chats: _chats,
-			operators: _operators,
-		} )
-	} )
-
 	toAgents( customers, 'join', 'customer.join' )
 	toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 
@@ -161,7 +150,9 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 		.catch( e => debug( 'middleware failed ', e ) )
 
 		runMiddleware( { origin, destination: 'agent', chat, message } )
-		.then( m => agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, m ) ) )
+		.then( m => store.dispatch(
+			agentReceiveMessage( formatAgentMessage( 'customer', chat.id, chat.id, m ) ) )
+		)
 		.catch( e => debug( 'middleware failed', e ) )
 
 		runMiddleware( { origin, destination: 'operator', chat, message } )
@@ -178,7 +169,9 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 		const origin = 'operator'
 
 		runMiddleware( { origin, destination: 'agent', chat, message, user: operator } )
-		.then( m => agents.emit( 'receive', formatAgentMessage( 'operator', operator.id, chat.id, m ) ) )
+		.then( m => store.dispatch(
+			agentReceiveMessage( formatAgentMessage( 'operator', operator.id, chat.id, m ) )
+		) )
 
 		runMiddleware( { origin, destination: 'operator', chat, message, user: operator } )
 		.then( m => new Promise( ( resolve, reject ) => {
@@ -195,13 +188,16 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 		.then( m => customers.emit( 'receive', chat, m ) )
 	} )
 
-	agents.on( 'message', ( message ) => {
+	const handleInboundAgentMessage = action => {
+		const { message } = action
 		const chat = { id: message.session_id }
 		const format = ( m ) => assign( {}, { author_type: 'agent' }, m )
 		const origin = 'agent'
 
 		runMiddleware( { origin, destination: 'agent', chat, message } )
-		.then( m => agents.emit( 'receive', assign( {}, { author_type: 'agent' }, m ) ) )
+		.then( m => store.dispatch(
+			agentReceiveMessage( assign( {}, { author_type: 'agent' }, m ) ) )
+		)
 
 		runMiddleware( { origin, destination: 'operator', chat, message } )
 		.then( m => new Promise( ( resolve, reject ) => {
@@ -216,9 +212,14 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 			.then( () => resolve( m ), reject )
 		} ) )
 		.then( m => customers.emit( 'receive', chat, format( m ) ) )
-	} )
+	}
 
 	return next => action => {
+		switch ( action.type ) {
+			case AGENT_INBOUND_MESSAGE:
+				handleInboundAgentMessage( action )
+				break;
+		}
 		return next( action )
 	}
 }

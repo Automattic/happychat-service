@@ -4,20 +4,25 @@ import controllerMiddleware from 'middlewares/socket-io/controller'
 import createStore from 'store'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
-import { RECEIVE_CUSTOMER_MESSAGE } from 'chat-list/actions';
+import { RECEIVE_CUSTOMER_MESSAGE, AGENT_RECEIVE_MESSAGE, agentInboundMessage } from 'chat-list/actions';
 import { OPERATOR_RECEIVE, OPERATOR_RECEIVE_TYPING, updateIdentity } from 'operator/actions';
 
+const debug = require( 'debug' )( 'happychat:test:controller' )
+
 describe( 'Controller', () => {
-	let customers, agents, operators, store, watchingMiddleware
+	let customers, agents, operators, store, watchingMiddleware, io
+
+	const watchForType = ( ... args ) => watchingMiddleware.watchForType( ... args )
 
 	beforeEach( () => {
 		customers = new EventEmitter()
 		agents = new EventEmitter()
 		operators = new EventEmitter()
 		let chats = new EventEmitter()
+		io = mockio().server
 		watchingMiddleware = new WatchingMiddleware()
 		store = createStore( {
-			io: mockio().server,
+			io,
 			customers,
 			operators,
 			agents,
@@ -65,7 +70,8 @@ describe( 'Controller', () => {
 		} )
 
 		it( 'should notify agents', ( done ) => {
-			agents.on( 'receive', ( { id, timestamp, session_id, text, author_id, author_type } ) => {
+			watchForType( AGENT_RECEIVE_MESSAGE, action => {
+				const { id, timestamp, session_id, text, author_id, author_type } = action.message
 				equal( id, 'message-id' )
 				equal( timestamp, 12345 )
 				equal( author_type, 'customer' )
@@ -91,7 +97,8 @@ describe( 'Controller', () => {
 
 	describe( 'agent message', () => {
 		it( 'should notify agents', ( done ) => {
-			agents.on( 'receive', ( { author_type, id, session_id, timestamp, author_id } ) => {
+			watchForType( AGENT_RECEIVE_MESSAGE, action => {
+				const { author_type, id, session_id, timestamp, author_id } = action.message
 				equal( author_type, 'agent' )
 				equal( author_id, 'author' )
 				equal( id, 'message-id' )
@@ -99,7 +106,9 @@ describe( 'Controller', () => {
 				equal( timestamp, 12345 )
 				done()
 			} )
-			agents.emit( 'message', { id: 'message-id', session_id: 'chat-id', timestamp: 12345, author_id: 'author' } )
+			store.dispatch( agentInboundMessage( 'agent',
+				{ id: 'message-id', session_id: 'chat-id', timestamp: 12345, author_id: 'author' }
+			) )
 		} )
 
 		it( 'should notify customers', ( done ) => {
@@ -117,7 +126,9 @@ describe( 'Controller', () => {
 			// - `context`: the id of the channel the message was sent to
 			// - `author_id`: the id of the author of the message
 			// - `author_type`: One of `customer`, `support`, `agent`
-			agents.emit( 'message', { id: 'message-id', session_id: 'chat-id', timestamp: 12345, author_id: 'author' } )
+			store.dispatch( agentInboundMessage( 'agent',
+				{ id: 'message-id', session_id: 'chat-id', timestamp: 12345, author_id: 'author' }
+			) )
 		} )
 
 		it( 'should notify operators', ( done ) => {
@@ -129,7 +140,9 @@ describe( 'Controller', () => {
 				equal( timestamp, 12345 )
 				done()
 			} )
-			agents.emit( 'message', { id: 'message-id', session_id: 'chat-id', timestamp: 12345, author_id: 'author' } )
+			store.dispatch( agentInboundMessage( 'agent',
+				{ id: 'message-id', session_id: 'chat-id', timestamp: 12345, author_id: 'author' }
+			) )
 		} )
 	} )
 
@@ -145,7 +158,8 @@ describe( 'Controller', () => {
 		} )
 
 		it( 'should notify agents', ( done ) => {
-			agents.on( 'receive', ( { author_type, id, session_id, timestamp, author_id, type } ) => {
+			watchForType( AGENT_RECEIVE_MESSAGE, ( action ) => {
+				const { author_type, id, session_id, timestamp, author_id, type } = action.message
 				equal( author_type, 'operator' )
 				equal( author_id, 'user-id' )
 				equal( id, 'message-id' )
@@ -207,14 +221,17 @@ describe( 'Controller', () => {
 	describe( 'agents system.info', () => {
 		it( 'should handle system.info event', done => {
 			// need to insert operator
-			const socket = new EventEmitter();
-			socket.id = 'fake';
-			store.dispatch( updateIdentity( socket, { id: 'operator' } ) )
-			agents.emit( 'system.info', data => {
-				deepEqual( data.chats, [] )
-				deepEqual( data.operators, [ { id: 'operator', load: 0, capacity: 0 } ] )
-				done()
-			} )
+			store.dispatch( updateIdentity( { id: 'what' }, { id: 'operator' } ) )
+			// authenticate an agent client
+			agents.on( 'connection', ( socket, auth ) => auth( null, 'happy' ) )
+			const { client } = io.of( '/agent' ).newClient()
+			client.on( 'init', () => {
+				client.emit( 'system.info', data => {
+					deepEqual( data.chats, [] )
+					deepEqual( data.operators, [ { id: 'operator', load: 0, capacity: 0 } ] )
+					done()
+				} )
+			} ).connect()
 		} )
 	} )
 } )

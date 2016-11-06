@@ -90,6 +90,9 @@ class Server extends EventEmitter {
 		client.disconnect = socket.disconnect = () => {
 			this.disconnect( { socket, client } )
 		}
+		client.connect = socket.connect = () => {
+			this.connect( socket )
+		}
 		return { socket, client }
 	}
 

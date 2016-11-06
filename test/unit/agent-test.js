@@ -1,38 +1,45 @@
 import { EventEmitter } from 'events'
-import { ok, equal } from 'assert'
+import { ok, equal, deepEqual } from 'assert'
 import mockIO from '../mock-io'
 import agentMiddleware from 'middlewares/socket-io/agents'
+import { AGENT_INBOUND_MESSAGE, agentReceiveMessage } from 'chat-list/actions'
 
 const debug = require( 'debug' )( 'happychat:test:agent' )
 
 describe( 'Agent Service', () => {
 	let server, socket, client, io
+	const noop = () => {}
 
 	beforeEach( () => {
 		( { server: io, socket, client } = mockIO() )
 	} )
 
 	describe( 'when authenticated', () => {
-		let events
+		let events, lastDispatch, state, middleware
 		beforeEach( ( next ) => {
 			server = io.of( '/agent' )
 			events = new EventEmitter()
-			agentMiddleware( server, events )()
-			events.on( 'connection', ( _socket, auth ) => auth() )
+			middleware = agentMiddleware( server, events )( {
+				dispatch: ( action ) => {
+					lastDispatch = action
+				},
+				getState: () => state
+			} )
+			events.on( 'connection', ( _socket, auth ) => auth( null, 'agent' ) )
 			client.on( 'init', () => next() )
 			server.emit( 'connection', socket )
 		} )
 
 		it( 'should emit message from customer', ( done ) => {
-		/**
-`message`: A message being sent and the context of the message
-  - `id`: the id of the message
-  - `timestamp`: timestampe of the message
-  - `text`: content of the message
-  - `context`: the id of the channel the message was sent to
-  - `author_id`: the id of the author of the message
-  - `author_type`: One of `customer`, `support`, `agent`
-		 */
+			const message = {
+				id: 'fake-message-id',
+				timestamp: ( new Date() ).getTime(),
+				text: 'hello',
+				session_id: 'fake-context',
+				author_id: 'fake-user-id',
+				author_type: 'customer',
+				type: 'message-type'
+			}
 			server.on( 'message', ( { id, timestamp, text, session_id, author_id, author_type, type } ) => {
 				equal( id, 'fake-message-id' )
 				ok( timestamp )
@@ -43,26 +50,11 @@ describe( 'Agent Service', () => {
 				equal( type, 'message-type' )
 				done()
 			} )
-			events.emit( 'receive', {
-				id: 'fake-message-id',
-				timestamp: ( new Date() ).getTime(),
-				text: 'hello',
-				session_id: 'fake-context',
-				author_id: 'fake-user-id',
-				author_type: 'customer',
-				type: 'message-type'
-			} )
+
+			middleware( noop )( agentReceiveMessage( message ) )
 		} )
 
-		it( 'should send messsage to customer', ( done ) => {
-			events.once( 'message', ( { id, text, session_id, timestamp } ) => {
-				debug( 'help' )
-				equal( id, 'fake-agent-message-id' )
-				equal( text, 'hello' )
-				equal( session_id, 'mock-user-context-id' )
-				ok( timestamp )
-				done()
-			} )
+		it( 'should send messsage to customer', () => {
 			client.emit( 'message', {
 				id: 'fake-agent-message-id',
 				timestamp: ( new Date() ).getTime(),
@@ -75,15 +67,25 @@ describe( 'Agent Service', () => {
 					username: 'agent-username'
 				}
 			} )
+
+			const { type, message: {
+				id, text, session_id, timestamp
+			} } = lastDispatch
+			equal( type, AGENT_INBOUND_MESSAGE )
+			equal( id, 'fake-agent-message-id' )
+			equal( text, 'hello' )
+			equal( session_id, 'mock-user-context-id' )
+			ok( timestamp )
 		} )
 
 		it( 'should handle system.info event', ( done ) => {
-			events.once( 'system.info', ( callback ) => {
-				callback( { foo: 'bar' } )
-			} )
+			state = {
+				operators: { identities: { a: 'a' } },
+				chatlist: { id: [ 'status', 'a-chat' ] }
+			}
 
 			client.emit( 'system.info', ( data ) => {
-				equal( data.foo, 'bar' )
+				deepEqual( data, { chats: [ 'a-chat' ], operators: [ 'a' ] } )
 				done()
 			} )
 		} )
@@ -92,7 +94,7 @@ describe( 'Agent Service', () => {
 	it( 'should initialize service', ( done ) => {
 		let events = new EventEmitter()
 		debug( 'io', io.on )
-		agentMiddleware( io, events )()
+		agentMiddleware( io, events )( { dispatch: noop, getState: noop } )
 		events.once( 'connection', ( _socket, auth ) => auth() )
 		client.on( 'init', () => done() )
 		io.emit( 'connection', socket )
@@ -100,7 +102,7 @@ describe( 'Agent Service', () => {
 
 	it( 'should emit unauthenticated when failing authentication', ( done ) => {
 		let events = new EventEmitter()
-		agentMiddleware( io, events )()
+		agentMiddleware( io, events )( { dispatch: noop, getState: noop } )
 		events.once( 'connection', ( _socket, auth ) => auth( new Error( 'nope' ) ) )
 		client.on( 'unauthorized', () => done() )
 		io.emit( 'connection', socket )
