@@ -10,6 +10,7 @@ import {
 	agentInboundMessage,
 	customerInboundMessage,
 	operatorInboundMessage,
+	customerTyping
 } from 'chat-list/actions';
 import {
 	OPERATOR_RECEIVE_TYPING,
@@ -215,7 +216,7 @@ describe( 'Controller', () => {
 				done()
 			} )
 
-			customers.emit( 'typing', { id: 'chat-id' }, { id: 'user-id' }, 'typing a message...' )
+			store.dispatch( customerTyping( 'chat-id', { id: 'user-id'}, 'typing a message...' ) )
 		} )
 	} )
 

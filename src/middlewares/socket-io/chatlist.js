@@ -40,7 +40,8 @@ import {
 	setOperatorChatsAbandoned,
 	setChatCustomerDisconnect,
 	operatorInboundMessage,
-	customerInboundMessage
+	customerInboundMessage,
+	customerTyping
 } from '../../chat-list/actions'
 import {
 	getChat,
@@ -123,7 +124,7 @@ const init = ( { user, socket, events, io, store } ) => () => {
 	} )
 
 	socket.on( 'typing', ( text ) => {
-		events.emit( 'typing', chat, user, text );
+		store.dispatch( customerTyping( chat.id, user, text ) )
 	} )
 
 	socket.on( 'disconnect', () => {

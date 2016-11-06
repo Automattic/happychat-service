@@ -3,7 +3,7 @@ import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
 import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
-import { RECEIVE_CUSTOMER_MESSAGE } from 'chat-list/actions'
+import { RECEIVE_CUSTOMER_MESSAGE, CUSTOMER_TYPING } from 'chat-list/actions'
 
 const debug = require( 'debug' )( 'happychat:test:customer' )
 
@@ -80,8 +80,9 @@ describe( 'Customer Service', () => {
 		} )
 
 		it( 'should handle `typing` from client and pass to events', ( done ) => {
-			customerEvents.once( 'typing', ( chat, user, text ) => {
-				equal( chat.id, mockUser.session_id )
+			watching.watchForType( CUSTOMER_TYPING, action => {
+				const { id, user, text } = action
+				equal( id, mockUser.session_id )
 				equal( user.id, mockUser.id )
 				equal( text, 'This is a message...' )
 				done()

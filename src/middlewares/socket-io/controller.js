@@ -10,7 +10,8 @@ import {
 	agentReceiveMessage,
 	AGENT_INBOUND_MESSAGE,
 	CUSTOMER_INBOUND_MESSAGE,
-	OPERATOR_INBOUND_MESSAGE
+	OPERATOR_INBOUND_MESSAGE,
+	CUSTOMER_TYPING
 } from '../../chat-list/actions'
 
 const debug = require( 'debug' )( 'happychat:controller' )
@@ -136,9 +137,12 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 		} )
 	} )
 
-	customers.on( 'typing', ( chat, user, text ) => {
+	const handleCustomerTyping = action => {
+		debug( 'action', action )
+		const { id, user, text } = action
+		const chat = { id }
 		store.dispatch( operatorReceiveTyping( chat, user, text ) );
-	} )
+	}
 
 	const handleOperatorTyping = action => {
 		const { id, user, text } = action
@@ -244,6 +248,9 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 				break;
 			case OPERATOR_TYPING:
 				handleOperatorTyping( action )
+				break;
+			case CUSTOMER_TYPING:
+				handleCustomerTyping( action )
 				break;
 		}
 		return next( action )

@@ -18,6 +18,7 @@ export const AGENT_RECEIVE_MESSAGE = 'AGENT_RECEIVE_MESSAGE'
 export const CUSTOMER_INBOUND_MESSAGE = 'CUSTOMER_INBOUND_MESSAGE'
 export const OPERATOR_INBOUND_MESSAGE = 'OPERATOR_INBOUND_MESSAGE'
 export const OPERATOR_RECEIVE_MESSAGE = 'OPERATOR_RECEIVE_MESSAGE'
+export const CUSTOMER_TYPING = 'CUSTOMER_TYPING'
 
 export const receiveCustomerMessage = ( chat, message ) => ( {
 	type: RECEIVE_CUSTOMER_MESSAGE, chat, message
@@ -97,4 +98,8 @@ export const operatorReceiveMessage = ( id, message ) => ( {
 
 export const customerInboundMessage = ( chat_id, message ) => ( {
 	type: CUSTOMER_INBOUND_MESSAGE, chat_id, message
+} )
+
+export const customerTyping = ( id, user, text ) => ( {
+	type: CUSTOMER_TYPING, id, user, text
 } )
