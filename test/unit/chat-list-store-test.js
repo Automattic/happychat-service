@@ -23,9 +23,6 @@ import {
 	setOperatorChatsAbandoned
 } from 'chat-list/actions'
 import {
-	operatorOpenChatForClients
-} from 'operator/actions';
-import {
 	operatorChatJoin,
 	operatorChatLeave
 } from 'middlewares/socket-io'
