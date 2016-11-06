@@ -21,6 +21,7 @@ export const CUSTOMER_TYPING = 'CUSTOMER_TYPING'
 export const CUSTOMER_RECEIVE_TYPING = 'CUSTOMER_RECEIVE_TYPING'
 export const CUSTOMER_RECEIVE_MESSAGE = 'CUSTOMER_RECEIVE_MESSAGE'
 export const CUSTOMER_JOIN = 'CUSTOMER_JOIN'
+export const OPERATOR_JOIN = 'OPERATOR_JOIN'
 
 export const reassignChats = ( operator, socket ) => ( {
 	type: REASSIGN_CHATS, operator, socket
@@ -112,4 +113,8 @@ export const customerReceiveMessage = ( id, message ) => ( {
 
 export const customerJoin = ( socket, chat, user ) => ( {
 	type: CUSTOMER_JOIN, socket, chat, user
+} )
+
+export const operatorJoinChat = ( socket, chat, user ) => ( {
+	type: OPERATOR_JOIN, socket, chat, user
 } )

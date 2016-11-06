@@ -44,7 +44,8 @@ import {
 	operatorInboundMessage,
 	customerInboundMessage,
 	customerTyping,
-	customerJoin
+	customerJoin,
+	operatorJoinChat
 } from '../../chat-list/actions'
 import {
 	getChat,
@@ -159,7 +160,7 @@ const getClients = ( server, room ) => new Promise( ( resolve, reject ) => {
 	} )
 } )
 
-export default ( { io, customers, operators, events, timeout = 1000, customerDisconnectTimeout = 90000 } ) => store => {
+export default ( { io, customers, events, timeout = 1000, customerDisconnectTimeout = 90000 } ) => store => {
 	const operator_io = io.of( '/operator' )
 	const customer_io = io.of( '/customer' )
 	.on( 'connection', socket => {
@@ -198,7 +199,7 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 					if ( error ) return reject( error )
 					debug( 'joined the room', customer_room_name )
 					resolve( socket )
-					operators.emit( 'join', chat, operator, socket )
+					store.dispatch( operatorJoinChat( socket, chat, operator ) )
 				} )
 			} ), clients )
 		) )

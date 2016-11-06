@@ -32,7 +32,7 @@ export default ( { io, customers, operators, chatlist, agents, messageMiddleware
 		controllerMiddleware( { customers, agents, operators, middlewares: messageMiddlewares } ),
 		operatorMiddleware( io.of( '/operator' ), operators ),
 		agentMiddleware( io.of( '/agent' ), agents ),
-		chatlistMiddleware( { io, customers, operators, events: chatlist, timeout, customerDisconnectTimeout: timeout } ),
+		chatlistMiddleware( { io, customers, events: chatlist, timeout, customerDisconnectTimeout: timeout } ),
 		broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
 		...operatorLoadMiddleware,
 	)

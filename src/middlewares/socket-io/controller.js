@@ -14,7 +14,8 @@ import {
 	CUSTOMER_INBOUND_MESSAGE,
 	OPERATOR_INBOUND_MESSAGE,
 	CUSTOMER_TYPING,
-	CUSTOMER_JOIN
+	CUSTOMER_JOIN,
+	OPERATOR_JOIN
 } from '../../chat-list/actions'
 
 const debug = require( 'debug' )( 'happychat:controller' )
@@ -77,7 +78,7 @@ const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
 	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
 }
 
-export default ( { customers, agents, operators, middlewares } ) => store => {
+export default ( { customers, agents, middlewares } ) => store => {
 	const toAgents = forward( agents )
 	const log = { operator: new ChatLog(), customer: new ChatLog() }
 
@@ -132,13 +133,14 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 		} )
 	}
 
-	operators.on( 'join', ( chat, operator, socket ) => {
+	const handleOperatorJoin = action => {
+		const { chat, user: operator, socket } = action
 		debug( 'emitting chat log to operator', operator.id )
 		log.operator.findLog( chat.id )
 		.then( ( messages ) => {
 			socket.emit( 'log', chat, messages )
 		} )
-	} )
+	}
 
 	const handleCustomerTyping = action => {
 		const { id, user, text } = action
@@ -259,6 +261,9 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 				break;
 			case CUSTOMER_JOIN:
 				handleCustomerJoin( action )
+				break;
+			case OPERATOR_JOIN:
+				handleOperatorJoin( action )
 				break;
 		}
 		return next( action )
