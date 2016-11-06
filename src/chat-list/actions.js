@@ -3,7 +3,6 @@ export const ASSIGN_CHAT = 'ASSIGN_CHAT'
 export const CLOSE_CHAT = 'CLOSE_CHAT'
 export const INSERT_PENDING_CHAT = 'INSERT_PENDING_CHAT'
 export const REASSIGN_CHATS = 'REASSIGN_CHATS'
-export const RECEIVE_CUSTOMER_MESSAGE = 'RECEIVE_CUSTOMER_MESSAGE'
 export const RECOVER_CHATS = 'RECOVER_CHATS'
 export const SET_CHAT_MISSED = 'SET_CHAT_MISSED'
 export const SET_CHAT_OPERATOR = 'SET_CHAT_OPERATOR'
@@ -20,10 +19,7 @@ export const OPERATOR_INBOUND_MESSAGE = 'OPERATOR_INBOUND_MESSAGE'
 export const OPERATOR_RECEIVE_MESSAGE = 'OPERATOR_RECEIVE_MESSAGE'
 export const CUSTOMER_TYPING = 'CUSTOMER_TYPING'
 export const CUSTOMER_RECEIVE_TYPING = 'CUSTOMER_RECEIVE_TYPING'
-
-export const receiveCustomerMessage = ( chat, message ) => ( {
-	type: RECEIVE_CUSTOMER_MESSAGE, chat, message
-} )
+export const CUSTOMER_RECEIVE_MESSAGE = 'CUSTOMER_RECEIVE_MESSAGE'
 
 export const reassignChats = ( operator, socket ) => ( {
 	type: REASSIGN_CHATS, operator, socket
@@ -97,8 +93,8 @@ export const operatorReceiveMessage = ( id, message ) => ( {
 	type: OPERATOR_RECEIVE_MESSAGE, id, message
 } )
 
-export const customerInboundMessage = ( chat_id, message ) => ( {
-	type: CUSTOMER_INBOUND_MESSAGE, chat_id, message
+export const customerInboundMessage = ( chat, message ) => ( {
+	type: CUSTOMER_INBOUND_MESSAGE, chat, message
 } )
 
 export const customerTyping = ( id, user, text ) => ( {
@@ -107,4 +103,8 @@ export const customerTyping = ( id, user, text ) => ( {
 
 export const customerReceiveTyping = ( id, user, text ) => ( {
 	type: CUSTOMER_RECEIVE_TYPING, id, user, text
+} )
+
+export const customerReceiveMessage = ( id, message ) => ( {
+	type: CUSTOMER_RECEIVE_MESSAGE, id, message
 } )

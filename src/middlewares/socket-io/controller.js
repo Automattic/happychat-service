@@ -6,9 +6,10 @@ import set from 'lodash/set'
 
 import { operatorReceiveTyping, OPERATOR_TYPING } from '../../operator/actions'
 import {
-	operatorReceiveMessage,
 	agentReceiveMessage,
+	customerReceiveMessage,
 	customerReceiveTyping,
+	operatorReceiveMessage,
 	AGENT_INBOUND_MESSAGE,
 	CUSTOMER_INBOUND_MESSAGE,
 	OPERATOR_INBOUND_MESSAGE,
@@ -150,8 +151,7 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 	}
 
 	const handleCustomerInboundMessage = ( action ) => {
-		const { chat_id, message } = action
-		const chat = { id: chat_id }
+		const { chat, message } = action
 		// broadcast the message to
 		debug( 'customer message action', action, chat.id, message.id, message.text )
 		const origin = 'customer'
@@ -162,7 +162,9 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 			log.customer.recordCustomerMessage( chat, m )
 			.then( () => resolve( m ), reject )
 		} ) )
-		.then( m => customers.emit( 'receive', chat, m ) )
+		.then( m => store.dispatch(
+			customerReceiveMessage( chat.id, m )
+		) )
 		.catch( e => debug( 'middleware failed ', e ) )
 
 		runMiddleware( { origin, destination: 'agent', chat, message } )
@@ -204,7 +206,9 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 			log.customer.recordOperatorMessage( chat, operator, m )
 			.then( () => resolve( m ), reject )
 		} ) )
-		.then( m => customers.emit( 'receive', chat, m ) )
+		.then( m => store.dispatch(
+			customerReceiveMessage( chat.id, m )
+		) )
 	}
 
 	const handleAgentInboundMessage = action => {
@@ -230,7 +234,9 @@ export default ( { customers, agents, operators, middlewares } ) => store => {
 			log.customer.recordAgentMessage( chat, message )
 			.then( () => resolve( m ), reject )
 		} ) )
-		.then( m => customers.emit( 'receive', chat, format( m ) ) )
+		.then( m => store.dispatch(
+			customerReceiveMessage( chat.id, format( m ) )
+		) )
 	}
 
 	return next => action => {

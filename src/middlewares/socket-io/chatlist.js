@@ -19,9 +19,10 @@ import {
 	ASSIGN_NEXT_CHAT,
 	CLOSE_CHAT,
 	CUSTOMER_RECEIVE_TYPING,
+	CUSTOMER_INBOUND_MESSAGE,
+	CUSTOMER_RECEIVE_MESSAGE,
 	INSERT_PENDING_CHAT,
 	REASSIGN_CHATS,
-	RECEIVE_CUSTOMER_MESSAGE,
 	RECOVER_CHATS,
 	SET_CHAT_MISSED,
 	SET_CHAT_OPERATOR,
@@ -32,7 +33,6 @@ import {
 	assignNextChat,
 	closeChat,
 	insertPendingChat,
-	receiveCustomerMessage,
 	reassignChats,
 	recoverChats,
 	setChatMissed,
@@ -121,7 +121,7 @@ const init = ( { user, socket, events, io, store } ) => () => {
 		debug( 'received customer message', message )
 		// all customer connections for this user receive the message
 		// io.to( user.id ).emit( 'message', message )
-		store.dispatch( receiveCustomerMessage( chat, message ) )
+		store.dispatch( customerInboundMessage( chat, message ) )
 	} )
 
 	socket.on( 'typing', ( text ) => {
@@ -207,12 +207,13 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 		} ) )
 	}
 
-	customers.on( 'receive', ( chat, message ) => {
-		debug( 'sending message to customer', chat.id, message.text )
-		customer_io.to( chatRoom( chat ) ).emit( 'message', message )
-	} )
+	const handleCustomerReceiveMessage = action => {
+		const { id, message } = action
+		debug( 'sending message to customer', id, message.text )
+		customer_io.to( chatRoomId( id ) ).emit( 'message', message )
+	}
 
-	const handleCustomeReceiveTyping = action => {
+	const handleCustomerReceiveTyping = action => {
 		const { id, text } = action
 		customer_io.to( chatRoomId( id ) ).emit( 'typing', text && !isEmpty( text ) )
 	}
@@ -304,8 +305,7 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 		store.dispatch( closeChat( chat.id, operator ) )
 	}, chat_id => debug( 'chat.close without existing chat', chat_id ) )( action.chat_id, action.user )
 
-	const handleReceiveCustomerMessage = ( { chat, message } ) => {
-		store.dispatch( customerInboundMessage( chat.id, message ) )
+	const handleCustomerInboundMessage = ( { chat } ) => {
 		const state = store.getState()
 		debug( 'see if we should assign?', getChatStatus( chat.id, state ) )
 		const operator = getChatOperator( chat.id, state )
@@ -490,15 +490,18 @@ export default ( { io, customers, operators, events, timeout = 1000, customerDis
 			case REMOVE_USER:
 				handleOperatorDisconnect( action )
 				return next( action )
-			case RECEIVE_CUSTOMER_MESSAGE:
-				handleReceiveCustomerMessage( action )
+			case CUSTOMER_INBOUND_MESSAGE:
+				handleCustomerInboundMessage( action )
 				return next( action )
 			case SET_CHAT_OPERATOR:
 				handleSetChatOperator( action )
 				return next( action )
 			case CUSTOMER_RECEIVE_TYPING:
-				handleCustomeReceiveTyping( action )
+				handleCustomerReceiveTyping( action )
 				return next( action )
+			case CUSTOMER_RECEIVE_MESSAGE:
+				handleCustomerReceiveMessage( action )
+				return next( action );
 		}
 		const lastState = store.getState()
 		const result = next( action )

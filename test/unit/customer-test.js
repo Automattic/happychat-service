@@ -3,7 +3,12 @@ import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
 import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
-import { RECEIVE_CUSTOMER_MESSAGE, CUSTOMER_TYPING, customerReceiveTyping } from 'chat-list/actions'
+import {
+	CUSTOMER_TYPING,
+	CUSTOMER_INBOUND_MESSAGE,
+	customerReceiveTyping,
+	customerReceiveMessage
+} from 'chat-list/actions'
 
 const debug = require( 'debug' )( 'happychat:test:customer' )
 
@@ -17,6 +22,8 @@ describe( 'Customer Service', () => {
 		session_id: 'abdefgh-chat'
 	}
 	let auth
+	const watchForType = ( ... args ) => watching.watchForType( ... args )
+
 	beforeEach( () => {
 		// export default ( { io, customers, operators, chatlist, middlewares = [], timeout = undefined }, state ) => createStore(
 		const { server: io } = mockIO()
@@ -50,7 +57,7 @@ describe( 'Customer Service', () => {
 		} )
 
 		it( 'should receive message and broadcast it', ( done ) => {
-			watching.watchForType( RECEIVE_CUSTOMER_MESSAGE, action => {
+			watching.watchForType( CUSTOMER_INBOUND_MESSAGE, action => {
 				const { chat, message } = action
 				const { id, text, timestamp, user, meta, session_id } = message
 				equal( chat.id, mockUser.session_id )
@@ -71,12 +78,15 @@ describe( 'Customer Service', () => {
 			client.emit( 'message', { id: 'message-id', text: 'hello world', meta: {} } )
 		} )
 
-		it( 'should receive message via event', ( done ) => {
+		it( 'should receive message via dispatch', ( done ) => {
 			client.once( 'message', ( message ) => {
 				equal( message.text, 'hello' )
 				done()
 			} )
-			customerEvents.emit( 'receive', { id: mockUser.session_id }, { text: 'hello', user: mockUser } )
+			store.dispatch( customerReceiveMessage(
+				mockUser.session_id,
+				{ text: 'hello', user: mockUser }
+			) )
 		} )
 
 		it( 'should handle `typing` from client and pass to events', ( done ) => {

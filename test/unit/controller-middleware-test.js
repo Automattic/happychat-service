@@ -10,12 +10,15 @@ import {
 	customerInboundMessage,
 	operatorInboundMessage,
 	AGENT_RECEIVE_MESSAGE,
-	OPERATOR_RECEIVE_MESSAGE
+	OPERATOR_RECEIVE_MESSAGE,
+	CUSTOMER_RECEIVE_MESSAGE
 } from 'chat-list/actions'
 
 describe( 'Controller middleware', () => {
 	let customers, agents, operators, watchingMiddleware
 	let compat, store
+
+	const watchForType = ( ... args ) => watchingMiddleware.watchForType( ... args )
 
 	beforeEach( () => {
 		customers = new EventEmitter()
@@ -50,12 +53,13 @@ describe( 'Controller middleware', () => {
 			equal( message.text, 'hello' )
 			return assign( {}, message, {text: 'middleware intercepted'} )
 		} )
-		customers.on( 'receive', ( chat, message ) => {
+		watchForType( CUSTOMER_RECEIVE_MESSAGE, action => {
+			const { message } = action
 			equal( message.text, 'middleware intercepted' )
 			done()
 		} )
 		store.dispatch( customerInboundMessage(
-			'user-id',
+			{ id: 'user-id' },
 			{ context: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
 		) )
 	} )
@@ -67,7 +71,7 @@ describe( 'Controller middleware', () => {
 			}
 		} )
 		store.dispatch( customerInboundMessage(
-			'user-id',
+			{ id: 'user-id' },
 			{ context: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
 		) )
 	} )
@@ -125,7 +129,7 @@ describe( 'Controller middleware', () => {
 		} )
 
 		store.dispatch( customerInboundMessage(
-			'user-id',
+			{ id: 'user-id' },
 			{ context: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
 		) )
 	} )
@@ -145,7 +149,7 @@ describe( 'Controller middleware', () => {
 		setTimeout( done, 100 )
 
 		store.dispatch( customerInboundMessage(
-			'user-id',
+			{ id: 'user-id' },
 			{ context: 'user-id', id: 'message-id', text: 'hello', timestamp: 1 }
 		) )
 	} )

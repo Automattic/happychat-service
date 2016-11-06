@@ -8,6 +8,7 @@ import {
 	AGENT_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_MESSAGE,
 	CUSTOMER_RECEIVE_TYPING,
+	CUSTOMER_RECEIVE_MESSAGE,
 	agentInboundMessage,
 	customerInboundMessage,
 	operatorInboundMessage,
@@ -18,8 +19,6 @@ import {
 	updateIdentity,
 	operatorTyping
 } from 'operator/actions';
-
-const debug = require( 'debug' )( 'happychat:test:controller' )
 
 describe( 'Controller', () => {
 	let customers, agents, operators, store, watchingMiddleware, io
@@ -72,14 +71,15 @@ describe( 'Controller', () => {
 
 	describe( 'customer message', () => {
 		it( 'should notify customers', ( done ) => {
-			customers.on( 'receive', ( chat, { id, session_id, text } ) => {
+			watchForType( CUSTOMER_RECEIVE_MESSAGE, action => {
+				const { message: { id, session_id, text } } = action
 				equal( id, 'message-id' )
 				equal( text, 'hello' )
 				equal( session_id, 'user-id' )
 				done()
 			} )
 			store.dispatch( customerInboundMessage(
-				'user-id',
+				{ id: 'user-id' },
 				{ session_id: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
 			) )
 		} )
@@ -96,7 +96,7 @@ describe( 'Controller', () => {
 				done()
 			} )
 			store.dispatch( customerInboundMessage(
-				'user-id',
+				{ id: 'user-id' },
 				{ session_id: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
 			) )
 		} )
@@ -110,7 +110,7 @@ describe( 'Controller', () => {
 			} )
 
 			store.dispatch( customerInboundMessage(
-				'user-id',
+				{ id: 'user-id' },
 				{ session_id: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
 			) )
 		} )
@@ -133,7 +133,14 @@ describe( 'Controller', () => {
 		} )
 
 		it( 'should notify customers', ( done ) => {
-			customers.on( 'receive', ( chat, { author_type, id, session_id, timestamp, author_id } ) => {
+			//   - `id`: the id of the message
+			// - `timestamp`: timestampe of the message
+			// - `text`: content of the message
+			// - `context`: the id of the channel the message was sent to
+			// - `author_id`: the id of the author of the message
+			// - `author_type`: One of `customer`, `support`, `agent`
+			watchForType( CUSTOMER_RECEIVE_MESSAGE, action => {
+				const { message: { author_type, id, session_id, timestamp, author_id } } = action
 				equal( author_type, 'agent' )
 				equal( author_id, 'author' )
 				equal( id, 'message-id' )
@@ -141,19 +148,14 @@ describe( 'Controller', () => {
 				equal( timestamp, 12345 )
 				done()
 			} )
-			//   - `id`: the id of the message
-			// - `timestamp`: timestampe of the message
-			// - `text`: content of the message
-			// - `context`: the id of the channel the message was sent to
-			// - `author_id`: the id of the author of the message
-			// - `author_type`: One of `customer`, `support`, `agent`
 			store.dispatch( agentInboundMessage( 'agent',
 				{ id: 'message-id', session_id: 'chat-id', timestamp: 12345, author_id: 'author' }
 			) )
 		} )
 
 		it( 'should notify operators', ( done ) => {
-			customers.on( 'receive', ( chat, { author_type, id, session_id, timestamp, author_id } ) => {
+			watchForType( CUSTOMER_RECEIVE_MESSAGE, action => {
+				const { message: { author_type, id, session_id, timestamp, author_id } } = action
 				equal( author_type, 'agent' )
 				equal( author_id, 'author' )
 				equal( id, 'message-id' )
@@ -197,9 +199,10 @@ describe( 'Controller', () => {
 		} )
 
 		it( 'should notify customers', ( done ) => {
-			customers.on( 'receive', ( chat, message ) => {
-				equal( chat.id, 'chat-id' )
-				equal( message.id, 'message-id' )
+			watchForType( CUSTOMER_RECEIVE_MESSAGE, action => {
+				const { message: { id: message_id }, id } = action
+				equal( id, 'chat-id' )
+				equal( message_id, 'message-id' )
 				done()
 			} )
 			store.dispatch( operatorInboundMessage(
