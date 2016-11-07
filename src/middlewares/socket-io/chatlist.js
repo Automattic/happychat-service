@@ -73,7 +73,7 @@ import {
 	isSystemAcceptingCustomers,
 	getAvailableOperators
 } from '../../operator/selectors'
-import { makeEventMessage, onConnection, timestamp } from '../../util'
+import { makeEventMessage, timestamp } from '../../util'
 
 const debug = require( 'debug' )( 'happychat:middleware:chat-list' )
 
@@ -123,7 +123,6 @@ const init = ( { user, socket, io, store } ) => () => {
 		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
 		debug( 'received customer message', message )
 		// all customer connections for this user receive the message
-		// io.to( user.id ).emit( 'message', message )
 		store.dispatch( customerInboundMessage( chat, message ) )
 	} )
 
@@ -158,14 +157,15 @@ const getClients = ( server, room ) => new Promise( ( resolve, reject ) => {
 	} )
 } )
 
-export default ( { io, customers, timeout = 1000, customerDisconnectTimeout = 90000 } ) => store => {
+export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, customerAuth ) => store => {
 	const operator_io = io.of( '/operator' )
 	const customer_io = io.of( '/customer' )
 	.on( 'connection', socket => {
 		debug( 'customer connecting' )
-		onConnection(
-			{ socket, events: customers },
-			user => join( { socket, user, io: customer_io, store } )
+		customerAuth( socket )
+		.then(
+			user => join( { socket, user, io: customer_io, store } ),
+			e => debug( 'customer auth failed', e )
 		)
 	} )
 
@@ -271,7 +271,6 @@ export default ( { io, customers, timeout = 1000, customerDisconnectTimeout = 90
 	const handleOperatorChatJoin = action => whenChatExists( ( chat, operator ) => {
 		debug( 'operator joining chat', chat.id, operator )
 		emitChatOpenToOperator( chat, operator )
-		// TODO: send a message over dispatch
 		store.dispatch( operatorInboundMessage( chat.id, operator, merge(
 			makeEventMessage( 'operator joined', chat.id ),
 			{	meta: { operator, event_type: 'join' } }
@@ -279,8 +278,6 @@ export default ( { io, customers, timeout = 1000, customerDisconnectTimeout = 90
 	}, chat_id => debug( 'chat.join without existing chat', chat_id ) )( action.chat_id, action.user )
 
 	const handleOperatorChatLeave = action => whenChatExists( ( chat, operator ) => {
-		// operators.emit( 'leave', chat, room_name, operator )
-		// store.dispatch( operatorLeave( chat, room_name, operator ) )
 		// remove all operator clients from the room
 		removeOperatorFromChat( operator, chat )
 		.then(
@@ -362,7 +359,7 @@ export default ( { io, customers, timeout = 1000, customerDisconnectTimeout = 90
 		debug( 'attempting to assign chat' )
 
 		const list = getAvailableOperators( store.getState() )
-		debug( 'anyone home?', list, JSON.stringify( store.getState().operators.identities, null, '  ' ) )
+		debug( 'anyone home?', list )
 		if ( isEmpty( list ) ) {
 			return store.dispatch( setChatMissed( chat.id, new Error( 'no operators available' ) ) )
 		}

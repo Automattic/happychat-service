@@ -1,6 +1,5 @@
 import { equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
-import controllerMiddleware from 'middlewares/socket-io/controller'
 import createStore from 'store'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
@@ -9,6 +8,8 @@ import {
 	OPERATOR_RECEIVE_MESSAGE,
 	CUSTOMER_RECEIVE_TYPING,
 	CUSTOMER_RECEIVE_MESSAGE,
+	CUSTOMER_JOIN,
+	CUSTOMER_DISCONNECT,
 	agentInboundMessage,
 	customerInboundMessage,
 	operatorInboundMessage,
@@ -23,26 +24,20 @@ import {
 } from 'operator/actions';
 
 describe( 'Controller', () => {
-	let customers, agents, operators, store, watchingMiddleware, io
+	let store, watchingMiddleware, io
 
 	const watchForType = ( ... args ) => watchingMiddleware.watchForType( ... args )
 
 	beforeEach( () => {
-		customers = new EventEmitter()
-		agents = new EventEmitter()
-		operators = new EventEmitter()
-		let chats = new EventEmitter()
 		io = mockio().server
 		watchingMiddleware = new WatchingMiddleware()
 		store = createStore( {
 			io,
-			customers,
-			operators,
-			agents,
-			chatlist: chats,
+			customerAuth: () => Promise.resolve( 'customer' ),
+			agentAuth: () => Promise.resolve( 'agent' ),
+			operatorAuth: () => Promise.resolve( 'operator' ),
 			middlewares: [ watchingMiddleware.middleware() ]
 		} )
-		controllerMiddleware( { customers, agents, operators, messageMiddlewares: [] } )
 	} )
 
 	const mockUser = { id: 'user-id', displayName: 'Furiosa' }
@@ -50,7 +45,8 @@ describe( 'Controller', () => {
 
 	describe( 'with user', () => {
 		it( 'notifies agent when user joins', ( done ) => {
-			agents.on( 'customer.join', ( { id, socketId }, { id: user_id, displayName } ) => {
+			watchForType( CUSTOMER_JOIN, action => {
+				const { chat: { id, displayName }, user: { id: user_id, socketId } } = action
 				equal( id, 'user-id' )
 				equal( socketId, 'user-id' )
 				equal( user_id, 'user-id' )
@@ -61,10 +57,11 @@ describe( 'Controller', () => {
 		} )
 
 		it( 'notifies agent when user disconnects', ( done ) => {
-			agents.on( 'customer.disconnect', ( { id: chat_id }, { id: user_id, displayName } ) => {
-				equal( chat_id, 'chat-id' )
-				equal( user_id, 'user-id' )
-				equal( displayName, 'Furiosa' )
+			watchForType( CUSTOMER_DISCONNECT, action => {
+				const { chat, user } = action
+				equal( chat.id, 'chat-id' )
+				equal( user.id, 'user-id' )
+				equal( user.displayName, 'Furiosa' )
 				done()
 			} )
 			store.dispatch( customerDisconnect( { id: 'chat-id' }, mockUser ) )
@@ -256,7 +253,6 @@ describe( 'Controller', () => {
 			// need to insert operator
 			store.dispatch( updateIdentity( { id: 'what' }, { id: 'operator' } ) )
 			// authenticate an agent client
-			agents.on( 'connection', ( socket, auth ) => auth( null, 'happy' ) )
 			const { client } = io.of( '/agent' ).newClient()
 			client.on( 'init', () => {
 				client.emit( 'system.info', data => {

@@ -8,11 +8,11 @@ import operatorLoadMiddleware from './middlewares/socket-io/operator-load'
 import operatorReducer from './operator/reducer'
 import chatlistReducer from './chat-list/reducer'
 import canRemoteDispatch from './operator/canRemoteDispatch'
+import { keys } from 'ramda'
 
 const debug = require( 'debug' )( 'happychat:store' )
 const logger = () => next => action => {
-	debug( 'ACTION_START', action.type )
-	debug( 'ACTION', action )
+	debug( 'ACTION_START', action.type, ... keys( action ) )
 	try {
 		const result = next( action )
 		debug( 'ACTION_END', action.type )
@@ -23,16 +23,16 @@ const logger = () => next => action => {
 	}
 }
 
-export default ( { io, customers, operators, agents, messageMiddlewares = [], middlewares = [], timeout = undefined }, state ) => createStore(
+export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], middlewares = [], timeout = undefined }, state ) => createStore(
 	combineReducers( { operators: operatorReducer, chatlist: chatlistReducer } ),
 	state,
 	applyMiddleware(
 		logger,
 		...middlewares,
 		controllerMiddleware( messageMiddlewares ),
-		operatorMiddleware( io.of( '/operator' ), operators ),
-		agentMiddleware( io.of( '/agent' ), agents ),
-		chatlistMiddleware( { io, customers, timeout, customerDisconnectTimeout: timeout } ),
+		operatorMiddleware( io.of( '/operator' ), operatorAuth ),
+		agentMiddleware( io.of( '/agent' ), agentAuth ),
+		chatlistMiddleware( { io, timeout, customerDisconnectTimeout: timeout }, customerAuth ),
 		broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
 		...operatorLoadMiddleware,
 	)

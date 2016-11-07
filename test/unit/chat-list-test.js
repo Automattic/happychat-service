@@ -1,7 +1,6 @@
 import { ok, equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
 import { merge } from 'ramda'
-import { tick } from '../tick'
 import mockio from '../mock-io'
 import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
@@ -12,6 +11,7 @@ import {
 	SET_OPERATOR_CHATS_ABANDONED,
 	SET_CHAT_MISSED,
 	SET_CHATS_RECOVERED,
+	NOTIFY_CHAT_STATUS_CHANGED,
 	customerInboundMessage,
 	customerJoin,
 	customerDisconnect
@@ -21,17 +21,15 @@ import { getChat, getChatStatus, getChatOperator } from 'chat-list/selectors'
 
 const debug = require( 'debug' )( 'happychat:chat-list:test' )
 
-const TIMEOUT = 10
-
 describe( 'ChatList component', () => {
-	let operators
-	let customers
 	let store
-	let events
 	let watchingMiddleware
 	let io
+	let auth = () => Promise.reject( new Error( 'no user' ) )
+	let doAuth = () => auth()
 
 	const watchForType = ( ... args ) => watchingMiddleware.watchForType( ... args )
+	const watchForTypeOnce = ( ... args ) => watchingMiddleware.watchForTypeOnce( ... args )
 
 	const emitCustomerMessage = ( text = 'hello', id = 'chat-id' ) => {
 		store.dispatch( customerInboundMessage( { id }, { text } ) )
@@ -39,16 +37,11 @@ describe( 'ChatList component', () => {
 
 	const chatlistWithState = ( state ) => {
 		( { server: io } = mockio() )
-		operators = new EventEmitter()
-		customers = new EventEmitter()
-		events = new EventEmitter()
 		watchingMiddleware = new WatchingMiddleware()
-		store = createStore(
-			{ io, operators, customers, chatlist: events, agents: new EventEmitter(),
-				middlewares: [ watchingMiddleware.middleware() ],
-				timeout: 100 },
-			state
-		)
+		store = createStore( {
+			operatorAuth: doAuth,
+			io, middlewares: [ watchingMiddleware.middleware() ], timeout: 100
+		}, state )
 	}
 
 	beforeEach( () => {
@@ -56,11 +49,15 @@ describe( 'ChatList component', () => {
 	} )
 
 	it( 'should notify when new chat has started', ( done ) => {
-		events.once( 'chat.status', tick( ( status, { id } ) => {
+		watchForTypeOnce( NOTIFY_CHAT_STATUS_CHANGED, ( { status, chat_id } ) => {
 			equal( status, 'pending' )
-			equal( id, 'chat-id' )
-			done()
-		} ) )
+			equal( chat_id, 'chat-id' )
+			watchForTypeOnce( NOTIFY_CHAT_STATUS_CHANGED, ( { status: status2, lastStatus } ) => {
+				equal( status2, 'assigning' )
+				equal( lastStatus, 'pending' )
+				done()
+			} )
+		} )
 		emitCustomerMessage()
 	} )
 
@@ -73,10 +70,7 @@ describe( 'ChatList component', () => {
 
 	const connectOperator = ( operator, capacity = 1, status = 'available' ) => new Promise( resolve => {
 		// have an operator join
-		operators.once( 'connection', ( socket, callback ) => {
-			debug( 'authorizing', operator )
-			callback( null, merge( operator, { capacity, status } ) )
-		} )
+		auth = () => Promise.resolve( merge( operator, { capacity, status } ) )
 		const operator_io = io.of( '/operator' )
 		const { client, socket } = operator_io.connectNewClient( undefined, () => {
 			client.once( 'init', ( user ) => {
@@ -119,12 +113,14 @@ describe( 'ChatList component', () => {
 	it.skip( 'should timeout if no operator provided', () =>
 		connectOperator( { id: 'ripley' } )
 		.then( ( { socket } ) => new Promise( resolve => {
-			socket.join = ( room, callback ) => callback( new Error( `failed to join ${ room }` ) )
-			events.on( 'miss', tick( ( error, { id } ) => {
+			// Makes socket.join timeout
+			socket.join = () => {}
+			watchForType( SET_CHAT_MISSED, action => {
+				const { error, chat_id: id } = action
 				equal( error.message, 'timeout' )
 				equal( id, 'chat-id' )
 				resolve()
-			} ) )
+			} )
 			emitCustomerMessage()
 		} ) )
 	)
@@ -327,28 +323,38 @@ describe( 'ChatList component', () => {
 		} )
 
 		it( 'should revert back to assigned when customer disconnects and returns', ( done ) => {
-			events.once( 'chat.status', tick( ( status, _chat ) => {
-				equal( status, 'customer-disconnect' )
-				deepEqual( chat, _chat )
+			watchForType( NOTIFY_CHAT_STATUS_CHANGED, action => {
+				// wait until we get a disconnect
+				if ( action.status !== 'customer-disconnect' ) {
+					return
+				}
+				equal( action.status, 'customer-disconnect' )
+				deepEqual( action.chat_id, chat.id )
 
-				events.once( 'chat.status', tick( ( __status, __chat ) => {
-					equal( __status, 'assigned' )
-					deepEqual( chat, __chat )
-				} ) )
+				watchForType( NOTIFY_CHAT_STATUS_CHANGED, action2 => {
+					debug( 'status changed', action )
+					equal( action2.status, 'assigned' )
+					equal( action2.chat_id, chat.id )
+					done()
+				} )
 
-				watchForType( OPERATOR_RECEIVE_MESSAGE, action => {
-					const { message } = action
+				watchForType( OPERATOR_RECEIVE_MESSAGE, action3 => {
+					const { message } = action3
 					if ( message.meta.event_type === 'customer-leave' ) {
-						throw new Error( 'operator should not be sent a message' )
+						done( new Error( 'operator should not be sent a message' ) )
 					}
 				} )
 
-				const socket = new EventEmitter()
-				store.dispatch( customerJoin( socket, chat, { id: user.id, socket_id: 'socket-id', session_id: 'session-id' } ) )
-
-				// call done() after timeout to verify that operator message isn't sent
-				setTimeout( () => done(), TIMEOUT + 1 )
-			} ) )
+				// small amount of timeout to double-check the message isn't sent
+				// immediately
+				setTimeout( () => {
+					store.dispatch( customerJoin(
+						new EventEmitter(),
+						chat,
+						{ id: user.id, socket_id: 'socket-id', session_id: 'session-id' }
+					) )
+				}, 40 )
+			} )
 
 			store.dispatch( customerDisconnect( chat, user ) )
 		} )

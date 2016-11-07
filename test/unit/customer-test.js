@@ -1,4 +1,3 @@
-import { EventEmitter } from 'events'
 import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
 import createStore from 'store'
@@ -16,7 +15,7 @@ import {
 const debug = require( 'debug' )( 'happychat:test:customer' )
 
 describe( 'Customer Service', () => {
-	let server, socket, client, customerEvents, events, watching, store
+	let server, socket, client, watching, store, auth, connectUser
 	const mockUser = {
 		id: 'abdefgh',
 		username: 'ridley',
@@ -24,39 +23,32 @@ describe( 'Customer Service', () => {
 		picture: 'http://example.com/image',
 		session_id: 'abdefgh-chat'
 	}
-	let auth
 	const watchForType = ( ... args ) => watching.watchForType( ... args )
+	let doAuth = () => auth( socket )
 
 	beforeEach( () => {
 		// export default ( { io, customers, operators, chatlist, middlewares = [], timeout = undefined }, state ) => createStore(
 		const { server: io } = mockIO()
-		events = customerEvents = new EventEmitter();
 		watching = new WatchingMiddleware()
 		store = createStore( {
 			io: io,
-			customers: customerEvents,
-			operators: new EventEmitter(),
-			chatlist: new EventEmitter(),
-			agents: new EventEmitter(),
+			customerAuth: doAuth,
 			timeout: 10,
 			middlewares: [ watching.middleware() ]
 		} )
-		server = io.of( '/customer' );
-		( { client, socket } = server.newClient() )
-		auth = ( next = () => {} ) => {
+		server = io.of( '/customer' )
+		auth = () => Promise.resolve( mockUser );
+		( { client, socket } = server.newClient() );
+		connectUser = ( next = () => {} ) => {
 			// customer( customerIO, customerEvents )
-			customerEvents.on( 'connection', ( _socket, authUser ) => {
-				authUser( null, mockUser )
-				client.on( 'init', () => next() )
-			} )
+			client.on( 'init', () => next() )
 			server.emit( 'connection', socket )
-			return customerEvents
 		}
 	} )
 
 	describe( 'with authorized user', () => {
 		beforeEach( ( next ) => {
-			customerEvents = auth( next )
+			connectUser( next )
 		} )
 
 		it( 'should receive message and broadcast it', ( done ) => {
@@ -139,17 +131,8 @@ describe( 'Customer Service', () => {
 		} )
 	} )
 
-	it( 'should emit connection', ( done ) => {
-		customerEvents.on( 'connection', () => {
-			done()
-		} )
-		server.emit( 'connection', socket )
-	} )
-
 	it( 'should authenticate and init client', ( done ) => {
-		customerEvents.once( 'connection', ( _socket, authUser ) => {
-			authUser( null, { id: 'user1', username: 'user1', session_id: 'session' } )
-		} )
+		auth = () => Promise.resolve( { id: 'user1', username: 'user1', session_id: 'session' } )
 
 		client.once( 'init', () => {
 			contains( socket.rooms, 'session/session' )
@@ -186,19 +169,13 @@ describe( 'Customer Service', () => {
 			server.disconnect( { client, socket } )
 		} )
 
-		auth()
-	} )
-
-	it( 'should fail to authenticate with invalid token', ( done ) => {
-		events.once( 'connection', ( _socket, authorize ) => authorize( new Error( 'nope' ) ) )
-		client.on( 'unauthorized', () => done() )
-		server.emit( 'connection', socket )
+		connectUser()
 	} )
 
 	describe( 'with multiple connections', () => {
 		let connection2;
 		beforeEach( ( next ) => {
-			events = auth( () => {
+			connectUser( () => {
 				connection2 = server.connectNewClient( undefined, () => next() )
 			} )
 		} )

@@ -15,17 +15,15 @@ describe( 'Agent Service', () => {
 	} )
 
 	describe( 'when authenticated', () => {
-		let events, lastDispatch, state, middleware
+		let lastDispatch, state, middleware
 		beforeEach( ( next ) => {
 			server = io.of( '/agent' )
-			events = new EventEmitter()
-			middleware = agentMiddleware( server, events )( {
+			middleware = agentMiddleware( server, () => Promise.resolve( 'agent' ) )( {
 				dispatch: ( action ) => {
 					lastDispatch = action
 				},
 				getState: () => state
 			} )
-			events.on( 'connection', ( _socket, auth ) => auth( null, 'agent' ) )
 			client.on( 'init', () => next() )
 			server.emit( 'connection', socket )
 		} )
@@ -92,19 +90,10 @@ describe( 'Agent Service', () => {
 	} )
 
 	it( 'should initialize service', ( done ) => {
-		let events = new EventEmitter()
 		debug( 'io', io.on )
-		agentMiddleware( io, events )( { dispatch: noop, getState: noop } )
-		events.once( 'connection', ( _socket, auth ) => auth() )
+		agentMiddleware( io, () => Promise.resolve( 'agent' ) )( { dispatch: noop, getState: noop } )
 		client.on( 'init', () => done() )
 		io.emit( 'connection', socket )
 	} )
 
-	it( 'should emit unauthenticated when failing authentication', ( done ) => {
-		let events = new EventEmitter()
-		agentMiddleware( io, events )( { dispatch: noop, getState: noop } )
-		events.once( 'connection', ( _socket, auth ) => auth( new Error( 'nope' ) ) )
-		client.on( 'unauthorized', () => done() )
-		io.emit( 'connection', socket )
-	} )
 } )

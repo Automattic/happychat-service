@@ -1,4 +1,3 @@
-import { EventEmitter } from 'events'
 import IO from 'socket.io'
 import createStore from './store'
 import middlewareInterface from './middleware-interface'
@@ -10,25 +9,26 @@ export default ( server, { customerAuthenticator, agentAuthenticator, operatorAu
 
 	const io = new IO( server )
 
-	const customers = new EventEmitter()
-	const operators = new EventEmitter()
-	const chatlistEvents = new EventEmitter()
-	const agents = new EventEmitter()
-
 	const middlewares = middlewareInterface()
+
+	const auth = authenticator => socket => new Promise( ( resolve, reject ) => {
+		authenticator( socket, ( e, result ) => {
+			if ( e ) {
+				socket.emit( 'unauthorized' )
+				socket.close()
+				return reject( e )
+			}
+			resolve( result )
+		} )
+	} )
 
 	const store = createStore( {
 		io,
-		operators,
-		customers,
-		agents,
-		chatlist: chatlistEvents,
+		operatorAuth: auth( operatorAuthenticator ),
+		customerAuth: auth( customerAuthenticator ),
+		agentAuth: auth( agentAuthenticator ),
 		messageMiddlewares: middlewares.middlewares()
 	} );
 
-	agents.on( 'connection', agentAuthenticator )
-	customers.on( 'connection', customerAuthenticator )
-	operators.on( 'connection', operatorAuthenticator )
-
-	return { io, agents, customers, operators, controller: middlewares.external, store }
+	return { io, controller: middlewares.external, store }
 }

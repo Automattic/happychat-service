@@ -17,7 +17,7 @@ import {
 	OPERATOR_CHAT_JOIN
 } from './index'
 import { haveAvailableCapacity, isSystemAcceptingCustomers } from '../../operator/selectors';
-import { setUserLoads, SET_USER_LOADS, OPERATOR_OPEN_CHAT_FOR_CLIENTS } from '../../operator/actions'
+import { setUserLoads, SET_USER_LOADS, OPERATOR_OPEN_CHAT_FOR_CLIENTS, REMOVE_USER } from '../../operator/actions'
 import { REMOTE_ACTION_TYPE } from './broadcast'
 import {
 	compose,
@@ -79,6 +79,9 @@ const updateLoadMiddleware = ( { getState, dispatch } ) => next => action => {
 		case OPERATOR_CHAT_LEAVE:
 		case OPERATOR_CHAT_JOIN:
 		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
+		case SET_CHAT_OPERATOR:
+		case SET_CHATS_RECOVERED:
+		case REMOVE_USER:
 			const result = next( action )
 			dispatch( setUserLoads( reducer( getState() ) ) )
 			return result;

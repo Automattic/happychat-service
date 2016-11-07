@@ -1,4 +1,4 @@
-import { onConnection, timestamp } from '../../util'
+import { timestamp } from '../../util'
 import {
 	OPERATOR_RECEIVE_MESSAGE,
 	operatorInboundMessage
@@ -126,12 +126,12 @@ const join = ( { socket, store, user, io } ) => {
 	} )
 }
 
-export default ( io, events ) => ( store ) => {
+export default ( io, auth ) => ( store ) => {
 	io.on( 'connection', ( socket ) => {
 		debug( 'operator connecting' )
-		onConnection(
-			{ socket, events },
-			user => join( { socket, store, user, io } )
+		auth( socket ).then(
+			user => join( { socket, store, user, io } ),
+			e => debug( 'operator auth failed', e )
 		)
 	} )
 
