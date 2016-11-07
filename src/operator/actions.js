@@ -52,16 +52,8 @@ export const operatorReceiveTyping = ( id, user, text ) => (
 	{ type: OPERATOR_RECEIVE_TYPING, id, user, text }
 )
 
-export const operatorClientQuery = ( id, deferred ) => (
-	{ type: OPERATOR_CLIENT_QUERY, id, deferred }
-)
-
 export const operatorOpenChatForClients = ( operator, clients, room, chat, deferred, onDisconnect ) => (
 	{ type: OPERATOR_OPEN_CHAT_FOR_CLIENTS, operator, clients, room, chat, deferred, onDisconnect }
-)
-
-export const operatorChatClose = ( chat, operator ) => (
-	{ type: OPERATOR_CLOSE_CHAT, chat, operator }
 )
 
 export const setAcceptsCustomers = ( isEnabled ) => (

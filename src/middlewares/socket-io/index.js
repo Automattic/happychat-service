@@ -1,11 +1,11 @@
 import { timestamp } from '../../util'
 import {
 	OPERATOR_RECEIVE_MESSAGE,
-	operatorInboundMessage
+	operatorInboundMessage,
+	closeChat
 } from '../../chat-list/actions'
 import {
 	OPERATOR_RECEIVE_TYPING,
-	OPERATOR_CLOSE_CHAT,
 	updateUserStatus,
 	updateCapacity,
 	removeUserSocket,
@@ -36,11 +36,6 @@ export const operatorChatJoin = ( chat_id, user ) => (
 export const OPERATOR_CHAT_LEAVE = 'OPERATOR_CHAT_LEAVE';
 export const operatorChatLeave = ( chat_id, user ) => (
 	{ type: OPERATOR_CHAT_LEAVE, chat_id, user }
-)
-
-export const OPERATOR_CHAT_CLOSE = 'OPERATOR_CHAT_CLOSE';
-const operatorChatClose = ( chat_id, user ) => (
-	{ type: OPERATOR_CHAT_CLOSE, chat_id, user }
 )
 
 export const OPERATOR_CHAT_TRANSFER = 'OPERATOR_CHAT_TRANSFER';
@@ -116,7 +111,7 @@ const join = ( { socket, store, user, io } ) => {
 	} )
 
 	socket.on( 'chat.close', ( chat_id ) => {
-		store.dispatch( operatorChatClose( chat_id, user ) );
+		store.dispatch( closeChat( chat_id, user ) );
 	} )
 
 	socket.on( 'chat.transfer', ( chat_id, user_id ) => {
@@ -144,10 +139,6 @@ export default ( io, auth ) => ( store ) => {
 				const chat = { id: action.id }
 				io.in( customerRoom( action.id ) ).emit( 'chat.typing', chat, action.user, action.text )
 				break;
-			case OPERATOR_CLOSE_CHAT:
-				io.in( action.room ).emit( 'chat.close', action.chat, action.operator )
-				break;
-
 		}
 		return next( action );
 	}

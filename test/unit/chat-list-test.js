@@ -4,9 +4,9 @@ import { merge } from 'ramda'
 import mockio from '../mock-io'
 import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
-import { OPERATOR_CLOSE_CHAT } from 'operator/actions';
 import {
 	ASSIGN_CHAT,
+	CLOSE_CHAT,
 	OPERATOR_RECEIVE_MESSAGE,
 	SET_OPERATOR_CHATS_ABANDONED,
 	SET_CHAT_MISSED,
@@ -174,12 +174,12 @@ describe( 'ChatList component', () => {
 		} )
 
 		it( 'should allow operator to close chat', ( done ) => {
-			watchingMiddleware.watchForType( OPERATOR_CLOSE_CHAT, ( action ) => {
+			watchingMiddleware.watchForType( CLOSE_CHAT, ( action ) => {
 				equal( action.operator.id, operator_id )
-				deepEqual( action.chat, chat )
+				equal( action.chat_id, chat.id )
 				ok( ! getChat( chat.id, store.getState() ) )
 				done()
-			} )
+			}, true )
 			client.emit( 'chat.close', 'the-id' )
 		} )
 

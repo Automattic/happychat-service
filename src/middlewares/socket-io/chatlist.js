@@ -11,8 +11,7 @@ import {
 	OPERATOR_READY,
 	OPERATOR_CHAT_JOIN,
 	OPERATOR_CHAT_LEAVE,
-	OPERATOR_CHAT_TRANSFER,
-	OPERATOR_CHAT_CLOSE
+	OPERATOR_CHAT_TRANSFER
 } from './index'
 import {
 	ASSIGN_CHAT,
@@ -32,7 +31,6 @@ import {
 	NOTIFY_CHAT_STATUS_CHANGED,
 	assignChat,
 	assignNextChat,
-	closeChat,
 	insertPendingChat,
 	reassignChats,
 	recoverChats,
@@ -66,8 +64,7 @@ import {
 	STATUS_CUSTOMER_DISCONNECT,
 } from '../../chat-list/reducer'
 import {
-	REMOVE_USER,
-	operatorChatClose
+	REMOVE_USER
 } from '../../operator/actions'
 import {
 	isSystemAcceptingCustomers,
@@ -293,10 +290,6 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 		)
 	}, chat_id => debug( 'chat.leave without existing chat', chat_id ) )( action.chat_id, action.user )
 
-	const handleOperatorCloseChat = action => whenChatExists( ( chat, operator ) => {
-		store.dispatch( closeChat( chat.id, operator ) )
-	}, chat_id => debug( 'chat.close without existing chat', chat_id ) )( action.chat_id, action.user )
-
 	const handleCustomerInboundMessage = ( { chat } ) => {
 		const state = store.getState()
 		debug( 'see if we should assign?', getChatStatus( chat.id, state ) )
@@ -312,7 +305,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 
 	const handleCloseChat = ( action, lastState ) => {
 		let chat = getChat( action.chat_id, lastState )
-		store.dispatch( operatorChatClose( chat, action.operator ) )
+		operator_io.in( chatRoom( chat ) ).emit( 'chat.close', chat, action.operator )
 		store.dispatch( operatorInboundMessage( chat.id, action.operator, merge(
 			makeEventMessage( 'chat closed', chat.id ),
 			{ meta: { event_type: 'close', by: action.operator } }
@@ -463,9 +456,6 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 			case OPERATOR_CHAT_TRANSFER:
 				handleTransferChat( action )
 				return next( action )
-			case OPERATOR_CHAT_CLOSE:
-				handleOperatorCloseChat( action )
-				return next( action )
 			case OPERATOR_READY:
 				handleOperatorReady( action )
 				return next( action )
@@ -509,8 +499,6 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 			case INSERT_PENDING_CHAT:
 				store.dispatch( assignNextChat() )
 				break;
-			default:
-				debug( 'default for action', action.type )
 		}
 		return result
 	}
