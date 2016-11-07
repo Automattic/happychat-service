@@ -41,16 +41,29 @@ describe( 'Operator', () => {
 		client.emit( 'chat.leave', chat_id )
 	} )
 
+	const closeChat = ( client, chat_id ) => new Promise( resolve => {
+		client.once( 'chat.close', chat => resolve( chat ) )
+		client.emit( 'chat.close', chat_id );
+	} )
+
+	const requestState = client => new Promise( resolve => {
+		client.emit( 'broadcast.state', ( version, state ) => {
+			resolve( state )
+		} )
+	} )
+
 	beforeEach( () => {
 		service = util( authenticators( mockUser, opUser, {} ) )
-		service.start() 
+		service.start()
 	} )
 	afterEach( () => service.stop() )
 
 	it( 'should join chat', () => service.startClients()
 		.then( emitCustomerMessage )
 		.then( operatorJoinChat )
-		.then( chat => ok( chat ) )
+	.then( chat => {
+		ok( chat )
+	} )
 	)
 
 	describe( 'when in a chat', () => {
@@ -68,6 +81,17 @@ describe( 'Operator', () => {
 		it( 'should leave chat', () => leaveChat( operator, mockUser.session_id )
 			.then( ( { chat: { id } } ) => {
 				deepEqual( id, mockUser.session_id )
+			} )
+		)
+
+		it( 'should close chat', () => requestState( operator )
+			.then( state => {
+				ok( state.chatlist['session-id'] )
+				closeChat( operator, mockUser.session_id )
+			} )
+			.then( () => requestState( operator ) )
+			.then( state => {
+				deepEqual( state.chatlist, {} )
 			} )
 		)
 	} )

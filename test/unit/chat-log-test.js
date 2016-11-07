@@ -1,5 +1,5 @@
-import { equal, ok } from 'assert'
-import { ChatLog } from 'chat-log'
+import { equal } from 'assert'
+import { ChatLog } from 'middlewares/socket-io/controller'
 import { reduce } from 'lodash/collection'
 
 describe( 'ChatLog', () => {
@@ -51,20 +51,19 @@ describe( 'ChatLog', () => {
 	} )
 
 	it( 'should limit the size of the chat log cache', () => {
-		var head, rest
 		var record = ( i ) => () => {
-			return log.recordCustomerMessage( chat, { id:`message-${i}`, text: `message-${i}` } )
+			return log.recordCustomerMessage( chat, { id: `message-${i}`, text: `message-${i}` } )
 		}
 		var actions = []
-		while( actions.length < 20 ) {
+		while ( actions.length < 20 ) {
 			actions.push( record( actions.length ) )
 		}
-		[ head, ...rest ] = actions
+		let [ head, ...rest ] = actions
 		return reduce( rest, ( p, action ) => p.then( action ), head() )
 		.then( () => log.findLog( chat.id ) )
 		.then( ( messages ) => {
-			const [first, ... rest ] = messages
-			const [last] = rest.reverse()
+			const [first, ... remaining ] = messages
+			const [last] = remaining.reverse()
 			equal( messages.length, maxMessages )
 			equal( last.id, 'message-19' )
 			equal( first.id, 'message-10' )

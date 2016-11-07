@@ -1,12 +1,12 @@
 {
   "name": "happychat-service",
-  "version": "0.9.11",
+  "version": "0.10.1-15",
   "description": "Socket.IO based chat server for happychat.",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_PATH=./src `npm bin`/mocha --compilers js:babel-register --recursive",
+    "test": "TIMEOUT_OVERRIDE=10 NODE_PATH=./src `npm bin`/mocha --compilers js:babel-register --recursive",
     "test:watch": "npm test -- --watch -R min",
-    "test:coverage": "NODE_PATH=./src babel-node `npm bin`/isparta cover --include-all-sources --include 'src/**/*.js' _mocha -- --recursive",
+    "test:coverage": "TIMEOUT_OVERRIDE=10 NODE_PATH=./src babel-node `npm bin`/isparta cover --include-all-sources --include 'src/**/*.js' _mocha -- --recursive",
     "build": "rm -rf lib; `npm bin`/babel -d lib ./src/",
     "prepublish": "npm run build"
   },
@@ -32,7 +32,9 @@
   "dependencies": {
     "async": "^2.0.0-rc.2",
     "lodash": "^4.11.1",
+    "ramda": "^0.22.1",
     "redux": "^3.5.2",
+    "simperium-jsondiff": "^1.0.1-1",
     "socket.io": "^1.4.5",
     "uuid": "^2.0.1"
   }
