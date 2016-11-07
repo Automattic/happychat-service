@@ -299,9 +299,13 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 	const handleCloseChat = ( action ) => {
 		const { chat_id, operator } = action
 		let chat = getChat( chat_id, store.getState() )
-		operator_io.in( customerRoom( chat.id ) ).emit( 'chat.close', chat, operator )
-		store.dispatch( operatorInboundMessage( chat.id, operator, merge(
-			makeEventMessage( 'chat closed', chat.id ),
+		if ( !chat ) {
+			debug( 'operator tried to close a chat that no longer exists', chat_id, operator.id )
+			chat = { id: chat_id }
+		}
+		operator_io.in( customerRoom( chat_id ) ).emit( 'chat.close', chat, operator )
+		store.dispatch( operatorInboundMessage( chat_id, operator, merge(
+			makeEventMessage( 'chat closed', chat_id ),
 			{ meta: { event_type: 'close', by: action.operator } }
 		) ) )
 	}
