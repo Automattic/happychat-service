@@ -23,16 +23,16 @@ const logger = () => next => action => {
 	}
 }
 
-export default ( { io, customers, operators, chatlist, agents, messageMiddlewares = [], middlewares = [], timeout = undefined }, state ) => createStore(
+export default ( { io, customers, operators, agents, messageMiddlewares = [], middlewares = [], timeout = undefined }, state ) => createStore(
 	combineReducers( { operators: operatorReducer, chatlist: chatlistReducer } ),
 	state,
 	applyMiddleware(
 		logger,
 		...middlewares,
-		controllerMiddleware( { customers, agents, operators, middlewares: messageMiddlewares } ),
+		controllerMiddleware( messageMiddlewares ),
 		operatorMiddleware( io.of( '/operator' ), operators ),
 		agentMiddleware( io.of( '/agent' ), agents ),
-		chatlistMiddleware( { io, customers, events: chatlist, timeout, customerDisconnectTimeout: timeout } ),
+		chatlistMiddleware( { io, customers, timeout, customerDisconnectTimeout: timeout } ),
 		broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
 		...operatorLoadMiddleware,
 	)

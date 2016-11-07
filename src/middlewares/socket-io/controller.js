@@ -15,7 +15,6 @@ import {
 	CUSTOMER_TYPING,
 	CUSTOMER_JOIN,
 	OPERATOR_JOIN,
-	CUSTOMER_DISCONNECT
 } from '../../chat-list/actions'
 
 const debug = require( 'debug' )( 'happychat:controller' )
@@ -65,7 +64,7 @@ const formatAgentMessage = ( author_type, author_id, session_id, { id, timestamp
 	meta
 } )
 
-export default ( { agents, middlewares } ) => store => {
+export default ( middlewares ) => store => {
 	const log = { operator: new ChatLog(), customer: new ChatLog() }
 
 	const runMiddleware = ( { origin, destination, chat, user, message } ) => new Promise( ( resolveMiddleware ) => {
@@ -108,10 +107,6 @@ export default ( { agents, middlewares } ) => store => {
 		.catch( e => debug( e.message ) )
 	} )
 
-	const handleCustomerDisconnect = action => {
-		agents.emit( 'customer.disconnect', action.chat, action.user )
-	}
-
 	// toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 	const handleCustomerJoin = action => {
 		const { user, socket, chat } = action
@@ -120,7 +115,6 @@ export default ( { agents, middlewares } ) => store => {
 			debug( 'emitting chat log to customer', user, messages.length, log.customer )
 			socket.emit( 'log', messages )
 		} )
-		agents.emit( 'customer.join', user, chat, socket )
 	}
 
 	const handleOperatorJoin = action => {
@@ -254,9 +248,6 @@ export default ( { agents, middlewares } ) => store => {
 				break;
 			case OPERATOR_JOIN:
 				handleOperatorJoin( action )
-				break;
-			case CUSTOMER_DISCONNECT:
-				handleCustomerDisconnect( action )
 				break;
 		}
 		return next( action )

@@ -26,7 +26,6 @@ import {
 	INSERT_PENDING_CHAT,
 	REASSIGN_CHATS,
 	RECOVER_CHATS,
-	SET_CHAT_MISSED,
 	SET_CHAT_OPERATOR,
 	SET_CHAT_CUSTOMER_DISCONNECT,
 	NOTIFY_SYSTEM_STATUS_CHANGE,
@@ -65,8 +64,6 @@ import {
 } from '../../chat-list/selectors'
 import {
 	STATUS_CUSTOMER_DISCONNECT,
-	STATUS_MISSED,
-	STATUS_PENDING,
 } from '../../chat-list/reducer'
 import {
 	REMOVE_USER,
@@ -161,7 +158,7 @@ const getClients = ( server, room ) => new Promise( ( resolve, reject ) => {
 	} )
 } )
 
-export default ( { io, customers, events, timeout = 1000, customerDisconnectTimeout = 90000 } ) => store => {
+export default ( { io, customers, timeout = 1000, customerDisconnectTimeout = 90000 } ) => store => {
 	const operator_io = io.of( '/operator' )
 	const customer_io = io.of( '/customer' )
 	.on( 'connection', socket => {
@@ -316,15 +313,6 @@ export default ( { io, customers, events, timeout = 1000, customerDisconnectTime
 		debug( 'chat exists time to make sure someone is home' )
 	}
 
-	const handleSetChatMissed = ( action, lastState ) => {
-		let previousStatus = getChatStatus( action.chat_id, lastState )
-		let missedChat = getChat( action.chat_id, store.getState() )
-		if ( previousStatus !== STATUS_MISSED ) {
-			debug( 'chat missed', action.chat_id, previousStatus, action.error.message )
-			events.emit( 'miss', action.error, missedChat, previousStatus )
-		}
-	}
-
 	const handleCloseChat = ( action, lastState ) => {
 		let chat = getChat( action.chat_id, lastState )
 		store.dispatch( operatorChatClose( chat, action.operator ) )
@@ -337,7 +325,6 @@ export default ( { io, customers, events, timeout = 1000, customerDisconnectTime
 	const handleSetChatOperator = ( action ) => {
 		let { operator, chat_id } = action
 		let chat = getChat( action.chat_id, store.getState() )
-		events.emit( 'found', chat, operator )
 		store.dispatch( operatorInboundMessage( chat.id, operator, merge(
 			makeEventMessage( 'operator assigned', chat_id ),
 			{ meta: { operator, event_type: 'assigned' } }
@@ -510,10 +497,6 @@ export default ( { io, customers, events, timeout = 1000, customerDisconnectTime
 		const lastState = store.getState()
 		const result = next( action )
 		switch ( action.type ) {
-			// tried to assign but couldn't
-			case SET_CHAT_MISSED:
-				handleSetChatMissed( action, lastState )
-				return next( action );
 			case CLOSE_CHAT:
 				handleCloseChat( action, lastState )
 				break
@@ -525,10 +508,8 @@ export default ( { io, customers, events, timeout = 1000, customerDisconnectTime
 				handleAssignNextChat( action )
 				break
 			case SET_CHAT_CUSTOMER_DISCONNECT:
-				events.emit( 'chat.status', STATUS_CUSTOMER_DISCONNECT, getChat( action.chat_id, store.getState() ) )
 				break;
 			case INSERT_PENDING_CHAT:
-				events.emit( 'chat.status', STATUS_PENDING, action.chat )
 				store.dispatch( assignNextChat() )
 				break;
 			default:

@@ -51,9 +51,24 @@ export default ( io, events ) => ( { dispatch, getState } ) => {
 			onAuthorized( { socket, dispatch, getState } )
 		)
 	} )
-	// agents.on( 'receive', ( message ) => io.emit( 'message', message ) )
+
+	// const handleCustomerJoin = action => {
+	// 	const { user, chat, socket } = action
+	// 	events.emit( 'customer.join', user, chat, socket )
+	// }
+	//
+	// const handleCustomerDisconnect = action => {
+	// 	events.emit( 'customer.disconnect', action.chat, action.user )
+	// }
+
 	return next => action => {
 		switch ( action.type ) {
+			// case CUSTOMER_DISCONNECT:
+			// 	handleCustomerDisconnect( action )
+			// 	break;
+			// case CUSTOMER_JOIN:
+			// 	handleCustomerJoin( action )
+			// 	break;
 			case AGENT_RECEIVE_MESSAGE:
 				io.emit( 'message', action.message )
 				break;
