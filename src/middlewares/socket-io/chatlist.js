@@ -72,9 +72,7 @@ import { makeEventMessage, timestamp } from '../../util'
 
 const debug = require( 'debug' )( 'happychat:middleware:chat-list' )
 
-import { customerRoom } from './index'
-const chatRoomId = customerRoom
-const chatRoom = ( { id } ) => chatRoomId( id )
+import { customerRoom, operatorRoom } from './index'
 
 // limit the information for the user
 const identityForUser = ( { id, name, username, picture } ) => ( { id, name, username, picture } )
@@ -101,16 +99,7 @@ const withTimeout = ( promise, ms = 1000 ) => Promise.race( [
 	} )
 ] )
 
-const init = ( { user, socket, io, store } ) => () => {
-	const socketIdentifier = { id: user.id, socket_id: socket.id, session_id: user.session_id }
-	const chat = {
-		user_id: user.id,
-		id: user.session_id,
-		username: user.username,
-		name: user.name,
-		picture: user.picture
-	}
-
+const init = ( { user, socket, io, store, chat } ) => () => {
 	debug( 'chat initialized', chat )
 
 	socket.on( 'message', ( { text, id, meta } ) => {
@@ -125,11 +114,11 @@ const init = ( { user, socket, io, store } ) => () => {
 	} )
 
 	socket.on( 'disconnect', () => {
-		debug( 'socket.on.disconnect', user.id, socketIdentifier );
+		debug( 'socket.on.disconnect', user.id );
 
 		store.dispatch( customerSocketDisconnect( socket, chat, user ) )
 
-		whenNoClients( io, chatRoom( chat ) )
+		whenNoClients( io, customerRoom( chat.id ) )
 			.then( () => store.dispatch( customerDisconnect( chat, user ) ) )
 	} )
 
@@ -139,7 +128,14 @@ const init = ( { user, socket, io, store } ) => () => {
 
 const join = ( { io, user, socket, store } ) => {
 	debug( 'user joined', user )
-	socket.join( customerRoom( user ), init( { user, socket, io, store } ) )
+	const chat = {
+		user_id: user.id,
+		id: user.session_id,
+		username: user.username,
+		name: user.name,
+		picture: user.picture
+	}
+	socket.join( customerRoom( chat.id ), init( { user, socket, io, store, chat } ) )
 }
 
 const getClients = ( server, room ) => new Promise( ( resolve, reject ) => {
@@ -182,8 +178,8 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 	}
 
 	const emitChatOpenToOperator = ( chat, operator ) => {
-		const customer_room_name = `customers/${chat.id}`
-		const room = operator_io.in( `operators/${operator.id}` )
+		const customer_room_name = customerRoom( chat.id )
+		const room = operator_io.in( operatorRoom( operator.id ) )
 		return getClients( operator_io, room )
 		.then( clients => Promise.all(
 			map( socket => new Promise( ( resolve, reject ) => {
@@ -204,13 +200,13 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 
 	const handleCustomerReceiveMessage = action => {
 		const { id, message } = action
-		debug( 'sending message to customer', id, message.text )
-		customer_io.to( chatRoomId( id ) ).emit( 'message', message )
+		debug( 'sending message to customer', customerRoom( id ), message.text )
+		customer_io.to( customerRoom( id ) ).emit( 'message', message )
 	}
 
 	const handleCustomerReceiveTyping = action => {
 		const { id, text } = action
-		customer_io.to( chatRoomId( id ) ).emit( 'typing', text && !isEmpty( text ) )
+		customer_io.to( customerRoom( id ) ).emit( 'typing', text && !isEmpty( text ) )
 	}
 
 	const handleCustomerJoin = action => {
@@ -303,7 +299,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 	const handleCloseChat = ( action ) => {
 		const { chat_id, operator } = action
 		let chat = getChat( chat_id, store.getState() )
-		operator_io.in( chatRoom( chat ) ).emit( 'chat.close', chat, operator )
+		operator_io.in( customerRoom( chat.id ) ).emit( 'chat.close', chat, operator )
 		store.dispatch( operatorInboundMessage( chat.id, operator, merge(
 			makeEventMessage( 'chat closed', chat.id ),
 			{ meta: { event_type: 'close', by: action.operator } }
@@ -437,7 +433,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 			case NOTIFY_CHAT_STATUS_CHANGED:
 				debug( 'NOTIFY_CHAT_STATUS_CHANGED', action.chat_id )
 				const status = getChatStatus( action.chat_id, store.getState() );
-				customer_io.in( chatRoomId( action.chat_id ) ).emit( 'status', status )
+				customer_io.in( customerRoom( action.chat_id ) ).emit( 'status', status )
 				break;
 			case RECOVER_CHATS:
 				handleRecoverChats( action )

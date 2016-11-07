@@ -173,14 +173,14 @@ describe( 'Operators', () => {
 				c.on( 'disconnect', () => {
 					resolve()
 				} )
-				server.in( 'operators/user-id' ).clients( ( e, clients ) => {
+				server.in( 'operator/user-id' ).clients( ( e, clients ) => {
 					equal( clients.length, 2 )
 					server.disconnect( { client: c, socket: s } )
 				} )
 			} )
 		} )
 
-		it.only( 'should emit chat.close to all clients in a chat', () => {
+		it( 'should emit chat.close to all clients in a chat', () => {
 			return () => new Promise( resolve => {
 				watchForType( INSERT_PENDING_CHAT, action => {
 					resolve( action.chat )

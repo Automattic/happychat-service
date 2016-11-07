@@ -52,7 +52,6 @@ describe( 'Operator', () => {
 		.then( operatorJoinChat )
 	.then( chat => {
 		ok( chat )
-		debug( 'check the store', service.service.store.getState().chatlist['session-id'] )
 	} )
 	)
 

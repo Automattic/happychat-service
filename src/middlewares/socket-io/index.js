@@ -30,12 +30,13 @@ const identityForUser = ( { id, displayName, avatarURL } ) => (
 	{ id, displayName, avatarURL }
 )
 
-export const customerRoom = id => `customers/${ id }`;
+export const customerRoom = id => `customer/${ id }`;
+export const operatorRoom = id => `operator/${ id }`;
 
 const join = ( { socket, store, user, io } ) => {
 	debug( 'initialize the operator', user )
 
-	const user_room = `operators/${user.id}`
+	const user_room = operatorRoom( user.id )
 
 	const selectIdentity = userId => selectUser( store.getState(), userId );
 

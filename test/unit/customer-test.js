@@ -135,7 +135,7 @@ describe( 'Customer Service', () => {
 		auth = () => Promise.resolve( { id: 'user1', username: 'user1', session_id: 'session' } )
 
 		client.once( 'init', () => {
-			contains( socket.rooms, 'session/session' )
+			contains( socket.rooms, 'customer/session' )
 			done()
 		} )
 
@@ -182,14 +182,14 @@ describe( 'Customer Service', () => {
 
 		it( 'should not fire disconnect until all clients leave', ( done ) => {
 			watchForType( CUSTOMER_DISCONNECT, () => {
-				server.in( `session/${ mockUser.session_id }` ).clients( ( e, clients ) => {
+				server.in( `customer/${ mockUser.session_id }` ).clients( ( e, clients ) => {
 					equal( clients.length, 0 )
 					done()
 				} )
 			} )
 
 			watchForType( CUSTOMER_JOIN, () => {
-				server.in( `session/${ mockUser.session_id }` ).clients( ( e, clients ) => {
+				server.in( `customer/${ mockUser.session_id }` ).clients( ( e, clients ) => {
 					equal( clients.length, 2 )
 					client.disconnect()
 					process.nextTick( () => connection2.client.disconnect() )
