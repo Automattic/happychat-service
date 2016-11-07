@@ -18,18 +18,11 @@ class Server extends EventEmitter {
 		this.rooms = {}
 		this.connected = {}
 		this.namespace = ns
+		this.to = this.in.bind( this )
 	}
 
-	to( room ) {
-		return {
-			emit: ( ... args ) => {
-				get( this.rooms, room, [] ).forEach( ( socket ) => {
-					socket.emit( ... args )
-				} )
-			}
-		}
-	}
-
+	// TODO: this api does not match how Socket.IO works
+	// Socket.IO sets a room flag that is cleared an .emit or .clients
 	in( room ) {
 		const sockets = get( this.rooms, room, [] )
 		debug( 'requesting room', room, sockets.length )

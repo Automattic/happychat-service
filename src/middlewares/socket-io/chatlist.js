@@ -139,7 +139,7 @@ const join = ( { io, user, socket, store } ) => {
 }
 
 const getClients = ( server, room ) => new Promise( ( resolve, reject ) => {
-	room.clients( ( e, ids ) => {
+	server.in( room ).clients( ( e, ids ) => {
 		if ( e ) {
 			return reject( e )
 		}
@@ -160,8 +160,8 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 	} )
 
 	const removeOperatorFromChat = ( operator, chat ) => {
-		const customer_room_name = `customers/${chat.id}`
-		const room = operator_io.in( `operators/${operator.id}` )
+		const customer_room_name = customerRoom( chat.id )
+		const room = operatorRoom( operator.id )
 		return getClients( operator_io, room )
 		.then( clients => Promise.all(
 			map( socket => new Promise( ( resolve, reject ) => {
@@ -172,28 +172,28 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 			} ), clients )
 		) )
 		.then( () => new Promise( resolve => {
-			room.emit( 'chat.leave', chat )
+			operator_io.in( room ).emit( 'chat.leave', chat )
 			resolve( { chat, operator } )
 		} ) )
 	}
 
 	const emitChatOpenToOperator = ( chat, operator ) => {
 		const customer_room_name = customerRoom( chat.id )
-		const room = operator_io.in( operatorRoom( operator.id ) )
-		return getClients( operator_io, room )
+		const operator_room_name = operatorRoom( operator.id )
+		return getClients( operator_io, operator_room_name )
 		.then( clients => Promise.all(
 			map( socket => new Promise( ( resolve, reject ) => {
 				socket.join( customer_room_name, ( error ) => {
 					if ( error ) return reject( error )
-					debug( 'joined the room', customer_room_name )
+					debug( 'joined the room', customer_room_name, socket.id )
 					resolve( socket )
 					store.dispatch( operatorJoinChat( socket, chat, operator ) )
 				} )
 			} ), clients )
 		) )
 		.then( ( clients ) => new Promise( resolve => {
-			debug( 'opening chat for clients', clients.length )
-			room.emit( 'chat.open', chat )
+			debug( 'opening chat for clients', clients.length, map( ( { id } ) => id, clients ) )
+			operator_io.to( operator_room_name ).emit( 'chat.open', chat )
 			resolve( { chat, operator } )
 		} ) )
 	}
@@ -303,7 +303,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 			debug( 'operator tried to close a chat that no longer exists', chat_id, operator.id )
 			chat = { id: chat_id }
 		}
-		operator_io.in( customerRoom( chat_id ) ).emit( 'chat.close', chat, operator )
+		operator_io.to( customerRoom( chat_id ) ).emit( 'chat.close', chat, operator )
 		store.dispatch( operatorInboundMessage( chat_id, operator, merge(
 			makeEventMessage( 'chat closed', chat_id ),
 			{ meta: { event_type: 'close', by: action.operator } }
@@ -437,7 +437,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 			case NOTIFY_CHAT_STATUS_CHANGED:
 				debug( 'NOTIFY_CHAT_STATUS_CHANGED', action.chat_id )
 				const status = getChatStatus( action.chat_id, store.getState() );
-				customer_io.in( customerRoom( action.chat_id ) ).emit( 'status', status )
+				customer_io.to( customerRoom( action.chat_id ) ).emit( 'status', status )
 				break;
 			case RECOVER_CHATS:
 				handleRecoverChats( action )
