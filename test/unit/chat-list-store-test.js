@@ -137,7 +137,7 @@ describe( 'ChatList reducer', () => {
 		{ id: [ 'open', { id: 'id' }, {}, 1, {} ] }
 	) )
 
-	it( 'should add operator as member', dispatchAction(
+	it( 'should remove operator as member', dispatchAction(
 		operatorChatLeave( 'id', { id: 'user' } ),
 		state => {
 			const [ , , , , members ] = state.chatlist.id

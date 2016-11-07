@@ -11,6 +11,7 @@ import {
 	ASSIGN_CHAT,
 	SET_CHATS_RECOVERED,
 	SET_OPERATOR_CHATS_ABANDONED,
+	CLOSE_CHAT
 } from '../../chat-list/actions'
 import { haveAvailableCapacity, isSystemAcceptingCustomers } from '../../operator/selectors';
 import {
@@ -82,6 +83,7 @@ const updateLoadMiddleware = ( { getState, dispatch } ) => next => action => {
 		case OPERATOR_CHAT_LEAVE:
 		case OPERATOR_CHAT_JOIN:
 		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
+		case CLOSE_CHAT:
 		case SET_CHAT_OPERATOR:
 		case SET_CHATS_RECOVERED:
 		case REMOVE_USER:
