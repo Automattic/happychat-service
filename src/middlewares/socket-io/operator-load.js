@@ -10,10 +10,14 @@ import {
 	INSERT_PENDING_CHAT,
 	ASSIGN_CHAT,
 	SET_CHATS_RECOVERED,
-	SET_OPERATOR_CHATS_ABANDONED
+	SET_OPERATOR_CHATS_ABANDONED,
 } from '../../chat-list/actions'
-import { haveAvailableCapacity, isSystemAcceptingCustomers } from '../../operator/store';
-import { setUserLoads, SET_USER_LOADS } from '../../operator/actions'
+import {
+	OPERATOR_CHAT_LEAVE,
+	OPERATOR_CHAT_JOIN
+} from './index'
+import { haveAvailableCapacity, isSystemAcceptingCustomers } from '../../operator/selectors';
+import { setUserLoads, SET_USER_LOADS, OPERATOR_OPEN_CHAT_FOR_CLIENTS, REMOVE_USER } from '../../operator/actions'
 import { REMOTE_ACTION_TYPE } from './broadcast'
 import {
 	compose,
@@ -72,15 +76,20 @@ const updateLoadMiddleware = ( { getState, dispatch } ) => next => action => {
 			return handleSetUserLoads( { dispatch, getState }, next, action )
 		// after loads are updated see if there are chats to assign in the
 		// event that capacity has increased
+		case OPERATOR_CHAT_LEAVE:
+		case OPERATOR_CHAT_JOIN:
+		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
+		case SET_CHAT_OPERATOR:
+		case SET_CHATS_RECOVERED:
+		case REMOVE_USER:
+			const result = next( action )
+			dispatch( setUserLoads( reducer( getState() ) ) )
+			return result;
 	}
 
 	// get user load/capacity before and after, if the load changes
 	// get system load before and after action
-	const result = next( action )
-
-	// update operator loads by aggregating the members of a chat
-	dispatch( setUserLoads( reducer( getState() ) ) )
-	return result
+	return next( action )
 }
 
 const mapStatus = state => ids => reduce(
@@ -129,7 +138,7 @@ const chatStatusNotifier = ( { getState, dispatch } ) => next => action => {
 	mapObjIndexed(
 		( state, id ) => {
 			if ( state !== previous[id] ) {
-				dispatch( notifyChatStatusChanged( id ) )
+				dispatch( notifyChatStatusChanged( id, state, previous[id] ) )
 			}
 		},
 		current

@@ -77,6 +77,7 @@ class Server extends EventEmitter {
 			const newSockets = {}
 			newSockets[room] = get( this.rooms, room, [] ).concat( socket )
 			this.rooms = assign( {}, this.rooms, newSockets )
+			debug( 'joined room', room )
 			process.nextTick( complete )
 		}
 		socket.leave = ( room, complete ) => {
@@ -87,6 +88,12 @@ class Server extends EventEmitter {
 			process.nextTick( complete )
 		}
 		socket.close = () => {}
+		client.disconnect = socket.disconnect = () => {
+			this.disconnect( { socket, client } )
+		}
+		client.connect = socket.connect = () => {
+			this.connect( socket )
+		}
 		return { socket, client }
 	}
 
@@ -99,7 +106,9 @@ class Server extends EventEmitter {
 	}
 
 	disconnect( { socket, client } ) {
+		debug( "DISCONNECTING SOCKET", socket.id )
 		forEach( socket.rooms, ( room ) => {
+			debug( 'disonnecting and removing from room', socket.id, room )
 			this.rooms[room] = reject( this.rooms[room], socket )
 		} )
 		socket.rooms = []
@@ -114,7 +123,7 @@ class Server extends EventEmitter {
 }
 
 export default ( socketid ) => {
-	const server = new Server()
+	const server = new Server( '/' )
 
 	server.namespaces = {}
 	server.of = ( name ) => {

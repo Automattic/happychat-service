@@ -18,15 +18,20 @@ describe( 'Chat logs', () => {
 
 	const afterInit = ( { customer, operator, agent } ) => new Promise( ( resolve ) => {
 		debug( 'setting up listeners after init' )
-		operator.on( 'available', ( _, available ) => available( { status: 'available', capacity: 1, load: 0 } ) )
 		operator.on( 'identify', callback => callback( { id: 'operator' } ) )
 		const ready = { customer: false, operator: false, agent: false }
 		const resolveIfReady = () => {
 			if ( every( ready, value => value === true ) ) {
 				debug( 'clients initialized' )
 				resolve( { customer, operator, agent } )
+				operator.emit( 'status', 'available', () => {
+					operator.emit( 'capacity', 1, () => {
+						resolve( { customer, operator, agent } )
+					} )
+				} )
 			}
 		}
+
 		const setReady = client => {
 			debug( 'setting client ready', client )
 			set( ready, client, true )
@@ -63,7 +68,7 @@ describe( 'Chat logs', () => {
 
 	const setOperatorOnline = ( clients ) => new Promise( ( resolve ) => {
 		debug( 'setting operator online' )
-		clients.operator.emit( 'status', 'online', () => {
+		clients.operator.emit( 'status', 'available', () => {
 			debug( 'now online' )
 			resolve( clients )
 		} )

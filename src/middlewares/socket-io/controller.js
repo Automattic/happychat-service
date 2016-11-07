@@ -1,13 +1,58 @@
-import isFunction from 'lodash/isFunction'
 import isEmpty from 'lodash/isEmpty'
 import assign from 'lodash/assign'
+import get from 'lodash/get'
+import set from 'lodash/set'
 
-import { ChatLog } from './chat-log'
-import { getChats } from './chat-list/selectors'
-import { operatorReceive, operatorReceiveTyping } from './operator/actions'
-import { selectIdentities } from './operator/store'
+import { operatorReceiveTyping, OPERATOR_TYPING } from '../../operator/actions'
+import {
+	agentReceiveMessage,
+	customerReceiveMessage,
+	customerReceiveTyping,
+	operatorReceiveMessage,
+	AGENT_INBOUND_MESSAGE,
+	CUSTOMER_INBOUND_MESSAGE,
+	OPERATOR_INBOUND_MESSAGE,
+	CUSTOMER_TYPING,
+	CUSTOMER_JOIN,
+	OPERATOR_JOIN,
+} from '../../chat-list/actions'
 
 const debug = require( 'debug' )( 'happychat:controller' )
+
+const DEFAULT_MAX_MESSAGES = 100
+
+export class ChatLog {
+
+	constructor( options = { maxMessages: DEFAULT_MAX_MESSAGES } ) {
+		this.maxMessages = options.maxMessages
+		this.chats = {}
+	}
+
+	append( id, message ) {
+		return new Promise( ( resolve ) => {
+			set( this.chats, id, get( this.chats, id, [] ).concat( message ).slice( - this.maxMessages ) )
+			resolve()
+		} )
+	}
+
+	findLog( id ) {
+		return new Promise( ( resolve ) => {
+			resolve( get( this.chats, id, [] ) )
+		} )
+	}
+
+	recordCustomerMessage( chat, message ) {
+		return this.append( chat.id, message )
+	}
+
+	recordOperatorMessage( chat, operator, message ) {
+		return this.append( chat.id, message )
+	}
+
+	recordAgentMessage( chat, message ) {
+		return this.append( chat.id, message )
+	}
+}
 
 // change a lib/customer message to what an agent client expects
 const formatAgentMessage = ( author_type, author_id, session_id, { id, timestamp, text, meta, type } ) => ( {
@@ -19,22 +64,7 @@ const formatAgentMessage = ( author_type, author_id, session_id, { id, timestamp
 	meta
 } )
 
-const pure = ( ... args ) => args
-
-const forward = ( dest ) => ( org, event, dstEvent, mapArgs = pure ) => {
-	if ( isFunction( dstEvent ) ) {
-		mapArgs = dstEvent
-		dstEvent = event
-	}
-	if ( !dstEvent ) {
-		dstEvent = event
-	}
-	org.on( event, ( ... args ) => dest.emit( dstEvent, ... mapArgs( ... args ) ) )
-}
-
-export default ( { customers, agents, operators, store } ) => {
-	const middlewares = []
-	const toAgents = forward( agents )
+export default ( middlewares ) => store => {
 	const log = { operator: new ChatLog(), customer: new ChatLog() }
 
 	const runMiddleware = ( { origin, destination, chat, user, message } ) => new Promise( ( resolveMiddleware ) => {
@@ -77,56 +107,57 @@ export default ( { customers, agents, operators, store } ) => {
 		.catch( e => debug( e.message ) )
 	} )
 
-	agents.on( 'system.info', done => {
-		const _operators = selectIdentities( store.getState() );
-		const _chats = getChats( store.getState() );
-		debug( 'system.info, got values', [ _operators, _chats ] );
-		done( {
-			chats: _chats,
-			operators: _operators,
+	// toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
+	const handleCustomerJoin = action => {
+		const { user, socket, chat } = action
+		log.customer.findLog( chat.id )
+		.then( ( messages ) => {
+			debug( 'emitting chat log to customer', user, messages.length, log.customer )
+			socket.emit( 'log', messages )
 		} )
-	} )
+	}
 
-	toAgents( customers, 'join', 'customer.join' )
-	toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
-
-	customers.on( 'join', ( socketIdentifier, user, socket ) => {
-		debug( 'emitting chat log' )
-		log.customer.findLog( user.id )
-		.then( ( messages ) => socket.emit( 'log', messages ) )
-	} )
-
-	operators.on( 'join', ( chat, operator, socket ) => {
+	const handleOperatorJoin = action => {
+		const { chat, user: operator, socket } = action
 		debug( 'emitting chat log to operator', operator.id )
 		log.operator.findLog( chat.id )
 		.then( ( messages ) => {
 			socket.emit( 'log', chat, messages )
 		} )
-	} )
+	}
 
-	customers.on( 'typing', ( chat, user, text ) => {
-		store.dispatch( operatorReceiveTyping( chat, user, text ) );
-	} )
+	const handleCustomerTyping = action => {
+		const { id, user, text } = action
+		store.dispatch( operatorReceiveTyping( id, user, text ) );
+	}
 
-	operators.on( 'typing', ( chat, user, text ) => {
-		store.dispatch( operatorReceiveTyping( chat, user, text ) );
-		customers.emit( 'receive.typing', chat, user, text )
-	} )
+	const handleOperatorTyping = action => {
+		const { id, user, text } = action
+		store.dispatch( operatorReceiveTyping( id, user, text ) );
+		store.dispatch( customerReceiveTyping( id, user, text ) )
+	}
 
-	customers.on( 'message', ( chat, message ) => {
+	const handleCustomerInboundMessage = ( action ) => {
+		const { chat, message } = action
 		// broadcast the message to
-		debug( 'customer message', chat.id, message.id, message.text )
+		debug( 'customer message action', action, chat.id, message.id, message.text )
 		const origin = 'customer'
+		debug( 'run the middleware and log message' )
 		runMiddleware( { origin, destination: 'customer', chat, message } )
 		.then( m => new Promise( ( resolve, reject ) => {
+			debug( 'logging customer message' )
 			log.customer.recordCustomerMessage( chat, m )
 			.then( () => resolve( m ), reject )
 		} ) )
-		.then( m => customers.emit( 'receive', chat, m ) )
+		.then( m => store.dispatch(
+			customerReceiveMessage( chat.id, m )
+		) )
 		.catch( e => debug( 'middleware failed ', e ) )
 
 		runMiddleware( { origin, destination: 'agent', chat, message } )
-		.then( m => agents.emit( 'receive', formatAgentMessage( 'customer', chat.id, chat.id, m ) ) )
+		.then( m => store.dispatch(
+			agentReceiveMessage( formatAgentMessage( 'customer', chat.id, chat.id, m ) ) )
+		)
 		.catch( e => debug( 'middleware failed', e ) )
 
 		runMiddleware( { origin, destination: 'operator', chat, message } )
@@ -134,66 +165,92 @@ export default ( { customers, agents, operators, store } ) => {
 			log.operator.recordCustomerMessage( chat, m )
 			.then( () => resolve( m ), reject )
 		} ) )
-		.then( m => store.dispatch( operatorReceive( chat.id, m ) ) )
+		.then( m => store.dispatch( operatorReceiveMessage( chat.id, m ) ) )
 		.catch( e => debug( 'middleware failed', e ) )
-	} )
+	}
 
-	operators.on( 'message', ( chat, operator, message ) => {
-		debug( 'operator message', chat, message.text )
+	const handleOperatorInboundMessage = action => {
+		const { chat_id, user: operator, message } = action
+		// TODO: look up chat from store?
+		const chat = { id: chat_id }
+		debug( 'operator message', chat.id, message.id )
 		const origin = 'operator'
 
 		runMiddleware( { origin, destination: 'agent', chat, message, user: operator } )
-		.then( m => agents.emit( 'receive', formatAgentMessage( 'operator', operator.id, chat.id, m ) ) )
+		.then( m => store.dispatch(
+			agentReceiveMessage( formatAgentMessage( 'operator', operator.id, chat.id, m ) )
+		) )
 
 		runMiddleware( { origin, destination: 'operator', chat, message, user: operator } )
 		.then( m => new Promise( ( resolve, reject ) => {
 			log.operator.recordOperatorMessage( chat, operator, m )
 			.then( () => resolve( m ), reject )
 		} ) )
-		.then( m => store.dispatch( operatorReceive( chat.id, m ) ) )
+		.then( m => store.dispatch( operatorReceiveMessage( chat.id, m ) ) )
 
 		runMiddleware( { origin, destination: 'customer', chat, message, user: operator } )
 		.then( m => new Promise( ( resolve, reject ) => {
 			log.customer.recordOperatorMessage( chat, operator, m )
 			.then( () => resolve( m ), reject )
 		} ) )
-		.then( m => customers.emit( 'receive', chat, m ) )
-	} )
+		.then( m => store.dispatch(
+			customerReceiveMessage( chat.id, m )
+		) )
+	}
 
-	agents.on( 'message', ( message ) => {
+	const handleAgentInboundMessage = action => {
+		const { message } = action
 		const chat = { id: message.session_id }
 		const format = ( m ) => assign( {}, { author_type: 'agent' }, m )
 		const origin = 'agent'
 
 		runMiddleware( { origin, destination: 'agent', chat, message } )
-		.then( m => agents.emit( 'receive', assign( {}, { author_type: 'agent' }, m ) ) )
+		.then( m => store.dispatch(
+			agentReceiveMessage( assign( {}, { author_type: 'agent' }, m ) ) )
+		)
 
 		runMiddleware( { origin, destination: 'operator', chat, message } )
 		.then( m => new Promise( ( resolve, reject ) => {
 			log.operator.recordAgentMessage( chat, m )
 			.then( () => resolve( m ), reject )
 		} ) )
-		.then( m => store.dispatch( operatorReceive( chat.id, format( m ) ) ) )
+		.then( m => store.dispatch( operatorReceiveMessage( chat.id, format( m ) ) ) )
 
 		runMiddleware( { origin, destination: 'customer', chat, message } )
 		.then( m => new Promise( ( resolve, reject ) => {
 			log.customer.recordAgentMessage( chat, message )
 			.then( () => resolve( m ), reject )
 		} ) )
-		.then( m => customers.emit( 'receive', chat, format( m ) ) )
-	} )
-
-	const external = {
-		middleware: ( middleware ) => {
-			if ( middleware.length >= 2 ) {
-				middlewares.push( ( ... args ) => new Promise( resolve => middleware( ... args.concat( resolve ) ) ) )
-			} else {
-				middlewares.push( middleware )
-			}
-			return external
-		},
-		middlewares
+		.then( m => store.dispatch(
+			customerReceiveMessage( chat.id, format( m ) )
+		) )
 	}
 
-	return external
+	return next => action => {
+		switch ( action.type ) {
+			case AGENT_INBOUND_MESSAGE:
+				handleAgentInboundMessage( action )
+				break;
+			case OPERATOR_INBOUND_MESSAGE:
+				handleOperatorInboundMessage( action )
+				break;
+			case CUSTOMER_INBOUND_MESSAGE:
+				handleCustomerInboundMessage( action )
+				break;
+			case OPERATOR_TYPING:
+				handleOperatorTyping( action )
+				break;
+			case CUSTOMER_TYPING:
+				handleCustomerTyping( action )
+				break;
+			case CUSTOMER_JOIN:
+				handleCustomerJoin( action )
+				break;
+			case OPERATOR_JOIN:
+				handleOperatorJoin( action )
+				break;
+		}
+		return next( action )
+	}
 }
+

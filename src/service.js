@@ -1,9 +1,6 @@
-import { EventEmitter } from 'events'
 import IO from 'socket.io'
-import agent from './agent'
-import operator from './operator'
-import buildController from './controller'
 import createStore from './store'
+import middlewareInterface from './middleware-interface'
 
 const debug = require( 'debug' )( 'happychat:main' )
 
@@ -12,27 +9,26 @@ export default ( server, { customerAuthenticator, agentAuthenticator, operatorAu
 
 	const io = new IO( server )
 
-	const operatorEvents = new EventEmitter()
-	const customers = new EventEmitter()
-	const chatlistEvents = new EventEmitter()
+	const middlewares = middlewareInterface()
+
+	const auth = authenticator => socket => new Promise( ( resolve, reject ) => {
+		authenticator( socket, ( e, result ) => {
+			if ( e ) {
+				socket.emit( 'unauthorized' )
+				socket.close()
+				return reject( e )
+			}
+			resolve( result )
+		} )
+	} )
 
 	const store = createStore( {
 		io,
-		operators: operatorEvents,
-		customers,
-		chatlist: chatlistEvents
+		operatorAuth: auth( operatorAuthenticator ),
+		customerAuth: auth( customerAuthenticator ),
+		agentAuth: auth( agentAuthenticator ),
+		messageMiddlewares: middlewares.middlewares()
 	} );
 
-	const agents = agent( io.of( '/agent' ) ).on( 'connection', agentAuthenticator )
-	customers.on( 'connection', customerAuthenticator )
-	const operators = operator( io.of( '/operator' ), operatorEvents, store ).on( 'connection', operatorAuthenticator )
-
-	const controller = buildController( {
-		customers,
-		agents,
-		operators,
-		store
-	} )
-
-	return { io, agents, customers, operators, controller, store }
+	return { io, controller: middlewares.external, store }
 }

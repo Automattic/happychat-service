@@ -23,9 +23,6 @@ import {
 	setOperatorChatsAbandoned
 } from 'chat-list/actions'
 import {
-	operatorOpenChatForClients
-} from 'operator/actions';
-import {
 	operatorChatJoin,
 	operatorChatLeave
 } from 'middlewares/socket-io'
@@ -115,17 +112,6 @@ describe( 'ChatList reducer', () => {
 		} } ) )
 	} )
 
-	it( 'should update chat member set', dispatchAction(
-		operatorOpenChatForClients( { id: 1 }, [], 'room', { id: 'chat-id' } ),
-		state => {
-			deepEqual(
-				state,
-				{ chatlist: { 'chat-id': [ null, null, null, null, { 1: true } ] } }
-			)
-		},
-		{ 'chat-id': [ null, null, null, null, {} ] }
-	) )
-
 	it( 'should insert pending chat', dispatchAction(
 		insertPendingChat( { id: 'chat-id' } ),
 		state => {
@@ -182,16 +168,16 @@ describe( 'ChatList reducer', () => {
 		setChatsRecovered( [ 'a', '3' ], { id: 'op-id' } ),
 		state => {
 			deepEqual( state, { chatlist: {
-				a: [ STATUS_ASSIGNED, 'a', { id: 'op-id' } ],
-				2: [ STATUS_ABANDONED, '2', { id: 'op-id' } ],
-				3: [ STATUS_ASSIGNED, '3', { id: 'op-id' } ],
-				4: [ STATUS_PENDING, '4', { id: 'other' } ]
+				a: [ STATUS_ASSIGNED, 'a', { id: 'op-id' }, 1, { 'op-id': true } ],
+				2: [ STATUS_ABANDONED, '2', { id: 'op-id' }, 2, {} ],
+				3: [ STATUS_ASSIGNED, '3', { id: 'op-id' }, 3, { 'op-id': true } ],
+				4: [ STATUS_PENDING, '4', { id: 'other' }, 4, {} ]
 			} } )
 		},
 		{
-			a: [ STATUS_ABANDONED, 'a', { id: 'op-id' } ],
-			2: [ STATUS_ABANDONED, '2', { id: 'op-id' } ],
-			3: [ STATUS_ABANDONED, '3', { id: 'op-id' } ],
-			4: [ STATUS_PENDING, '4', { id: 'other' } ]
+			a: [ STATUS_ABANDONED, 'a', { id: 'op-id' }, 1, {} ],
+			2: [ STATUS_ABANDONED, '2', { id: 'op-id' }, 2, {} ],
+			3: [ STATUS_ABANDONED, '3', { id: 'op-id' }, 3, {} ],
+			4: [ STATUS_PENDING, '4', { id: 'other' }, 4, {} ]
 		}	) )
 } )

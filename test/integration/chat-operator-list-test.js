@@ -3,6 +3,7 @@ import { series } from 'async'
 import { map, forEach } from 'lodash/collection'
 import { get } from 'lodash/object'
 import util from './util'
+import { keys } from 'ramda'
 
 const debug = require( 'debug' )( 'happychat:test:integration' )
 
@@ -45,10 +46,9 @@ describe( 'Operators in chat', () => {
 			.then( waitForConnect )
 			.then( ( client ) => {
 				client.on( 'identify', ( identify ) => identify( operator ) )
-				client.on( 'available', ( chat, available ) => {
-					available( { capacity: operator.capacity, status: 'available', load: 0 } )
+				client.emit( 'status', 'available', () => {
+					client.emit( 'capacity', operator.capacity, () => callback( null, client ) )
 				} )
-				callback( null, client )
 			} )
 		} ), ( e, clients ) => {
 			operatorClients = clients
@@ -68,11 +68,12 @@ describe( 'Operators in chat', () => {
 	} )
 
 	const waitForChatOperatorList = ( client ) => new Promise( ( resolve ) => {
-		debug( 'waiting for list' )
-		client.once( 'chat.online', ( chat, list ) => {
-			debug( 'received list of operators', list )
-			resolve( list )
-		} )
+		setTimeout( () => {
+			client.emit( 'broadcast.state', ( version, state ) => {
+				const [ , , , , members ] = state.chatlist.session
+				resolve( keys( members ) )
+			} )
+		}, 100 )
 	} )
 
 	const joinChat = ( client, chat_id ) => new Promise( ( resolve ) => {
@@ -111,7 +112,7 @@ describe( 'Operators in chat', () => {
 		} )
 		// when an operator joins a chat, updated operator list should be sent
 		.then( ( list ) => {
-			deepEqual( map( list, prop( 'id' ) ), ['operator-1', 'operator-3'] )
+			deepEqual( list, ['operator-1', 'operator-3'] )
 			const client = operatorClients.slice( -1 )[0]
 
 			debug( 'listen for operator leaving' )
@@ -120,14 +121,14 @@ describe( 'Operators in chat', () => {
 		} )
 		// when an operator leaves a chat, updated operator list should be sent
 		.then( ( list ) => {
-			deepEqual( map( list, prop( 'id' ) ), map( operators.slice( 0, 1 ), prop( 'id' ) ) )
+			deepEqual( list, map( operators.slice( 0, 1 ), prop( 'id' ) ) )
 		} )
 		.then( () => joinChat( operatorClients[1], customer.session_id ) )
 		.then( () => waitForChatOperatorList( operatorClients[1] ) )
 		.then( () => disconnectClient( operatorClients[1] ) )
 		.then( () => waitForChatOperatorList( operatorClients[0] ) )
 		.then( ( list ) => {
-			deepEqual( map( list, prop( 'id' ) ), [ 'operator-1' ] )
+			deepEqual( list, [ 'operator-1' ] )
 		} )
 	} )
 } )

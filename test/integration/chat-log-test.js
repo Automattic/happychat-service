@@ -42,11 +42,6 @@ describe( 'Chat logs', () => {
 		return reduce( rest, ( p, msg ) => p.then( sendMessage( msg ) ), sendMessage( first )( customer ) )
 	}
 
-	const setOperatorOnline = ( client ) => new Promise( ( resolve ) => {
-		debug( 'setting operator to online status' )
-		client.emit( 'status', 'online', () => resolve( client ) )
-	} )
-
 	const acceptAllAssignments = ( client ) => new Promise( ( resolve ) => {
 		debug( 'set accepting all chats' )
 		client.once( 'identify', ( callback ) => {
@@ -75,8 +70,8 @@ describe( 'Chat logs', () => {
 	} )
 	afterEach( () => service.stop() )
 
-	it( 'should deliver logs when customer joins chat', () => {
-		return service.startClients()
+	it( 'should deliver logs when customer joins chat', () =>
+		service.startClients()
 		.then( afterInit )
 		.then( sendMessages( mockMessages ) )
 		.then( disconnect )
@@ -90,7 +85,7 @@ describe( 'Chat logs', () => {
 				map( mockMessages, m => 'test: ' + m )
 			)
 		} )
-	} )
+	)
 
 	it.skip( 'should deliver logs to operator when joining chat', () => {
 		return service.startClients()

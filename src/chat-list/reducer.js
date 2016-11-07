@@ -23,7 +23,8 @@ import {
 	CLOSE_CHAT
 } from './actions'
 import {
-	OPERATOR_OPEN_CHAT_FOR_CLIENTS
+	OPERATOR_OPEN_CHAT_FOR_CLIENTS,
+	REMOVE_USER
 } from '../operator/actions'
 import {
 	OPERATOR_CHAT_LEAVE,
@@ -69,8 +70,9 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 		case SET_CHAT_OPERATOR:
 		case SET_CHATS_RECOVERED:
 			return compose(
+				setMembers( set( lensProp( action.operator.id ), true, membersView( state ) ) ),
 				setStatus( STATUS_ASSIGNED ),
-				setOperator( action.operator )
+				setOperator( action.operator ),
 			)( state )
 		case SET_OPERATOR_CHATS_ABANDONED:
 			return setStatus( STATUS_ABANDONED, state )
@@ -79,6 +81,7 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 		case SET_CHAT_MISSED:
 			return setStatus( STATUS_MISSED, state )
 		case OPERATOR_CHAT_LEAVE:
+		case REMOVE_USER:
 			return setMembers( dissoc( action.user.id, membersView( state ) ), state )
 		case OPERATOR_CHAT_JOIN:
 			return setMembers( set( lensProp( action.user.id ), true, membersView( state ) ), state )
@@ -128,7 +131,8 @@ export default ( state = {}, action ) => {
 			return map(
 				whenOperatorIs( action.operator_id )( value => chat( value, action ) )
 			)( state )
-
+		case REMOVE_USER:
+			return map( ( chatState ) => chat( chatState, action ), state )
 	}
 	return state
 }

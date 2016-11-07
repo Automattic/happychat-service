@@ -3,8 +3,6 @@ export const REMOVE_USER = 'REMOVE_USER'
 export const REMOVE_USER_SOCKET = 'REMOVE_USER_SOCKET'
 export const UPDATE_USER_STATUS = 'UPDATE_USER_STATUS'
 export const UPDATE_USER_CAPACITY = 'UPDATE_USER_CAPACITY';
-export const UPDATE_AVAILABILITY = 'UPDATE_AVAILABILITY';
-export const OPERATOR_RECEIVE = 'OPERATOR_RECEIVE';
 export const OPERATOR_RECEIVE_TYPING = 'OPERATOR_RECEIVE_TYPING';
 export const OPERATOR_CHAT_ONLINE = 'OPERATOR_CHAT_ONLINE';
 export const OPERATOR_IDENTIFY_CLIENT_REQUEST = 'OPERATOR_IDENTIFY_CLIENT_REQUEST'
@@ -22,6 +20,11 @@ export const OPERATOR_ASSIGN = 'OPERATOR_ASSIGN';
 export const OPERATOR_RECOVER = 'OPERATOR_RECOVER';
 export const OPERATOR_OPEN = 'OPERATOR_OPEN';
 export const OPERATOR_LEAVE = 'OPERATOR_LEAVE';
+export const OPERATOR_TYPING = 'OPERATOR_TYPING';
+
+export const operatorTyping = ( id, user, text ) => (
+	{ type: OPERATOR_TYPING, id, user, text }
+)
 
 export const updateIdentity = ( socket, user ) => (
 	{ socket, user, type: UPDATE_IDENTITY }
@@ -45,29 +48,8 @@ export const setUserLoads = ( loads ) => ( {
 	type: SET_USER_LOADS, loads
 } )
 
-export const updateAvailability = ( availability ) => (
-	{ type: UPDATE_AVAILABILITY, availability }
-)
-
-export const operatorReceive = ( id, message ) => (
-	{ type: OPERATOR_RECEIVE, id, message }
-)
-
-export const operatorReceiveTyping = ( chat, user, text ) => {
-	const { id } = chat;
-	return { type: OPERATOR_RECEIVE_TYPING, id, chat, user, text }
-}
-
-export const operatorChatOnline = ( id, identities ) => (
-	{ type: OPERATOR_CHAT_ONLINE, id, identities }
-);
-
-export const operatorIdentifyClientRequest = ( clients, timeout, deferred ) => (
-	{ type: OPERATOR_IDENTIFY_CLIENT_REQUEST, clients, timeout, deferred }
-);
-
-export const clientQuery = ( room, deferred ) => (
-	{ type: CLIENT_QUERY, room, deferred }
+export const operatorReceiveTyping = ( id, user, text ) => (
+	{ type: OPERATOR_RECEIVE_TYPING, id, user, text }
 )
 
 export const operatorClientQuery = ( id, deferred ) => (
@@ -78,42 +60,10 @@ export const operatorOpenChatForClients = ( operator, clients, room, chat, defer
 	{ type: OPERATOR_OPEN_CHAT_FOR_CLIENTS, operator, clients, room, chat, deferred, onDisconnect }
 )
 
-export const operatorLeaveChat = ( clients, room, operator_room, chat, deferred ) => (
-	{ type: OPERATOR_LEAVE_CHAT, clients, room, operator_room, chat, deferred }
-)
-
-export const operatorChatClose = ( chat, room, operator ) => (
-	{ type: OPERATOR_CLOSE_CHAT, chat, room, operator }
-)
-
-export const operatorQueryAvailability = ( clients, chat, deferred ) => (
-	{ type: OPERATOR_QUERY_AVAILABILITY, clients, chat, deferred }
+export const operatorChatClose = ( chat, operator ) => (
+	{ type: OPERATOR_CLOSE_CHAT, chat, operator }
 )
 
 export const setAcceptsCustomers = ( isEnabled ) => (
 	{ type: SET_SYSTEM_ACCEPTS_CUSTOMERS, isEnabled }
-)
-
-export const operatorTransfer = ( chat, from, to, complete ) => (
-	{ type: OPERATOR_TRANSFER, chat, from, to, complete }
-);
-
-export const operatorReassign = ( user, socket, chats ) => (
-	{ type: OPERATOR_REASSIGN, user, socket, chats }
-)
-
-export const operatorAssign = ( chat, room, callback ) => (
-	{ type: OPERATOR_ASSIGN, chat, room, callback }
-)
-
-export const operatorRecover = ( user, chats, callback ) => (
-	{ type: OPERATOR_RECOVER, user, chats, callback }
-)
-
-export const operatorOpen = ( chat, room, operator ) => (
-	{ type: OPERATOR_OPEN, chat, room, operator }
-)
-
-export const operatorLeave = ( chat, room, operator ) => (
-	{ type: OPERATOR_LEAVE, chat, room, operator }
 )

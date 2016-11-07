@@ -1,5 +1,6 @@
 import { equal } from 'assert'
 import util, { authenticators } from './util'
+import { STATUS_AVAILABLE } from 'middlewares/socket-io'
 
 const debug = require( 'debug' )( 'happychat:test:integration' )
 
@@ -24,10 +25,11 @@ describe( 'Abandoned service', () => {
 
 	const service = util( authenticators( mockUser, opUser, {} ) )
 
-	const setOperatorStatus = ( { operator, customer }, status = 'online' ) => new Promise( ( resolve ) => {
+	const setOperatorStatus = ( { operator, customer }, status = STATUS_AVAILABLE ) => new Promise( resolve => {
 		operator.emit( 'status', status, () => {
-			debug( `operator is ${ status }` )
-			resolve( { operator, customer } )
+			operator.emit( 'capacity', 5, () => {
+				resolve( { operator, customer } )
+			} )
 		} )
 	} )
 
