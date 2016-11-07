@@ -11,7 +11,7 @@ import canRemoteDispatch from './operator/canRemoteDispatch'
 import { keys } from 'ramda'
 
 const debug = require( 'debug' )( 'happychat:store' )
-const logger = () => next => action => {
+const logger = ( { getState } ) => next => action => {
 	debug( 'ACTION_START', action.type, ... keys( action ) )
 	try {
 		const result = next( action )
@@ -19,6 +19,8 @@ const logger = () => next => action => {
 		return result
 	} catch ( e ) {
 		debug( 'ACTION_ERROR', action.type, e )
+		debug( 'ACTION', action )
+		debug( 'STATE', JSON.stringify( getState(), null, '  ' ) )
 		throw ( e )
 	}
 }
