@@ -8,12 +8,6 @@ import {
 } from 'ramda'
 
 import {
-	OPERATOR_READY,
-	OPERATOR_CHAT_JOIN,
-	OPERATOR_CHAT_LEAVE,
-	OPERATOR_CHAT_TRANSFER
-} from './index'
-import {
 	ASSIGN_CHAT,
 	ASSIGN_NEXT_CHAT,
 	CLOSE_CHAT,
@@ -64,7 +58,11 @@ import {
 	STATUS_CUSTOMER_DISCONNECT,
 } from '../../chat-list/reducer'
 import {
-	REMOVE_USER
+	REMOVE_USER,
+	OPERATOR_CHAT_LEAVE,
+	OPERATOR_READY,
+	OPERATOR_CHAT_JOIN,
+	OPERATOR_CHAT_TRANSFER
 } from '../../operator/actions'
 import {
 	isSystemAcceptingCustomers,
@@ -74,7 +72,8 @@ import { makeEventMessage, timestamp } from '../../util'
 
 const debug = require( 'debug' )( 'happychat:middleware:chat-list' )
 
-const chatRoomId = id => `session/${id}`
+import { customerRoom } from './index'
+const chatRoomId = customerRoom
 const chatRoom = ( { id } ) => chatRoomId( id )
 
 // limit the information for the user
@@ -101,8 +100,6 @@ const withTimeout = ( promise, ms = 1000 ) => Promise.race( [
 		setTimeout( () => reject( new Error( 'timeout' ) ), ms )
 	} )
 ] )
-
-const customerRoom = ( { session_id } ) => `session/${ session_id }`
 
 const init = ( { user, socket, io, store } ) => () => {
 	const socketIdentifier = { id: user.id, socket_id: socket.id, session_id: user.session_id }
@@ -303,10 +300,11 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 		debug( 'chat exists time to make sure someone is home' )
 	}
 
-	const handleCloseChat = ( action, lastState ) => {
-		let chat = getChat( action.chat_id, lastState )
-		operator_io.in( chatRoom( chat ) ).emit( 'chat.close', chat, action.operator )
-		store.dispatch( operatorInboundMessage( chat.id, action.operator, merge(
+	const handleCloseChat = ( action ) => {
+		const { chat_id, operator } = action
+		let chat = getChat( chat_id, store.getState() )
+		operator_io.in( chatRoom( chat ) ).emit( 'chat.close', chat, operator )
+		store.dispatch( operatorInboundMessage( chat.id, operator, merge(
 			makeEventMessage( 'chat closed', chat.id ),
 			{ meta: { event_type: 'close', by: action.operator } }
 		) ) )
@@ -480,13 +478,12 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 			case CUSTOMER_DISCONNECT:
 				handleCustomerDisconnect( action )
 				return next( action )
+			case CLOSE_CHAT:
+				handleCloseChat( action )
+				break
 		}
-		const lastState = store.getState()
 		const result = next( action )
 		switch ( action.type ) {
-			case CLOSE_CHAT:
-				handleCloseChat( action, lastState )
-				break
 			case OPERATOR_READY:
 			case ASSIGN_CHAT:
 				handleAssignChat( action )

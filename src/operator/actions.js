@@ -21,6 +21,10 @@ export const OPERATOR_RECOVER = 'OPERATOR_RECOVER';
 export const OPERATOR_OPEN = 'OPERATOR_OPEN';
 export const OPERATOR_LEAVE = 'OPERATOR_LEAVE';
 export const OPERATOR_TYPING = 'OPERATOR_TYPING';
+export const OPERATOR_CHAT_LEAVE = 'OPERATOR_CHAT_LEAVE';
+export const OPERATOR_CHAT_JOIN = 'OPERATOR_CHAT_JOIN';
+export const OPERATOR_CHAT_TRANSFER = 'OPERATOR_CHAT_TRANSFER';
+export const OPERATOR_READY = 'OPERATOR_READY'
 
 export const operatorTyping = ( id, user, text ) => (
 	{ type: OPERATOR_TYPING, id, user, text }
@@ -59,3 +63,19 @@ export const operatorOpenChatForClients = ( operator, clients, room, chat, defer
 export const setAcceptsCustomers = ( isEnabled ) => (
 	{ type: SET_SYSTEM_ACCEPTS_CUSTOMERS, isEnabled }
 )
+
+export const operatorChatLeave = ( chat_id, user ) => (
+	{ type: OPERATOR_CHAT_LEAVE, chat_id, user }
+)
+
+export const operatorChatJoin = ( chat_id, user ) => (
+	{ type: OPERATOR_CHAT_JOIN, chat_id, user }
+)
+
+export const operatorChatTransfer = ( chat_id, user, toUser ) => (
+	{ type: OPERATOR_CHAT_TRANSFER, chat_id, user, toUser }
+)
+
+export const operatorReady = ( user, socket, room ) => (
+	{ type: OPERATOR_READY, user, socket, room }
+);

@@ -6,12 +6,16 @@ import {
 } from '../../chat-list/actions'
 import {
 	OPERATOR_RECEIVE_TYPING,
+	operatorChatLeave,
 	updateUserStatus,
 	updateCapacity,
 	removeUserSocket,
 	removeUser,
 	updateIdentity,
 	operatorTyping,
+	operatorChatJoin,
+	operatorReady,
+	operatorChatTransfer
 } from '../../operator/actions'
 
 import {
@@ -26,27 +30,7 @@ const identityForUser = ( { id, displayName, avatarURL } ) => (
 	{ id, displayName, avatarURL }
 )
 
-const customerRoom = id => `customers/${ id }`;
-
-export const OPERATOR_CHAT_JOIN = 'OPERATOR_CHAT_JOIN';
-export const operatorChatJoin = ( chat_id, user ) => (
-	{ type: OPERATOR_CHAT_JOIN, chat_id, user }
-)
-
-export const OPERATOR_CHAT_LEAVE = 'OPERATOR_CHAT_LEAVE';
-export const operatorChatLeave = ( chat_id, user ) => (
-	{ type: OPERATOR_CHAT_LEAVE, chat_id, user }
-)
-
-export const OPERATOR_CHAT_TRANSFER = 'OPERATOR_CHAT_TRANSFER';
-const operatorChatTransfer = ( chat_id, user, toUser ) => (
-	{ type: OPERATOR_CHAT_TRANSFER, chat_id, user, toUser }
-)
-
-export const OPERATOR_READY = 'OPERATOR_READY'
-const operatorReady = ( user, socket, room ) => (
-	{ type: OPERATOR_READY, user, socket, room }
-);
+export const customerRoom = id => `customers/${ id }`;
 
 const join = ( { socket, store, user, io } ) => {
 	debug( 'initialize the operator', user )

@@ -23,9 +23,9 @@ import {
 	setOperatorChatsAbandoned
 } from 'chat-list/actions'
 import {
+	operatorChatLeave,
 	operatorChatJoin,
-	operatorChatLeave
-} from 'middlewares/socket-io'
+} from 'operator/actions'
 
 import { createStore, combineReducers } from 'redux'
 

@@ -16,7 +16,7 @@ import {
 	customerJoin,
 	customerDisconnect
 } from 'chat-list/actions';
-import { OPERATOR_CHAT_TRANSFER } from 'middlewares/socket-io'
+import { OPERATOR_CHAT_TRANSFER } from 'operator/actions'
 import { getChat, getChatStatus, getChatOperator } from 'chat-list/selectors'
 
 const debug = require( 'debug' )( 'happychat:chat-list:test' )

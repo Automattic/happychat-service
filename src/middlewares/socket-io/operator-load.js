@@ -12,12 +12,15 @@ import {
 	SET_CHATS_RECOVERED,
 	SET_OPERATOR_CHATS_ABANDONED,
 } from '../../chat-list/actions'
-import {
-	OPERATOR_CHAT_LEAVE,
-	OPERATOR_CHAT_JOIN
-} from './index'
 import { haveAvailableCapacity, isSystemAcceptingCustomers } from '../../operator/selectors';
-import { setUserLoads, SET_USER_LOADS, OPERATOR_OPEN_CHAT_FOR_CLIENTS, REMOVE_USER } from '../../operator/actions'
+import {
+	setUserLoads,
+	OPERATOR_CHAT_LEAVE,
+	OPERATOR_CHAT_JOIN,
+	SET_USER_LOADS,
+	OPERATOR_OPEN_CHAT_FOR_CLIENTS,
+	REMOVE_USER
+} from '../../operator/actions'
 import { REMOTE_ACTION_TYPE } from './broadcast'
 import {
 	compose,

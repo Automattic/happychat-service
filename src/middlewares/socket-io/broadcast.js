@@ -1,6 +1,6 @@
 import jsondiff from 'simperium-jsondiff'
 import { v4 as uuid } from 'uuid'
-import { OPERATOR_READY } from './index'
+import { OPERATOR_READY } from '../../operator/actions'
 import { isEmpty } from 'ramda'
 import { selectSocketIdentity } from '../../operator/selectors'
 

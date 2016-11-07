@@ -1,16 +1,17 @@
 import { ok, equal, deepEqual } from 'assert'
 import mockio from '../mock-io'
-import { parallel } from 'async'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
 import createStore from 'store'
 import WatchingMiddleware from '../mock-middleware'
+import { INSERT_PENDING_CHAT } from 'chat-list/actions'
 import {
-	operatorChatClose,
 	setAcceptsCustomers,
-	operatorOpen,
+	operatorChatJoin,
+	operatorChatClose,
 	REMOVE_USER,
-	OPERATOR_RECEIVE_TYPING
+	OPERATOR_RECEIVE_TYPING,
+	OPERATOR_CHAT_LEAVE
 } from 'operator/actions'
 import { selectTotalCapacity } from 'operator/selectors'
 import {
@@ -18,7 +19,8 @@ import {
 	OPERATOR_INBOUND_MESSAGE,
 	SET_CHAT_OPERATOR
 } from 'chat-list/actions'
-import { STATUS_AVAILABLE, OPERATOR_READY } from 'middlewares/socket-io'
+import { OPERATOR_READY } from 'operator/actions'
+import { STATUS_AVAILABLE } from 'middlewares/socket-io'
 
 const debug = require( 'debug' )( 'happychat:operator' )
 
@@ -141,16 +143,12 @@ describe( 'Operators', () => {
 		let connections
 		let op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var' }
 
-		const connectAllClientsToChat = ( ops, chat, opUser ) => new Promise( ( resolve, reject ) => {
-			parallel( map( connections, ( { client: opClient } ) => ( callback ) => {
-				opClient.once( 'chat.open', ( _chat ) => callback( null, _chat ) )
-			} ), ( e, chats ) => {
-				if ( e ) return reject( e )
-				resolve( chats )
-			} )
-			// ops.emit( 'open', chat, `customers/${ chat.id }`, opUser )
-			store.dispatch( operatorOpen( chat, `customers/${ chat.id }`, opUser ) );
-		} )
+		const connectAllClientsToChat = ( chat, opUser ) => Promise.all(
+			map( connections, ( { client: opClient } ) => new Promise( resolve => {
+				opClient.once( 'chat.open', _chat => resolve( _chat ) )
+				store.dispatch( operatorChatJoin( chat.id, opUser ) );
+			} ) )
+		)
 
 		beforeEach( () => {
 			connections = []
@@ -165,11 +163,11 @@ describe( 'Operators', () => {
 			} ) )
 		} )
 
-		it.skip( 'should not emit leave when one socket disconnects', () => {
+		it( 'should not emit leave when one socket disconnects', () => {
 			return new Promise( ( resolve, reject ) => {
 				const [ connection ] = connections
 				const { client: c, socket: s } = connection
-				operators.on( 'leave', () => {
+				watchForType( OPERATOR_CHAT_LEAVE, () => {
 					reject( new Error( 'there are still clients connected' ) )
 				} )
 				c.on( 'disconnect', () => {
@@ -182,17 +180,23 @@ describe( 'Operators', () => {
 			} )
 		} )
 
-		it.skip( 'should emit chat.close to all clients in a chat', () => {
-			return connectAllClientsToChat( operators, { id: 'chat-id' }, op )
-			.then( () => new Promise( ( resolve, reject ) => {
-				parallel( map( connections, ( { client: opClient } ) => ( callback ) => {
-					opClient.once( 'chat.close', ( chat, opUser ) => callback( null, { chat, operator: opUser, client: opClient } ) )
-				} ), ( e, messages ) => {
-					if ( e ) reject( e )
-					resolve( messages )
-				} )
+		it.only( 'should emit chat.close to all clients in a chat', () => {
+			return () => new Promise( resolve => {
+				watchForType( INSERT_PENDING_CHAT, action => {
+					resolve( action.chat )
+				}, true )
+				store.dispatch( insertPendingChat( { id: 'chat-id' } ) )
+			} )
+			.then( ( chat ) => connectAllClientsToChat( chat, op ) )
+			.then( clients => {
+				const all = Promise.all( map( clients, ( { client: opClient } ) => new Promise( resolve => {
+					opClient.once( 'chat.close', ( chat, opUser ) => {
+						resolve( { chat, operator: opUser, client: opClient } )
+					} )
+				} ) ) )
 				store.dispatch( operatorChatClose( { id: 'chat-id' }, op ) )
-			} ) )
+				return all
+			} )
 			.then( ( messages ) => {
 				equal( messages.length, 2 )
 			} )

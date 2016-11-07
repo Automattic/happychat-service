@@ -24,13 +24,10 @@ import {
 } from './actions'
 import {
 	OPERATOR_OPEN_CHAT_FOR_CLIENTS,
-	REMOVE_USER
-} from '../operator/actions'
-import {
+	REMOVE_USER,
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_CHAT_JOIN,
-} from '../middlewares/socket-io/index';
-
+} from '../operator/actions'
 export const STATUS_NEW = 'new'
 export const STATUS_PENDING = 'pending'
 export const STATUS_MISSED = 'missed'
