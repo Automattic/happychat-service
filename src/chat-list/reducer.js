@@ -10,7 +10,9 @@ import {
 	reduce,
 	when,
 	defaultTo,
-	lensIndex
+	lensIndex,
+	equals,
+	invoker
 } from 'ramda'
 import {
 	INSERT_PENDING_CHAT,
@@ -54,6 +56,15 @@ const setOperator = set( operatorLens )
 const setTimestamp = set( timestampLens )
 const setMembers = set( membersLens )
 
+const typeOf = v => typeof( v )
+const asString = when(
+	compose(
+		equals( 'number' ),
+		typeOf
+	),
+	invoker( 0, 'toString' )
+)
+
 const timestamp = () => ( new Date() ).getTime()
 
 const chat = ( state = [ null, null, null, null, {} ], action ) => {
@@ -79,7 +90,7 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 			return setStatus( STATUS_MISSED, state )
 		case OPERATOR_CHAT_LEAVE:
 		case REMOVE_USER:
-			return setMembers( dissoc( action.user.id, membersView( state ) ), state )
+			return setMembers( dissoc( asString( action.user.id ), membersView( state ) ), state )
 		case OPERATOR_CHAT_JOIN:
 			return setMembers( set( lensProp( action.user.id ), true, membersView( state ) ), state )
 		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
@@ -113,7 +124,7 @@ export default ( state = {}, action ) => {
 			const lens = lensProp( action.chat.id )
 			return set( lens, chat( view( lens, state ), action ) )( state )
 		case CLOSE_CHAT:
-			return dissoc( action.chat_id, state )
+			return dissoc( asString( action.chat_id ), state )
 		case SET_CHATS_RECOVERED:
 			return reduce(
 				( chats, chat_id ) => set(

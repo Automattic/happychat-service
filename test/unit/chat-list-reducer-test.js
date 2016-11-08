@@ -146,6 +146,15 @@ describe( 'ChatList reducer', () => {
 		{ id: [ 'open', { id: 'id' }, {}, 1, { user: true } ] }
 	) )
 
+	it( 'should remove operator as member with int id', dispatchAction(
+		operatorChatLeave( 'id', { id: 1 } ),
+		state => {
+			const [ , , , , members ] = state.chatlist.id
+			deepEqual( members, {} )
+		},
+		{ id: [ 'open', { id: 'id' }, {}, 1, { 1: true } ] }
+	) )
+
 	it( 'should set operator chats abandoned', dispatchAction(
 		setOperatorChatsAbandoned( 'op-id' ),
 		state => {
