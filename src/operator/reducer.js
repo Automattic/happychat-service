@@ -68,7 +68,7 @@ const identities = ( state = {}, action ) => {
 			return set_ramda( lens,
 				merge(
 					view( lens, state ),
-					{ capacity: action.capacity }
+					{ capacity: parseInt( action.capacity ) }
 				),
 				state
 			)
