@@ -180,4 +180,12 @@ describe( 'ChatList reducer', () => {
 			3: [ STATUS_ABANDONED, '3', { id: 'op-id' }, 3, {} ],
 			4: [ STATUS_PENDING, '4', { id: 'other' }, 4, {} ]
 		}	) )
+
+	it( 'should close chat when id is int', dispatchAction(
+		closeChat( 451 ),
+		state => {
+			deepEqual( state, { chatlist: {} } )
+		},
+		{ 451: 'a chat' }
+	) )
 } )
