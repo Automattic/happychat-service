@@ -5,11 +5,15 @@ import defaults from 'lodash/defaults'
 import concat from 'lodash/concat'
 import reject from 'lodash/reject'
 import omit from 'lodash/omit'
+import { REMOTE_USER_KEY } from './canRemoteDispatch'
 import { combineReducers } from 'redux'
 import {
 	mapObjIndexed,
 	defaultTo,
 	merge,
+	lensProp,
+	view,
+	set as set_ramda
 } from 'ramda'
 
 import {
@@ -19,7 +23,8 @@ import {
 	UPDATE_USER_STATUS,
 	UPDATE_USER_CAPACITY,
 	SET_SYSTEM_ACCEPTS_CUSTOMERS,
-	SET_USER_LOADS
+	SET_USER_LOADS,
+	SET_OPERATOR_CAPACITY
 } from './actions'
 
 // Reducers
@@ -58,6 +63,15 @@ const identities = ( state = {}, action ) => {
 			return assign( {}, state, set( {}, user.id, userWithDefaults ) );
 		case UPDATE_USER_STATUS:
 			return setStatus( action, state );
+		case SET_OPERATOR_CAPACITY:
+			const lens = lensProp( action[REMOTE_USER_KEY].id )
+			return set_ramda( lens,
+				merge(
+					view( lens, state ),
+					{ capacity: parseInt( action.capacity ) }
+				),
+				state
+			)
 		case UPDATE_USER_CAPACITY:
 			return setCapacity( action, state );
 		case REMOVE_USER:

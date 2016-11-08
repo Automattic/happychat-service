@@ -25,6 +25,7 @@ export const OPERATOR_CHAT_LEAVE = 'OPERATOR_CHAT_LEAVE';
 export const OPERATOR_CHAT_JOIN = 'OPERATOR_CHAT_JOIN';
 export const OPERATOR_CHAT_TRANSFER = 'OPERATOR_CHAT_TRANSFER';
 export const OPERATOR_READY = 'OPERATOR_READY'
+export const SET_OPERATOR_CAPACITY = 'UPDATE_OPERATOR_CAPACITY';
 
 export const operatorTyping = ( id, user, text ) => (
 	{ type: OPERATOR_TYPING, id, user, text }
@@ -47,6 +48,10 @@ export const updateUserStatus = ( user, status ) => (
 export const updateCapacity = ( user, capacity ) => (
 	{ user, capacity, type: UPDATE_USER_CAPACITY }
 )
+
+export const setOperatorCapacity = ( user_id, capacity ) => ( {
+	user_id, capacity, type: SET_OPERATOR_CAPACITY
+} )
 
 export const setUserLoads = ( loads ) => ( {
 	type: SET_USER_LOADS, loads
