@@ -8,7 +8,7 @@ describe( 'Remote Dispatch', () => {
 	} )
 	it( 'can set capacity for remote user', () => {
 		ok( canRemoteDispatch( {
-			action: setOperatorCapacity( 'a', 5 ),
+			action: setOperatorCapacity( 5 ),
 			user: true
 		} ) )
 	} )
