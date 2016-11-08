@@ -282,7 +282,7 @@ describe( 'Operators', () => {
 		it( 'should report accepting customers', () => {
 			const { load, capacity } = selectTotalCapacity( store.getState(), STATUS_AVAILABLE )
 			ok( load < capacity )
-			equal( capacity, 17 )
+			equal( capacity, reduce( ops, ( total, op ) => total + op.capacity, 0 ) )
 		} )
 	} )
 } )

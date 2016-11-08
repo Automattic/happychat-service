@@ -50,6 +50,7 @@ const userPropUpdater = prop => ( action, state ) => {
 	const { user } = action;
 	const newProp = set( {}, prop, val );
 	const updatedUser = assign( {}, get( state, user.id ), newProp );
+	// set and assign on new objects to prevent modifying existing state
 	return assign( {}, state, set( {}, user.id, updatedUser ) );
 }
 const setStatus = userPropUpdater( 'status' );
@@ -59,8 +60,8 @@ const identities = ( state = {}, action ) => {
 	const { user } = action
 	switch ( action.type ) {
 		case UPDATE_IDENTITY:
-			const userWithDefaults = defaults( user, { load: 0, capacity: 0 } );
-			return assign( {}, state, set( {}, user.id, userWithDefaults ) );
+			const userWithDefaults = defaults( get( state, user.id, {} ), user, { load: 0, capacity: 0 } );
+			return assign( {}, state, set( state, user.id, userWithDefaults ) );
 		case UPDATE_USER_STATUS:
 			return setStatus( action, state );
 		case SET_OPERATOR_CAPACITY:
