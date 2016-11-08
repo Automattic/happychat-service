@@ -5,6 +5,7 @@ import defaults from 'lodash/defaults'
 import concat from 'lodash/concat'
 import reject from 'lodash/reject'
 import omit from 'lodash/omit'
+import { REMOTE_USER_KEY } from './canRemoteDispatch'
 import { combineReducers } from 'redux'
 import {
 	mapObjIndexed,
@@ -63,7 +64,7 @@ const identities = ( state = {}, action ) => {
 		case UPDATE_USER_STATUS:
 			return setStatus( action, state );
 		case SET_OPERATOR_CAPACITY:
-			const lens = lensProp( action.user_id )
+			const lens = lensProp( action[REMOTE_USER_KEY].id )
 			return set_ramda( lens,
 				merge(
 					view( lens, state ),

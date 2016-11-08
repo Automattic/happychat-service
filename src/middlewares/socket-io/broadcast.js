@@ -3,10 +3,12 @@ import { v4 as uuid } from 'uuid'
 import { OPERATOR_READY } from '../../operator/actions'
 import { isEmpty } from 'ramda'
 import { selectSocketIdentity } from '../../operator/selectors'
+import { assoc } from 'ramda'
 
 const debug = require( 'debug' )( 'happychat:socket-io:broadcast' )
 
 export const REMOTE_ACTION_TYPE = 'REMOTE_ACTION_TYPE'
+export const REMOTE_USER_KEY = 'REMOTE_USER_KEY'
 
 const join = ( io, socket ) => new Promise( ( resolve, reject ) => {
 	socket.join( 'broadcast', e => {
@@ -36,7 +38,12 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 		const dispatchListener = ( remoteAction, callback ) => {
 			debug( 'received remote dispatch', remoteAction.type )
 			const user = selectSocketIdentity( getState(), socket )
-			const action = { type: REMOTE_ACTION_TYPE, action: remoteAction, socket, user }
+			const action = {
+				type: REMOTE_ACTION_TYPE,
+				action: assoc( REMOTE_USER_KEY, user, remoteAction ),
+				socket,
+				user
+			}
 			if ( ! canRemoteDispatch( action, getState ) ) {
 				debug( 'remote dispatch not allowed for action', remoteAction.type )
 				callback( 'Remote dispatch not allowed' )

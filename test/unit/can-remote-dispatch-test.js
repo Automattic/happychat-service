@@ -9,13 +9,7 @@ describe( 'Remote Dispatch', () => {
 	it( 'can set capacity for remote user', () => {
 		ok( canRemoteDispatch( {
 			action: setOperatorCapacity( 'a', 5 ),
-			user: { id: 'a' }
-		} ) )
-	} )
-	it( 'can not set capacity for other user', () => {
-		ok( ! canRemoteDispatch( {
-			action: setOperatorCapacity( 'a', 5 ),
-			user: { id: 'b' }
+			user: true
 		} ) )
 	} )
 } )

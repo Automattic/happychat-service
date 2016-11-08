@@ -10,9 +10,8 @@ export default ( { action, user } ) => {
 
 	switch ( action.type ) {
 		case SET_SYSTEM_ACCEPTS_CUSTOMERS:
-			return true
 		case SET_OPERATOR_CAPACITY:
-			return user.id === action.user_id
+			return true
 		default:
 			return false
 	}
