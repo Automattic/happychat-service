@@ -2,7 +2,7 @@ import { equal } from 'assert'
 import { setOperatorCapacity } from 'operator/actions'
 import reducer from 'operator/reducer';
 import { createStore } from 'redux';
-import { REMOTE_USER_KEY } from 'operator/canRemoteDispatch'
+import { REMOTE_USER_KEY } from 'middlewares/socket-io/broadcast'
 import { assoc } from 'ramda'
 
 describe( 'Operator reducer', () => {
@@ -18,4 +18,3 @@ describe( 'Operator reducer', () => {
 		equal( store.getState().identities[ 'user-a' ].capacity, 2 )
 	} )
 } )
-

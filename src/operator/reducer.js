@@ -5,7 +5,7 @@ import defaults from 'lodash/defaults'
 import concat from 'lodash/concat'
 import reject from 'lodash/reject'
 import omit from 'lodash/omit'
-import { REMOTE_USER_KEY } from './canRemoteDispatch'
+import { REMOTE_USER_KEY } from '../middlewares/socket-io/broadcast'
 import { combineReducers } from 'redux'
 import {
 	mapObjIndexed,
