@@ -8,8 +8,14 @@ import { assoc } from 'ramda'
 describe( 'Operator reducer', () => {
 	it( 'should set operator capacity', () => {
 		const store = createStore( reducer, { identities: { 'user-a': { capacity: 0 } } } )
-		store.dispatch( assoc( REMOTE_USER_KEY, { id: 'user-a' }, setOperatorCapacity( 'user-a', 5 ) ) )
+		store.dispatch( assoc( REMOTE_USER_KEY, { id: 'user-a' }, setOperatorCapacity( 5 ) ) )
 		equal( store.getState().identities[ 'user-a' ].capacity, 5 )
+	} )
+
+	it( 'should fail to set capacity with non-int type', () => {
+		const store = createStore( reducer, { identities: { 'user-a': { capacity: 2 } } } )
+		store.dispatch( assoc( REMOTE_USER_KEY, { id: 'user-a' }, setOperatorCapacity( 'a' ) ) )
+		equal( store.getState().identities[ 'user-a' ].capacity, 2 )
 	} )
 } )
 

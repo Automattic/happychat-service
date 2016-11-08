@@ -64,11 +64,15 @@ const identities = ( state = {}, action ) => {
 		case UPDATE_USER_STATUS:
 			return setStatus( action, state );
 		case SET_OPERATOR_CAPACITY:
+			const capacity = parseInt( action.capacity )
+			if ( isNaN( capacity ) ) {
+				return state
+			}
 			const lens = lensProp( action[REMOTE_USER_KEY].id )
 			return set_ramda( lens,
 				merge(
 					view( lens, state ),
-					{ capacity: parseInt( action.capacity ) }
+					{ capacity }
 				),
 				state
 			)
