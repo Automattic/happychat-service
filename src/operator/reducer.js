@@ -11,8 +11,6 @@ import {
 	mapObjIndexed,
 	defaultTo,
 	merge,
-	lensProp,
-	view,
 	lensPath,
 	set as set_ramda
 } from 'ramda'
@@ -77,12 +75,9 @@ const identities = ( state = {}, action ) => {
 			if ( isNaN( capacity ) ) {
 				return state
 			}
-			const lens = lensProp( action[REMOTE_USER_KEY].id )
-			return set_ramda( lens,
-				merge(
-					view( lens, state ),
-					{ capacity }
-				),
+			return set_ramda(
+				lensPath( [ action[REMOTE_USER_KEY].id, 'capacity' ] ),
+				capacity,
 				state
 			)
 		case UPDATE_USER_CAPACITY:
