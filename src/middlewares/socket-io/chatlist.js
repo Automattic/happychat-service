@@ -159,6 +159,19 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 		)
 	} )
 
+	const removeOperatorsFromChat = ( chat ) => {
+		const room = customerRoom( chat.id )
+		return getClients( operator_io, room )
+		.then( clients => Promise.all(
+			map( socket => new Promise( ( resolve, reject ) => {
+				socket.leave( room, e => {
+					if ( e ) return reject( e )
+					resolve( socket )
+				} )
+			} ), clients )
+		) )
+	}
+
 	const removeOperatorFromChat = ( operator, chat ) => {
 		const customer_room_name = customerRoom( chat.id )
 		const room = operatorRoom( operator.id )
@@ -269,15 +282,15 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 
 	const handleOperatorChatLeave = action => whenChatExists( ( chat, operator ) => {
 		// remove all operator clients from the room
+		store.dispatch( operatorInboundMessage( chat.id, operator, merge(
+			makeEventMessage( 'operator left', chat.id ),
+			{ meta: { operator, event_type: 'leave' } }
+		) ) )
 		removeOperatorFromChat( operator, chat )
 		.then(
 			() => {
 				// send redux action to update loads
 				debug( 'removed operator from chat', operator.id )
-				store.dispatch( operatorInboundMessage( chat.id, operator, merge(
-					makeEventMessage( 'operator left', chat.id ),
-					{ meta: { operator, event_type: 'leave' } }
-				) ) )
 			},
 			e => debug( 'failed to remove operator from chat', e )
 		)
@@ -308,6 +321,11 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 			makeEventMessage( 'chat closed', chat_id ),
 			{ meta: { event_type: 'close', by: action.operator } }
 		) ) )
+		removeOperatorsFromChat( chat )
+		.then(
+			() => debug( 'removed all operators from chat stream', chat_id ),
+			e => debug( 'failed to remove operator sockets from chat', chat_id, e )
+		)
 	}
 
 	const handleSetChatOperator = ( action ) => {
