@@ -1,6 +1,6 @@
 import { ok } from 'assert'
 import canRemoteDispatch from 'operator/canRemoteDispatch'
-import { setOperatorCapacity, setAcceptsCustomers } from 'operator/actions'
+import { setOperatorCapacity, setAcceptsCustomers, setOperatorStatus } from 'operator/actions'
 
 describe( 'Remote Dispatch', () => {
 	it( 'can update system accept status', () => {
@@ -9,6 +9,12 @@ describe( 'Remote Dispatch', () => {
 	it( 'can set capacity for remote user', () => {
 		ok( canRemoteDispatch( {
 			action: setOperatorCapacity( 5 ),
+			user: true
+		} ) )
+	} )
+	it( 'can set status from remote user', () => {
+		ok( canRemoteDispatch( {
+			action: setOperatorStatus( 'test' ),
 			user: true
 		} ) )
 	} )
