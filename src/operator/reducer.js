@@ -61,7 +61,7 @@ const identities = ( state = {}, action ) => {
 	switch ( action.type ) {
 		case UPDATE_IDENTITY:
 			const userWithDefaults = defaults( get( state, user.id, {} ), user, { load: 0, capacity: 0 } );
-			return assign( {}, state, set( state, user.id, userWithDefaults ) );
+			return assign( {}, state, set( {}, user.id, userWithDefaults ) );
 		case UPDATE_USER_STATUS:
 			return setStatus( action, state );
 		case SET_OPERATOR_CAPACITY:
