@@ -11,8 +11,7 @@ import {
 	mapObjIndexed,
 	defaultTo,
 	merge,
-	lensProp,
-	view,
+	lensPath,
 	set as set_ramda
 } from 'ramda'
 
@@ -24,7 +23,8 @@ import {
 	UPDATE_USER_CAPACITY,
 	SET_SYSTEM_ACCEPTS_CUSTOMERS,
 	SET_USER_LOADS,
-	SET_OPERATOR_CAPACITY
+	SET_OPERATOR_CAPACITY,
+	SET_OPERATOR_STATUS
 } from './actions'
 
 // Reducers
@@ -64,17 +64,20 @@ const identities = ( state = {}, action ) => {
 			return assign( {}, state, set( {}, user.id, userWithDefaults ) );
 		case UPDATE_USER_STATUS:
 			return setStatus( action, state );
+		case SET_OPERATOR_STATUS:
+			return set_ramda(
+				lensPath( [ action[REMOTE_USER_KEY].id, 'status' ] ),
+				action.status,
+				state
+			)
 		case SET_OPERATOR_CAPACITY:
 			const capacity = parseInt( action.capacity )
 			if ( isNaN( capacity ) ) {
 				return state
 			}
-			const lens = lensProp( action[REMOTE_USER_KEY].id )
-			return set_ramda( lens,
-				merge(
-					view( lens, state ),
-					{ capacity }
-				),
+			return set_ramda(
+				lensPath( [ action[REMOTE_USER_KEY].id, 'capacity' ] ),
+				capacity,
 				state
 			)
 		case UPDATE_USER_CAPACITY:
