@@ -1,4 +1,4 @@
-import { createStore, applyMiddleware, combineReducers } from 'redux'
+import { createStore, applyMiddleware } from 'redux'
 import operatorMiddleware from './middlewares/socket-io'
 import chatlistMiddleware from './middlewares/socket-io/chatlist'
 import broadcastMiddleware from './middlewares/socket-io/broadcast'

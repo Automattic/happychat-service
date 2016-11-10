@@ -1,6 +1,7 @@
 import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
 import createStore from 'store'
+import { reducer } from 'service'
 import WatchingMiddleware from '../mock-middleware'
 import {
 	CUSTOMER_TYPING,
@@ -35,7 +36,7 @@ describe( 'Customer Service', () => {
 			customerAuth: doAuth,
 			timeout: 10,
 			middlewares: [ watching.middleware() ]
-		} )
+		}, undefined, reducer )
 		server = io.of( '/customer' )
 		auth = () => Promise.resolve( mockUser );
 		( { client, socket } = server.newClient() );
