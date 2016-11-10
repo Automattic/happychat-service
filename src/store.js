@@ -5,8 +5,6 @@ import broadcastMiddleware from './middlewares/socket-io/broadcast'
 import agentMiddleware from './middlewares/socket-io/agents'
 import controllerMiddleware from './middlewares/socket-io/controller'
 import operatorLoadMiddleware from './middlewares/socket-io/operator-load'
-import operatorReducer from './operator/reducer'
-import chatlistReducer from './chat-list/reducer'
 import canRemoteDispatch from './operator/canRemoteDispatch'
 import { keys } from 'ramda'
 
@@ -26,17 +24,19 @@ const logger = ( { getState } ) => next => action => {
 	}
 }
 
-export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], middlewares = [], timeout = undefined }, state ) => createStore(
-	combineReducers( { operators: operatorReducer, chatlist: chatlistReducer } ),
-	state,
-	applyMiddleware(
-		logger,
-		...middlewares,
-		controllerMiddleware( messageMiddlewares ),
-		operatorMiddleware( io.of( '/operator' ), operatorAuth ),
-		agentMiddleware( io.of( '/agent' ), agentAuth ),
-		chatlistMiddleware( { io, timeout, customerDisconnectTimeout: timeout }, customerAuth ),
-		broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
-		...operatorLoadMiddleware,
+export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], middlewares = [], timeout = undefined }, state, reducer ) => {
+	return createStore(
+		reducer,
+		state,
+		applyMiddleware(
+			logger,
+			...middlewares,
+			controllerMiddleware( messageMiddlewares ),
+			operatorMiddleware( io.of( '/operator' ), operatorAuth ),
+			agentMiddleware( io.of( '/agent' ), agentAuth ),
+			chatlistMiddleware( { io, timeout, customerDisconnectTimeout: timeout }, customerAuth ),
+			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
+			...operatorLoadMiddleware,
+		)
 	)
-)
+}
