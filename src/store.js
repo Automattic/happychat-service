@@ -24,6 +24,12 @@ const logger = ( { getState } ) => next => action => {
 	}
 }
 
+export const SERIALIZE = 'SERIALIZE';
+export const DESERIALIZE = 'DESERIALIZE';
+
+export const serializeAction = () => ( { type: SERIALIZE } )
+export const deserializeAction = () => ( { type: DESERIALIZE } )
+
 export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], middlewares = [], timeout = undefined }, state, reducer ) => {
 	return createStore(
 		reducer,
