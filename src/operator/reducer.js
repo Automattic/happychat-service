@@ -26,6 +26,7 @@ import {
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS
 } from './actions'
+import { SERIALIZE } from '../store'
 
 // Reducers
 const user_sockets = ( state = {}, action ) => {
@@ -40,6 +41,8 @@ const user_sockets = ( state = {}, action ) => {
 			return assign( {}, state, set( {}, user.id, reject( sockets, socket.id ) ) )
 		case REMOVE_USER:
 			return omit( state, user.id )
+		case SERIALIZE:
+			return {}
 		default:
 			return state
 	}
@@ -99,6 +102,8 @@ const sockets = ( state = {}, action ) => {
 	switch ( action.type ) {
 		case UPDATE_IDENTITY:
 			return assign( {}, state, set( {}, socket.id, user.id ) )
+		case SERIALIZE:
+			return {}
 		default:
 			return state
 	}
