@@ -16,8 +16,9 @@ import {
 	customerJoin,
 	customerDisconnect
 } from 'chat-list/actions';
+import { STATUS_CLOSED } from 'chat-list/reducer'
 import { OPERATOR_CHAT_TRANSFER } from 'operator/actions'
-import { getChat, getChatStatus, getChatOperator } from 'chat-list/selectors'
+import { getChatStatus, getChatOperator } from 'chat-list/selectors'
 
 const debug = require( 'debug' )( 'happychat:chat-list:test' )
 
@@ -177,7 +178,7 @@ describe( 'ChatList component', () => {
 			watchingMiddleware.watchForType( CLOSE_CHAT, ( action ) => {
 				equal( action.operator.id, operator_id )
 				equal( action.chat_id, chat.id )
-				ok( ! getChat( chat.id, store.getState() ) )
+				equal( getChatStatus( chat.id, store.getState() ), STATUS_CLOSED )
 				done()
 			}, true )
 			client.emit( 'chat.close', 'the-id' )

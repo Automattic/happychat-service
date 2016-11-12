@@ -37,6 +37,7 @@ export const STATUS_ASSIGNED = 'assigned'
 export const STATUS_ASSIGNING = 'assigning'
 export const STATUS_ABANDONED = 'abandoned'
 export const STATUS_CUSTOMER_DISCONNECT = 'customer-disconnect'
+export const STATUS_CLOSED = 'closed'
 
 const statusLens = lensIndex( 0 )
 const chatLens = lensIndex( 1 )
@@ -66,6 +67,8 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 				setTimestamp( timestamp() ),
 				setChat( action.chat )
 			)( state )
+		case CLOSE_CHAT:
+			return setStatus( STATUS_CLOSED, state );
 		case SET_CHAT_OPERATOR:
 		case SET_CHATS_RECOVERED:
 			return compose(
@@ -108,6 +111,7 @@ export default ( state = {}, action ) => {
 		case OPERATOR_CHAT_JOIN:
 		case OPERATOR_CHAT_LEAVE:
 		case SET_CHAT_CUSTOMER_DISCONNECT:
+		case CLOSE_CHAT:
 			const chatIdLens = lensProp( action.chat_id )
 			return set( chatIdLens, chat( view( chatIdLens, state ), action ) )( state )
 		case INSERT_PENDING_CHAT:
@@ -115,8 +119,6 @@ export default ( state = {}, action ) => {
 		case ASSIGN_CHAT:
 			const lens = lensProp( action.chat.id )
 			return set( lens, chat( view( lens, state ), action ) )( state )
-		case CLOSE_CHAT:
-			return dissoc( asString( action.chat_id ), state )
 		case SET_CHATS_RECOVERED:
 			return reduce(
 				( chats, chat_id ) => set(

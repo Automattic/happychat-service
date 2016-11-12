@@ -1,5 +1,6 @@
 import { ok, deepEqual } from 'assert'
 import util, { authenticators } from './util'
+import { STATUS_CLOSED } from 'chat-list/reducer'
 
 const debug = require( 'debug' )( 'happychat:test:join-chat' )
 
@@ -91,7 +92,7 @@ describe( 'Operator', () => {
 			} )
 			.then( () => requestState( operator ) )
 			.then( state => {
-				deepEqual( state.chatlist, {} )
+				deepEqual( state.chatlist['session-id'][0], STATUS_CLOSED )
 			} )
 		)
 	} )

@@ -3,7 +3,8 @@ import reducer, {
 	STATUS_PENDING,
 	STATUS_MISSED,
 	STATUS_ABANDONED,
-	STATUS_ASSIGNED
+	STATUS_ASSIGNED,
+	STATUS_CLOSED
 } from 'chat-list/reducer'
 import {
 	// selectors
@@ -120,10 +121,10 @@ describe( 'ChatList reducer', () => {
 		}
 	) )
 
-	it( 'should remove closed chat', dispatchAction(
+	it( 'should set chat closed', dispatchAction(
 		closeChat( 'some-chat' ),
 		state => {
-			deepEqual( state, { chatlist: { 'other-chat': 'b' } } )
+			deepEqual( getChatStatus( 'some-chat', state ), STATUS_CLOSED )
 		},
 		{ 'some-chat': 'a', 'other-chat': 'b'}
 	) )
@@ -193,8 +194,8 @@ describe( 'ChatList reducer', () => {
 	it( 'should close chat when id is int', dispatchAction(
 		closeChat( 451 ),
 		state => {
-			deepEqual( state, { chatlist: {} } )
+			deepEqual( getChatStatus( 451, state ), STATUS_CLOSED )
 		},
-		{ 451: 'a chat' }
+		{ 451: [null, { id: '451' }, null, null, null ] }
 	) )
 } )
