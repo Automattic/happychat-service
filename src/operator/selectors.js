@@ -29,8 +29,8 @@ export const getAvailableOperators = compose(
 		{ weight: weight( a ), capacity: a.capacity },
 		{ weight: weight( b ), capacity: b.capacity }
 	) ),
-	filter( ( { status, load, capacity } ) => {
-		if ( status !== STATUS_AVAILABLE ) {
+	filter( ( { status, load, capacity, online } ) => {
+		if ( !online || status !== STATUS_AVAILABLE ) {
 			return false;
 		}
 		return capacity - load > 0

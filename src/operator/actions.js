@@ -27,6 +27,11 @@ export const OPERATOR_CHAT_TRANSFER = 'OPERATOR_CHAT_TRANSFER';
 export const OPERATOR_READY = 'OPERATOR_READY'
 export const SET_OPERATOR_CAPACITY = 'SET_OPERATOR_CAPACITY';
 export const SET_OPERATOR_STATUS = 'SET_OPERATOR_STATUS';
+export const SET_USER_OFFLINE = 'SET_USER_OFFLINE';
+
+export const setUserOffline = user => ( {
+	type: SET_USER_OFFLINE, user
+} )
 
 export const operatorTyping = ( id, user, text ) => (
 	{ type: OPERATOR_TYPING, id, user, text }

@@ -59,6 +59,7 @@ import {
 } from '../../chat-list/reducer'
 import {
 	REMOVE_USER,
+	SET_USER_OFFLINE,
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_READY,
 	OPERATOR_CHAT_JOIN,
@@ -453,7 +454,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 				customer_io.emit( 'accept', action.enabled )
 				break;
 			case NOTIFY_CHAT_STATUS_CHANGED:
-				debug( 'NOTIFY_CHAT_STATUS_CHANGED', action.chat_id )
+				debug( 'NOTIFY_CHAT_STATUS_CHANGED', action.chat_id, action.status, action.lastStatus )
 				const status = getChatStatus( action.chat_id, store.getState() );
 				customer_io.to( customerRoom( action.chat_id ) ).emit( 'status', status )
 				break;
@@ -476,6 +477,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 				handleOperatorReady( action )
 				return next( action )
 			case REMOVE_USER:
+			case SET_USER_OFFLINE:
 				handleOperatorDisconnect( action )
 				return next( action )
 			case CUSTOMER_INBOUND_MESSAGE:

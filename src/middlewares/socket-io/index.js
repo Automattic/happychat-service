@@ -10,7 +10,7 @@ import {
 	updateUserStatus,
 	updateCapacity,
 	removeUserSocket,
-	removeUser,
+	setUserOffline,
 	updateIdentity,
 	operatorTyping,
 	operatorChatJoin,
@@ -60,14 +60,14 @@ const join = ( { socket, store, user, io } ) => {
 			if ( clients.length > 0 ) {
 				return;
 			}
-			store.dispatch( removeUser( user ) )
+			store.dispatch( setUserOffline( user ) )
 		} )
 	} )
 
 	socket.join( user_room, () => {
-		socket.emit( 'init', user )
 		store.dispatch( updateIdentity( socket, user ) )
 		store.dispatch( operatorReady( user, socket, user_room ) )
+		socket.emit( 'init', user )
 	} )
 
 	socket.on( 'message', ( chat_id, { id, text } ) => {

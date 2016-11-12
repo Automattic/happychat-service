@@ -1,7 +1,6 @@
 import assign from 'lodash/assign'
 import set from 'lodash/set'
 import get from 'lodash/get'
-import defaults from 'lodash/defaults'
 import concat from 'lodash/concat'
 import reject from 'lodash/reject'
 import omit from 'lodash/omit'
@@ -12,9 +11,12 @@ import {
 	defaultTo,
 	merge,
 	lensPath,
-	set as set_ramda
+	lensProp,
+	set as set_ramda,
+	compose,
+	view
 } from 'ramda'
-
+import { asString } from '../util'
 import {
 	UPDATE_IDENTITY,
 	REMOVE_USER,
@@ -24,7 +26,8 @@ import {
 	SET_SYSTEM_ACCEPTS_CUSTOMERS,
 	SET_USER_LOADS,
 	SET_OPERATOR_CAPACITY,
-	SET_OPERATOR_STATUS
+	SET_OPERATOR_STATUS,
+	SET_USER_OFFLINE
 } from './actions'
 
 // Reducers
@@ -45,43 +48,57 @@ const user_sockets = ( state = {}, action ) => {
 	}
 }
 
-const userPropUpdater = prop => ( action, state ) => {
-	const val = get( action, prop );
-	const { user } = action;
-	const newProp = set( {}, prop, val );
-	const updatedUser = assign( {}, get( state, user.id ), newProp );
-	// set and assign on new objects to prevent modifying existing state
-	return assign( {}, state, set( {}, user.id, updatedUser ) );
-}
-const setStatus = userPropUpdater( 'status' );
-const setCapacity = userPropUpdater( 'capacity' );
+const DEFAULT_CAPACITY = 3;
 
-const identities = ( state = {}, action ) => {
-	const { user } = action
+const identity = ( state = { load: 0, capacity: DEFAULT_CAPACITY, online: false }, action ) => {
 	switch ( action.type ) {
 		case UPDATE_IDENTITY:
-			const userWithDefaults = defaults( get( state, user.id, {} ), user, { load: 0, capacity: 0 } );
-			return assign( {}, state, set( {}, user.id, userWithDefaults ) );
+			return merge( state, action.user, { online: true } )
 		case UPDATE_USER_STATUS:
-			return setStatus( action, state );
+			return merge( state, { status: action.status, online: true } )
+		case UPDATE_USER_CAPACITY:
+			return merge( state, { capacity: action.capacity, online: true } )
 		case SET_OPERATOR_STATUS:
-			return set_ramda(
-				lensPath( [ action[REMOTE_USER_KEY].id, 'status' ] ),
-				action.status,
-				state
-			)
+			return merge( state, { status: action.status, online: true } )
 		case SET_OPERATOR_CAPACITY:
 			const capacity = parseInt( action.capacity )
 			if ( isNaN( capacity ) ) {
 				return state
 			}
-			return set_ramda(
-				lensPath( [ action[REMOTE_USER_KEY].id, 'capacity' ] ),
-				capacity,
-				state
-			)
+			return merge( state, { capacity, online: true } )
+		case SET_USER_OFFLINE:
+			return merge( state, { online: false } )
+	}
+	return state
+}
+
+const lensUser = action => lensProp( compose(
+	asString,
+	view( lensPath( [ 'user', 'id' ] ) )
+)( action ) )
+
+const lensRemoteUser = action => lensProp( compose(
+	asString,
+	view( lensPath( [ REMOTE_USER_KEY, 'id' ] ) )
+)( action ) );
+
+const identities = ( state = {}, action ) => {
+	const { user } = action
+	switch ( action.type ) {
+		case UPDATE_IDENTITY:
+		case UPDATE_USER_STATUS:
 		case UPDATE_USER_CAPACITY:
-			return setCapacity( action, state );
+		case SET_USER_OFFLINE:
+			return set_ramda(
+				lensUser( action ),
+				identity( view( lensUser( action ), state ), action )
+			)( state )
+		case SET_OPERATOR_STATUS:
+		case SET_OPERATOR_CAPACITY:
+			return set_ramda(
+				lensRemoteUser( action ),
+				identity( view( lensRemoteUser( action ), state ), action )
+			)( state )
 		case REMOVE_USER:
 			return omit( state, user.id )
 		case SET_USER_LOADS:

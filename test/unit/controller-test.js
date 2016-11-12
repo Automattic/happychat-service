@@ -257,7 +257,7 @@ describe( 'Controller', () => {
 			client.on( 'init', () => {
 				client.emit( 'system.info', data => {
 					deepEqual( data.chats, [] )
-					deepEqual( data.operators, [ { id: 'operator', load: 0, capacity: 0 } ] )
+					deepEqual( data.operators, [ { id: 'operator', load: 0, capacity: 3, online: false } ] )
 					done()
 				} )
 			} ).connect()

@@ -20,7 +20,8 @@ import {
 	OPERATOR_CHAT_JOIN,
 	SET_USER_LOADS,
 	OPERATOR_OPEN_CHAT_FOR_CLIENTS,
-	REMOVE_USER
+	REMOVE_USER,
+	SET_USER_OFFLINE
 } from '../../operator/actions'
 import { REMOTE_ACTION_TYPE } from './broadcast'
 import {
@@ -87,6 +88,7 @@ const updateLoadMiddleware = ( { getState, dispatch } ) => next => action => {
 		case SET_CHAT_OPERATOR:
 		case SET_CHATS_RECOVERED:
 		case REMOVE_USER:
+		case SET_USER_OFFLINE:
 			const result = next( action )
 			dispatch( setUserLoads( reducer( getState() ) ) )
 			return result;

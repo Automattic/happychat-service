@@ -11,9 +11,8 @@ import {
 	when,
 	defaultTo,
 	lensIndex,
-	equals,
-	invoker
 } from 'ramda'
+import { asString } from '../util'
 import {
 	INSERT_PENDING_CHAT,
 	SET_CHAT_OPERATOR,
@@ -26,6 +25,7 @@ import {
 } from './actions'
 import {
 	OPERATOR_OPEN_CHAT_FOR_CLIENTS,
+	SET_USER_OFFLINE,
 	REMOVE_USER,
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_CHAT_JOIN,
@@ -56,15 +56,6 @@ const setOperator = set( operatorLens )
 const setTimestamp = set( timestampLens )
 const setMembers = set( membersLens )
 
-const typeOf = v => typeof( v )
-const asString = when(
-	compose(
-		equals( 'number' ),
-		typeOf
-	),
-	invoker( 0, 'toString' )
-)
-
 const timestamp = () => ( new Date() ).getTime()
 
 const chat = ( state = [ null, null, null, null, {} ], action ) => {
@@ -89,6 +80,7 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 		case SET_CHAT_MISSED:
 			return setStatus( STATUS_MISSED, state )
 		case OPERATOR_CHAT_LEAVE:
+		case SET_USER_OFFLINE:
 		case REMOVE_USER:
 			return setMembers( dissoc( asString( action.user.id ), membersView( state ) ), state )
 		case OPERATOR_CHAT_JOIN:
@@ -140,6 +132,7 @@ export default ( state = {}, action ) => {
 				whenOperatorIs( action.operator_id )( value => chat( value, action ) )
 			)( state )
 		case REMOVE_USER:
+		case SET_USER_OFFLINE:
 			return map( ( chatState ) => chat( chatState, action ), state )
 	}
 	return state

@@ -5,6 +5,8 @@ import concat from 'lodash/concat'
 import find from 'lodash/find'
 import { ok, deepEqual } from 'assert'
 
+const debug = require( 'debug' )( 'happychat:test:transfer' )
+
 describe( 'Operator Transfer', () => {
 	const operators = [
 		{ id: 'a', status: 'available', capacity: 2, load: 0 },
@@ -22,8 +24,12 @@ describe( 'Operator Transfer', () => {
 		.then( client => new Promise( resolve => {
 			client.on( 'connect', () => {
 				client.once( 'auth', auth => auth( null, user ) )
-				client.once( 'init', () => resolve( client ) )
-				client.on( 'available', ( chat, available ) => available( { capacity: user.capacity, status: 'available', load: 0 } ) )
+				client.once( 'init', () => {
+					client.emit( 'status', 'available', () => {
+						resolve( client )
+					} )
+				} )
+				// client.on( 'available', ( chat, available ) => available( { capacity: user.capacity, status: 'available', load: 0 } ) )
 			} )
 		} ) )
 
@@ -53,6 +59,7 @@ describe( 'Operator Transfer', () => {
 			} ) )
 			.then( ( chat ) => new Promise( resolve => {
 				// have operator a transfer to operator b
+				debug( 'transfer chat' )
 				a.emit( 'chat.transfer', chat.id, 'b' )
 				b.once( 'log', ( _, log ) => resolve( log ) )
 			} ) )
@@ -60,7 +67,7 @@ describe( 'Operator Transfer', () => {
 				// check to make sure the transfer event message is in the log
 				let transfer = find( messages, ( { type, meta } ) => type === 'event' && meta.event_type === 'transfer' )
 				ok( transfer )
-				const expectedTo = Object.assign( {}, operators[1], { load: 0 } )
+				const expectedTo = Object.assign( {}, operators[1], { load: 0, online: true } )
 				deepEqual( transfer.meta.from, operators[0] )
 				deepEqual( transfer.meta.to, expectedTo )
 			} )

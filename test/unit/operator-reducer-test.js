@@ -1,4 +1,4 @@
-import { equal } from 'assert'
+import { deepEqual, equal } from 'assert'
 import { setOperatorCapacity, setOperatorStatus } from 'operator/actions'
 import reducer from 'operator/reducer';
 import { createStore } from 'redux';
@@ -22,5 +22,11 @@ describe( 'Operator reducer', () => {
 		const store = createStore( reducer, { identities: { 'user-a': { capacity: 2 } } } )
 		store.dispatch( assoc( REMOTE_USER_KEY, { id: 'user-a' }, setOperatorCapacity( 'a' ) ) )
 		equal( store.getState().identities[ 'user-a' ].capacity, 2 )
+	} )
+
+	it( 'should update user', () => {
+		const store = createStore( reducer )
+		store.dispatch( { type: 'UPDATE_IDENTITY', user: { id: 1, name: 'hi' }, socket: {} } )
+		deepEqual( store.getState().identities, { 1: { id: 1, name: 'hi', capacity: 3, load: 0, online: false } } )
 	} )
 } )

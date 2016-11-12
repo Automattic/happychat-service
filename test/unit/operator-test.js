@@ -9,7 +9,7 @@ import {
 	setAcceptsCustomers,
 	operatorChatJoin,
 	operatorChatClose,
-	REMOVE_USER,
+	SET_USER_OFFLINE,
 	OPERATOR_RECEIVE_TYPING,
 	OPERATOR_CHAT_LEAVE
 } from 'operator/actions'
@@ -75,8 +75,8 @@ describe( 'Operators', () => {
 		let op = { id: 'user-id', displayName: 'furiosa', avatarURL: 'url', priv: 'var', status: 'online', load: 1, capacity: 3 }
 		beforeEach( () => connectOperator( { socket, client }, op ) )
 
-		it( 'should remove user when last socket disconnects', ( done ) => {
-			watchForType( REMOVE_USER, action => {
+		it( 'should set user offline when last socket disconnects', ( done ) => {
+			watchForType( SET_USER_OFFLINE, action => {
 				equal( action.user.id, op.id )
 				done()
 			} )
