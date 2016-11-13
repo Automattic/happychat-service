@@ -20,7 +20,7 @@ import {
 	REASSIGN_CHATS,
 	RECOVER_CHATS,
 	SET_CHAT_OPERATOR,
-	SET_CHAT_CUSTOMER_DISCONNECT,
+	SET_CHAT_MISSED,
 	NOTIFY_SYSTEM_STATUS_CHANGE,
 	NOTIFY_CHAT_STATUS_CHANGED,
 	assignChat,
@@ -69,7 +69,8 @@ import {
 import {
 	isSystemAcceptingCustomers,
 	getAvailableOperators,
-	isOperatorAcceptingChats
+	isOperatorAcceptingChats,
+	haveAvailableCapacity
 } from '../../operator/selectors'
 import { makeEventMessage, timestamp } from '../../util'
 
@@ -307,7 +308,12 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 
 		if ( operator && isOperatorAcceptingChats( operator.id, state ) && isClosed ) {
 			debug( 'reassign chat to operator', operator.id )
-			store.dispatch( setChatOperator( chat.id, operator ) )
+			emitChatOpenToOperator( chat, operator )
+			.then(
+				() => store.dispatch( setChatOperator( chat.id, operator ) ),
+				e => store.dispatch( setChatMissed( chat.id, e ) )
+			)
+
 			return
 		}
 
@@ -437,6 +443,12 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 	}
 
 	const handleAssignNextChat = () => {
+		// TODO: check if we have capacity
+		if ( ! haveAvailableCapacity( store.getState() ) ) {
+			debug( 'no capacity to assign chat' )
+			return
+		}
+
 		if ( isAssigningChat( store.getState() ) ) {
 			debug( 'aready assigning chat, wait until complete' )
 			return
@@ -521,8 +533,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 			case ASSIGN_NEXT_CHAT:
 				handleAssignNextChat( action )
 				break
-			case SET_CHAT_CUSTOMER_DISCONNECT:
-				break;
+			case SET_CHAT_MISSED:
 			case INSERT_PENDING_CHAT:
 				store.dispatch( assignNextChat() )
 				break;
