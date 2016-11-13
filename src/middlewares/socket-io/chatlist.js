@@ -52,6 +52,7 @@ import {
 	haveMissedChat,
 	havePendingChat,
 	isChatStatusNew,
+	isChatStatusClosed,
 	isAssigningChat,
 } from '../../chat-list/selectors'
 import {
@@ -67,7 +68,8 @@ import {
 } from '../../operator/actions'
 import {
 	isSystemAcceptingCustomers,
-	getAvailableOperators
+	getAvailableOperators,
+	isOperatorAcceptingChats
 } from '../../operator/selectors'
 import { makeEventMessage, timestamp } from '../../util'
 
@@ -299,13 +301,21 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 
 	const handleCustomerInboundMessage = ( { chat } ) => {
 		const state = store.getState()
-		debug( 'see if we should assign?', getChatStatus( chat.id, state ) )
 		const operator = getChatOperator( chat.id, state )
 		const isNew = isChatStatusNew( chat.id, state )
-		if ( !operator || isNew ) {
+		const isClosed = isChatStatusClosed( chat.id, state )
+
+		if ( operator && isOperatorAcceptingChats( operator.id, state ) && isClosed ) {
+			debug( 'reassign chat to operator', operator.id )
+			store.dispatch( setChatOperator( chat.id, operator ) )
+			return
+		}
+
+		if ( !operator || isNew || isClosed ) {
 			store.dispatch( insertPendingChat( chat ) )
 			return
 		}
+
 		// TODO: check if there is an operator in the room
 		debug( 'chat exists time to make sure someone is home' )
 	}
@@ -369,7 +379,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 		debug( 'attempting to assign chat' )
 
 		const list = getAvailableOperators( store.getState() )
-		debug( 'anyone home?', list )
+
 		if ( isEmpty( list ) ) {
 			return store.dispatch( setChatMissed( chat.id, new Error( 'no operators available' ) ) )
 		}

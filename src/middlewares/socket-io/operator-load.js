@@ -1,4 +1,4 @@
-import { getChatMembers, getChatsForOperator, getChatStatus } from '../../chat-list/selectors';
+import { getOpenChatMembers, getChatsForOperator, getChatStatus } from '../../chat-list/selectors';
 import {
 	assignNextChat,
 	notifySystemStatusChange,
@@ -50,7 +50,7 @@ const sumMemberships = ( total, members ) => evolve(
 	// merge total into members to fill any keys that aren't present
 	merge( members, total )
 )
-const reducer = compose( reduce( sumMemberships, {} ), getChatMembers )
+const reducer = compose( reduce( sumMemberships, {} ), getOpenChatMembers )
 
 const handleSetUserLoads = ( { dispatch, getState }, next, action ) => {
 	const result = next( action );

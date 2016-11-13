@@ -10,7 +10,8 @@ import {
 	both,
 	defaultTo,
 	isEmpty,
-	head
+	head,
+	not
 } from 'ramda'
 import {
 	statusView,
@@ -21,14 +22,15 @@ import {
 	STATUS_MISSED,
 	STATUS_NEW,
 	STATUS_PENDING,
-	STATUS_ASSIGNING
+	STATUS_ASSIGNING,
+	STATUS_CLOSED
 } from './reducer'
 
 const selectChatlist = view( lensProp( 'chatlist' ) )
 const mapToChat = map( chatView )
 const mapToMembers = map( membersView )
 const matchingStatus = status => filter( compose( equals( status ), statusView ) )
-
+const filterClosed = compose( not, whereEq( { status: STATUS_CLOSED } ) )
 /*
 Selects all chats assigned/associated with given operator id
 */
@@ -49,6 +51,7 @@ export const getChatsForOperator = ( operator_id, state ) => compose(
 )( state )
 
 export const getChatMembers = compose( mapToMembers, values, selectChatlist )
+export const getOpenChatMembers = compose( mapToMembers, filterClosed, values, selectChatlist )
 export const getAllChats = compose( mapToChat, values, selectChatlist )
 export const getChatsWithStatus = ( status, state ) => compose(
 	mapToChat,
@@ -97,7 +100,13 @@ export const getChatStatus = ( chat_id, state ) => defaultTo( STATUS_NEW )( comp
 	selectChatlist
 )( state ) )
 
-export const isChatStatusNew = ( chat_id, state ) => equals( STATUS_NEW, getChatStatus( chat_id, state ) )
+export const isChatStatusNew = ( chat_id, state ) => equals(
+	STATUS_NEW, getChatStatus( chat_id, state )
+)
+
+export const isChatStatusClosed = ( chat_id, state ) => equals(
+	STATUS_CLOSED, getChatStatus( chat_id, state )
+)
 
 export const haveChatWithStatus = ( status, state ) => ! isEmpty(
 	getChatsWithStatus( status, state )

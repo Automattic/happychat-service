@@ -12,6 +12,7 @@ import {
 	SET_CHAT_MISSED,
 	SET_CHATS_RECOVERED,
 	NOTIFY_CHAT_STATUS_CHANGED,
+	SET_CHAT_OPERATOR,
 	customerInboundMessage,
 	customerJoin,
 	customerDisconnect
@@ -359,5 +360,16 @@ describe( 'ChatList component', () => {
 
 			store.dispatch( customerDisconnect( chat, user ) )
 		} )
+	} )
+
+	it( 'should resasign closed chat to previous operator', done => {
+		chatlistWithState( {
+			operators: { identities: { opid: { id: 'opid', online: true, status: 'available' } } },
+			chatlist: { id: [ STATUS_CLOSED, { id: 'id' }, { id: 'opid' }, null, {} ] }
+		} )
+		watchForType( SET_CHAT_OPERATOR, () => {
+			done()
+		} )
+		store.dispatch( customerInboundMessage( { id: 'id' }, { id: '123', text: 'hello' } ) )
 	} )
 } )

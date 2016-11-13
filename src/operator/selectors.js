@@ -8,8 +8,10 @@ import {
 	sort,
 	defaultTo,
 	values,
-	both
+	both,
+	equals
 } from 'ramda'
+import { asString } from '../util';
 import {
 	STATUS_AVAILABLE
 } from '../middlewares/socket-io'
@@ -65,3 +67,22 @@ export const haveAvailableCapacity = state => getAvailableCapacity( state ) > 0
 export const getSystemAcceptsCustomers = ( { operators: { system: { acceptsCustomers } } } ) => acceptsCustomers
 
 export const isSystemAcceptingCustomers = both( haveAvailableCapacity, getSystemAcceptsCustomers )
+
+export const getOperatorIdentity = ( id, state ) => view(
+	lensPath( [ 'operators', 'identities', asString( id ) ] ),
+	state
+)
+
+export const getOperatorOnline = ( id, state ) => view(
+	lensPath( [ 'operators', 'identities', asString( id ), 'online' ] ),
+	state
+)
+export const isOperatorStatusAvailable = ( id, state ) => equals(
+	view(
+		lensPath( [ 'operators', 'identities', asString( id ), 'status' ] ),
+		state
+	),
+	STATUS_AVAILABLE
+)
+export const isOperatorOnline = getOperatorOnline
+export const isOperatorAcceptingChats = ( id, state ) => isOperatorOnline( id, state ) && isOperatorStatusAvailable( id, state )
