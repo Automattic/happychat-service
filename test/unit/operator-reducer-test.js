@@ -1,9 +1,10 @@
-import { equal } from 'assert'
+import { equal, deepEqual } from 'assert'
 import { setOperatorCapacity, setOperatorStatus } from 'operator/actions'
 import reducer from 'operator/reducer';
 import { createStore } from 'redux';
 import { REMOTE_USER_KEY } from 'middlewares/socket-io/broadcast'
 import { assoc } from 'ramda'
+import { serializeAction, deserializeAction } from 'store'
 
 describe( 'Operator reducer', () => {
 	it( 'should set operator status', () => {
@@ -22,5 +23,15 @@ describe( 'Operator reducer', () => {
 		const store = createStore( reducer, { identities: { 'user-a': { capacity: 2 } } } )
 		store.dispatch( assoc( REMOTE_USER_KEY, { id: 'user-a' }, setOperatorCapacity( 'a' ) ) )
 		equal( store.getState().identities[ 'user-a' ].capacity, 2 )
+	} )
+
+	it( 'should remove sockets on serialize', () => {
+		const store = createStore( reducer, {
+			sockets: { 'socket-a': 'operator-a' },
+			user_sockets: { 'socket-b': 'user-b' }
+		} )
+		store.dispatch( serializeAction() );
+		deepEqual( store.getState().sockets, {} );
+		deepEqual( store.getState().user_sockets, {} );
 	} )
 } )
