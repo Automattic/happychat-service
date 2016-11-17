@@ -9,7 +9,7 @@ const debug = require( 'debug' )( 'happychat:main' )
 
 export const reducer = combineReducers( { operators: operatorReducer, chatlist: chatlistReducer } )
 
-export const service = ( server, { customerAuthenticator, agentAuthenticator, operatorAuthenticator, state } ) => {
+export const service = ( server, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, state ) => {
 	debug( 'configuring socket.io server' )
 
 	const io = new IO( server )
