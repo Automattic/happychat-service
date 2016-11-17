@@ -111,6 +111,8 @@ const sockets = ( state = {}, action ) => {
 
 const system = ( state = { acceptsCustomers: false }, action ) => {
 	switch ( action.type ) {
+		case SERIALIZE:
+			return state
 		case SET_SYSTEM_ACCEPTS_CUSTOMERS:
 			return assign( {}, state, { acceptsCustomers: action.isEnabled } )
 	}
