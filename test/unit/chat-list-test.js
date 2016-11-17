@@ -51,26 +51,6 @@ describe( 'ChatList component', () => {
 		chatlistWithState()
 	} )
 
-	it( 'should notify when new chat has started', ( done ) => {
-		watchForTypeOnce( NOTIFY_CHAT_STATUS_CHANGED, ( { status, chat_id } ) => {
-			equal( status, 'pending' )
-			equal( chat_id, 'chat-id' )
-			watchForTypeOnce( NOTIFY_CHAT_STATUS_CHANGED, ( { status: status2, lastStatus } ) => {
-				equal( status2, 'assigning' )
-				equal( lastStatus, 'pending' )
-				done()
-			} )
-		} )
-		emitCustomerMessage()
-	} )
-
-	it( 'should request operator for chat', ( done ) => {
-		watchingMiddleware.watchForType( ASSIGN_CHAT, () => {
-			done()
-		} )
-		emitCustomerMessage()
-	} )
-
 	const connectOperator = ( operator, capacity = 1, status = 'available' ) => new Promise( resolve => {
 		// have an operator join
 		auth = () => Promise.resolve( merge( operator, { capacity, status } ) )
@@ -86,6 +66,27 @@ describe( 'ChatList component', () => {
 				} )
 			} )
 		} )
+	} )
+
+	it( 'should notify when new chat has started', ( done ) => {
+		watchForTypeOnce( NOTIFY_CHAT_STATUS_CHANGED, ( { status, chat_id } ) => {
+			equal( status, 'pending' )
+			equal( chat_id, 'chat-id' )
+			debug( 'first status check' )
+			watchForTypeOnce( NOTIFY_CHAT_STATUS_CHANGED, ( { status: status2, lastStatus } ) => {
+				equal( status2, 'assigning' )
+				equal( lastStatus, 'pending' )
+				done()
+			} )
+		} )
+		connectOperator( { id: 'op' } ).then( () => emitCustomerMessage() )
+	} )
+
+	it( 'should request operator for chat', ( done ) => {
+		watchingMiddleware.watchForType( ASSIGN_CHAT, () => {
+			done()
+		} )
+		connectOperator( { id: 'op' } ).then( () => emitCustomerMessage() )
 	} )
 
 	it( 'should move chat to active when operator found', () =>
