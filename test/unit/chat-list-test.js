@@ -3,6 +3,7 @@ import { EventEmitter } from 'events'
 import { merge } from 'ramda'
 import mockio from '../mock-io'
 import createStore from 'store'
+import { reducer } from 'service'
 import WatchingMiddleware from '../mock-middleware'
 import {
 	ASSIGN_CHAT,
@@ -43,7 +44,7 @@ describe( 'ChatList component', () => {
 		store = createStore( {
 			operatorAuth: doAuth,
 			io, middlewares: [ watchingMiddleware.middleware() ], timeout: 100
-		}, state )
+		}, state, reducer )
 	}
 
 	beforeEach( () => {

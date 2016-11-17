@@ -3,6 +3,7 @@ import mockio from '../mock-io'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
 import createStore from 'store'
+import { reducer } from 'service'
 import WatchingMiddleware from '../mock-middleware'
 import { INSERT_PENDING_CHAT } from 'chat-list/actions'
 import {
@@ -58,7 +59,7 @@ describe( 'Operators', () => {
 			io,
 			operatorAuth: doAuth,
 			middlewares: [ watchingMiddleware.middleware() ]
-		} )
+		}, undefined, reducer )
 	} )
 
 	it( 'should send current state to operator', done => {

@@ -2,6 +2,7 @@ import { equal } from 'assert'
 import { EventEmitter } from 'events'
 import assign from 'lodash/assign'
 import createStore from 'store'
+import { reducer } from 'service'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
 import middlewareInterface from 'middleware-interface'
@@ -35,7 +36,7 @@ describe( 'Controller middleware', () => {
 			chatlist: chats,
 			messageMiddlewares: compat.middlewares(),
 			middlewares: [ watchingMiddleware.middleware() ]
-		} )
+		}, undefined, reducer )
 	} )
 
 	it( 'should register middleware', () => {

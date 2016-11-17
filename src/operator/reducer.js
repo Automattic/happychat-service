@@ -29,6 +29,7 @@ import {
 	SET_OPERATOR_STATUS,
 	SET_USER_OFFLINE
 } from './actions'
+import { SERIALIZE } from '../store'
 
 // Reducers
 const user_sockets = ( state = {}, action ) => {
@@ -43,6 +44,8 @@ const user_sockets = ( state = {}, action ) => {
 			return assign( {}, state, set( {}, user.id, reject( sockets, socket.id ) ) )
 		case REMOVE_USER:
 			return omit( state, user.id )
+		case SERIALIZE:
+			return {}
 		default:
 			return state
 	}
@@ -116,6 +119,8 @@ const sockets = ( state = {}, action ) => {
 	switch ( action.type ) {
 		case UPDATE_IDENTITY:
 			return assign( {}, state, set( {}, socket.id, user.id ) )
+		case SERIALIZE:
+			return {}
 		default:
 			return state
 	}
@@ -123,6 +128,8 @@ const sockets = ( state = {}, action ) => {
 
 const system = ( state = { acceptsCustomers: false }, action ) => {
 	switch ( action.type ) {
+		case SERIALIZE:
+			return state
 		case SET_SYSTEM_ACCEPTS_CUSTOMERS:
 			return assign( {}, state, { acceptsCustomers: action.isEnabled } )
 	}

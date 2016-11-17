@@ -1,6 +1,7 @@
 import { equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
 import createStore from 'store'
+import { reducer } from 'service'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
 import {
@@ -37,7 +38,7 @@ describe( 'Controller', () => {
 			agentAuth: () => Promise.resolve( 'agent' ),
 			operatorAuth: () => Promise.resolve( 'operator' ),
 			middlewares: [ watchingMiddleware.middleware() ]
-		} )
+		}, undefined, reducer )
 	} )
 
 	const mockUser = { id: 'user-id', displayName: 'Furiosa' }
