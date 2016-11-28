@@ -27,7 +27,8 @@ import {
 	ASSIGN_CHAT,
 	SET_CHAT_MISSED,
 	CLOSE_CHAT,
-	AUTOCLOSE_CHAT
+	AUTOCLOSE_CHAT,
+	OPERATOR_JOIN
 } from './actions'
 import {
 	OPERATOR_OPEN_CHAT_FOR_CLIENTS,
@@ -94,6 +95,7 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 		case REMOVE_USER:
 			return setMembers( dissoc( asString( action.user.id ), membersView( state ) ), state )
 		case OPERATOR_CHAT_JOIN:
+		case OPERATOR_JOIN:
 			return setMembers( set( lensProp( action.user.id ), true, membersView( state ) ), state )
 		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
 			return setMembers( set( lensProp( action.operator.id ), true, membersView( state ) ), state )
@@ -130,8 +132,9 @@ export default ( state = {}, action ) => {
 		case INSERT_PENDING_CHAT:
 		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
 		case ASSIGN_CHAT:
+		case OPERATOR_JOIN:
 			const lens = lensProp( action.chat.id )
-			return set( lens, chat( view( lens, state ), action ) )( state )
+			return assoc( asString( action.chat.id ), chat( view( lens, state ), action ) )( state )
 		case SET_CHATS_RECOVERED:
 			return reduce(
 				( chats, chat_id ) => set(

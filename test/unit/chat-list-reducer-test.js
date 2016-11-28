@@ -21,7 +21,8 @@ import {
 	insertPendingChat,
 	closeChat,
 	setChatsRecovered,
-	setOperatorChatsAbandoned
+	setOperatorChatsAbandoned,
+	operatorJoinChat,
 } from 'chat-list/actions'
 import {
 	operatorChatLeave,
@@ -145,6 +146,14 @@ describe( 'ChatList reducer', () => {
 			deepEqual( members, {} )
 		},
 		{ id: [ 'open', { id: 'id' }, {}, 1, { user: true } ] }
+	) )
+
+	it( 'should add operator as member when joined', dispatchAction(
+		operatorJoinChat( new Object, { id: 'chat_id'}, { id: 'operator' } ),
+		state => {
+			deepEqual( state.chatlist.chat_id[4], { operator: true } )
+		},
+		{ chat_id: ['open', { id: 'chat_id'}, { id: 'operator' }, 1, {} ] }
 	) )
 
 	it( 'should remove operator as member with int id', dispatchAction(
