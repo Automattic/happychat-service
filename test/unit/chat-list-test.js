@@ -327,7 +327,7 @@ describe( 'ChatList component', () => {
 		} )
 
 		it( 'should autoclose chat after specified time', done => {
-			watchForType( AUTOCLOSE_CHAT, action => {
+			watchForType( AUTOCLOSE_CHAT, () => {
 				done()
 			} )
 			store.dispatch( customerDisconnect( chat, user ) )
