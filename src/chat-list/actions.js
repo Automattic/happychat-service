@@ -24,6 +24,8 @@ export const CUSTOMER_JOIN = 'CUSTOMER_JOIN'
 export const OPERATOR_JOIN = 'OPERATOR_JOIN'
 export const CUSTOMER_SOCKET_DISCONNECT = 'CUSTOMER_SOCKET_DISCONNECT'
 export const CUSTOMER_DISCONNECT = 'CUSTOMER_DISCONNECT'
+export const AUTOCLOSE_CHAT = 'AUTOCLOSE_CHAT'
+export const CUSTOMER_LEFT = 'CUSTOMER_LEFT'
 
 export const reassignChats = ( operator, socket ) => ( {
 	type: REASSIGN_CHATS, operator, socket
@@ -127,4 +129,12 @@ export const customerSocketDisconnect = ( socket, chat, user ) => ( {
 
 export const customerDisconnect = ( chat, user ) => ( {
 	type: CUSTOMER_DISCONNECT, chat, user
+} )
+
+export const customerLeft = id => ( {
+	type: CUSTOMER_LEFT, id
+} )
+
+export const autocloseChat = id => ( {
+	type: AUTOCLOSE_CHAT, id
 } )

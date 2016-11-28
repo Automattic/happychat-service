@@ -6,15 +6,19 @@ import {
 	view,
 	lensPath
 } from 'ramda'
-
+import {
+	delayAction, cancelAction
+} from 'redux-delayed-dispatch'
 import {
 	ASSIGN_CHAT,
 	ASSIGN_NEXT_CHAT,
+	AUTOCLOSE_CHAT,
 	CLOSE_CHAT,
 	CUSTOMER_RECEIVE_TYPING,
 	CUSTOMER_INBOUND_MESSAGE,
 	CUSTOMER_RECEIVE_MESSAGE,
 	CUSTOMER_DISCONNECT,
+	CUSTOMER_LEFT,
 	CUSTOMER_JOIN,
 	INSERT_PENDING_CHAT,
 	REASSIGN_CHATS,
@@ -39,12 +43,14 @@ import {
 	customerJoin,
 	operatorJoinChat,
 	customerSocketDisconnect,
-	customerDisconnect
+	customerDisconnect,
+	customerLeft,
+	autocloseChat
 } from '../../chat-list/actions'
 import {
 	getChat,
 	getChatOperator,
-	getChatsForOperator,
+	getOpenChatsForOperator,
 	getChatStatus,
 	getNextMissedChat,
 	getNextPendingChat,
@@ -151,7 +157,7 @@ const getClients = ( server, room ) => new Promise( ( resolve, reject ) => {
 	} )
 } )
 
-export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, customerAuth ) => store => {
+export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, customerDisconnectMessageTimeout = 10000 }, customerAuth ) => store => {
 	const operator_io = io.of( '/operator' )
 	const customer_io = io.of( '/customer' )
 	.on( 'connection', socket => {
@@ -232,6 +238,9 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 		const state = store.getState()
 		const status = getChatStatus( chat.id, state )
 		const operator = getChatOperator( chat.id, state )
+
+		store.dispatch( cancelAction( customerLeft( chat.id ) ) )
+		store.dispatch( cancelAction( autocloseChat( chat.id ) ) )
 		if ( operator && !isEmpty( operator ) && status === STATUS_CUSTOMER_DISCONNECT ) {
 			store.dispatch( setChatOperator( chat.id, operator ) )
 			return
@@ -250,19 +259,18 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 			debug( 'Customer disconnected without starting chat', chat.id )
 			return;
 		}
+		debug( 'Delaying customer left', customerDisconnectMessageTimeout )
 		store.dispatch( setChatCustomerDisconnect( chat.id ) )
-		setTimeout( () => {
-			const status = getChatStatus( chat.id, store.getState() )
-			if ( status !== STATUS_CUSTOMER_DISCONNECT ) {
-				return
-			}
+		store.dispatch( delayAction( customerLeft( chat.id ), customerDisconnectMessageTimeout ) )
+		store.dispatch( delayAction( autocloseChat( chat.id ), customerDisconnectTimeout ) )
+	}
 
-			const operator = getChatOperator( chat.id, store.getState() )
-			store.dispatch( operatorInboundMessage( chat.id, operator, merge(
-				makeEventMessage( 'customer left', chat.id ),
-				{ meta: { event_type: 'customer-leave' } }
-			) ) )
-		}, customerDisconnectTimeout )
+	const handleCustomerLeft = action => {
+		const operator = getChatOperator( action.id, store.getState() )
+		store.dispatch( operatorInboundMessage( action.id, operator, merge(
+			makeEventMessage( 'customer left', action.id ),
+			{ meta: { event_type: 'customer-leave' } }
+		) ) )
 	}
 
 	const handleOperatorReady = ( { user, socket } ) => {
@@ -324,6 +332,24 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 
 		// TODO: check if there is an operator in the room
 		debug( 'chat exists time to make sure someone is home' )
+	}
+
+	const handleAutocloseChat = action => {
+		let chat = getChat( action.id, store.getState() )
+		if ( !chat ) {
+			debug( 'autoclose chat that does not exist' )
+			chat = { id: action.id }
+		}
+		operator_io.to( customerRoom( chat.id ) ).emit( 'chat.close', chat, {} )
+		store.dispatch( operatorInboundMessage( chat.id, {}, merge(
+			makeEventMessage( 'chat closed after customer left', chat.id ),
+			{ meta: { event_type: 'close' } }
+		) ) )
+		removeOperatorsFromChat( chat ).
+		then(
+			() => debug( 'removed all operators from chat stream', chat.id ),
+			e => debug( 'failed to remove operator sockets from chat', chat.id, e )
+		)
 	}
 
 	const handleCloseChat = ( action ) => {
@@ -403,7 +429,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 	const handleReassignChats = ( action ) => {
 		const { operator } = action
 		debug( 'reassign', operator.id )
-		const chats = getChatsForOperator( operator.id, store.getState() )
+		const chats = getOpenChatsForOperator( operator.id, store.getState() )
 		debug( 'reassign existing chants to operator', operator.id )
 		Promise.all( map(
 			chat => emitChatOpenToOperator( chat, operator ),
@@ -522,6 +548,12 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000 }, cust
 				return next( action )
 			case CLOSE_CHAT:
 				handleCloseChat( action )
+				break
+			case CUSTOMER_LEFT:
+				handleCustomerLeft( action )
+				break
+			case AUTOCLOSE_CHAT:
+				handleAutocloseChat( action )
 				break
 		}
 		const result = next( action )

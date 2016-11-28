@@ -157,4 +157,9 @@ const chatStatusNotifier = ( { getState, dispatch } ) => next => action => {
 	return result;
 }
 
-export default [ updateLoadMiddleware, notifySystemStatus, chatStatusNotifier ]
+// when a chat is disconnected
+const chatDisconnectMonitor = ( { getState, dispatch } ) => next => action => {
+	return next( action );
+}
+
+export default [ updateLoadMiddleware, notifySystemStatus, chatStatusNotifier, chatDisconnectMonitor ]

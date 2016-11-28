@@ -6,7 +6,9 @@ import createStore from 'store'
 import { reducer } from 'service'
 import WatchingMiddleware from '../mock-middleware'
 import {
+	AUTOCLOSE_CHAT,
 	ASSIGN_CHAT,
+	CUSTOMER_LEFT,
 	CLOSE_CHAT,
 	OPERATOR_RECEIVE_MESSAGE,
 	SET_OPERATOR_CHATS_ABANDONED,
@@ -311,18 +313,23 @@ describe( 'ChatList component', () => {
 		} )
 
 		it( 'should send a message when customer disconnects', ( done ) => {
-			watchForType( OPERATOR_RECEIVE_MESSAGE, action => {
-				const { id, message } = action
-				equal(
-					getChatStatus( id, store.getState() ),
-					'customer-disconnect'
-				)
-				equal( id, chat.id )
-				equal( message.type, 'event' )
-				equal( message.meta.event_type, 'customer-leave' )
-				done()
+			watchForType( CUSTOMER_LEFT, () => {
+				watchForTypeOnce( OPERATOR_RECEIVE_MESSAGE, action => {
+					const { id, message } = action
+					equal( id, chat.id )
+					equal( message.type, 'event' )
+					equal( message.meta.event_type, 'customer-leave' )
+					done()
+				} )
 			} )
 
+			store.dispatch( customerDisconnect( chat, user ) )
+		} )
+
+		it( 'should autoclose chat after specified time', done => {
+			watchForType( AUTOCLOSE_CHAT, action => {
+				done()
+			} )
 			store.dispatch( customerDisconnect( chat, user ) )
 		} )
 

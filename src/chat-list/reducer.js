@@ -11,6 +11,11 @@ import {
 	when,
 	defaultTo,
 	lensIndex,
+	assoc,
+	not,
+	equals,
+	both,
+	tap
 } from 'ramda'
 import { asString } from '../util'
 import {
@@ -21,7 +26,8 @@ import {
 	SET_CHAT_CUSTOMER_DISCONNECT,
 	ASSIGN_CHAT,
 	SET_CHAT_MISSED,
-	CLOSE_CHAT
+	CLOSE_CHAT,
+	AUTOCLOSE_CHAT
 } from './actions'
 import {
 	OPERATOR_OPEN_CHAT_FOR_CLIENTS,
@@ -68,6 +74,7 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 				setChat( action.chat )
 			)( state )
 		case CLOSE_CHAT:
+		case AUTOCLOSE_CHAT:
 			return setStatus( STATUS_CLOSED, state );
 		case SET_CHAT_OPERATOR:
 		case SET_CHATS_RECOVERED:
@@ -98,14 +105,20 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 
 const whereOperatorIs = id => compose(
 	whereEq( { id } ),
+	tap( v => console.error( 'wth?', id, v ) ),
 	defaultTo( {} ),
 	operatorView
 )
-
-const whenOperatorIs = id => when( whereOperatorIs( id ) )
+const whereStatusIsNot = status => compose(
+	not,
+	equals( status ),
+	statusView
+)
 
 export default ( state = {}, action ) => {
 	switch ( action.type ) {
+		case AUTOCLOSE_CHAT:
+			return assoc( action.id, chat( view( lensProp( action.id ), state ), action ), state )
 		case SET_CHAT_MISSED:
 		case SET_CHAT_OPERATOR:
 		case OPERATOR_CHAT_JOIN:
@@ -131,7 +144,13 @@ export default ( state = {}, action ) => {
 			)
 		case SET_OPERATOR_CHATS_ABANDONED:
 			return map(
-				whenOperatorIs( action.operator_id )( value => chat( value, action ) )
+				when(
+					both(
+						whereOperatorIs( action.operator_id ),
+						whereStatusIsNot( STATUS_CLOSED )
+					),
+					value => chat( value, action )
+				)
 			)( state )
 		case REMOVE_USER:
 		case SET_USER_OFFLINE:

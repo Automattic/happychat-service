@@ -167,9 +167,9 @@ describe( 'ChatList reducer', () => {
 			} } )
 		},
 		{
-			a: [ STATUS_PENDING, 'a', { id: 'op-id' } ],
-			2: [ STATUS_PENDING, '2', { id: 'op-id' } ],
-			3: [ STATUS_PENDING, '3', { id: 'op-id' } ],
+			a: [ STATUS_ASSIGNED, 'a', { id: 'op-id' } ],
+			2: [ STATUS_ASSIGNED, '2', { id: 'op-id' } ],
+			3: [ STATUS_ASSIGNED, '3', { id: 'op-id' } ],
 			4: [ STATUS_PENDING, '4', { id: 'other' } ]
 		}
 	) )

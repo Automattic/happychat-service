@@ -50,6 +50,29 @@ export const getChatsForOperator = ( operator_id, state ) => compose(
 	selectChatlist
 )( state )
 
+export const getOpenChatsForOperator = ( operator_id, state ) => compose(
+	// take the 2nd item (the chat)
+	mapToChat,
+	// filter the values of chat
+	filter( both(
+		compose(
+			// compare operator.id to operator_id and match when equal
+			whereEq( { id: operator_id } ),
+			defaultTo( {} ),
+			// take the 3rd item in chat row [STATUS, CHAT, OPERATOR]
+			operatorView
+		),
+		compose(
+			not,
+			equals( STATUS_CLOSED ),
+			statusView
+		)
+	) ),
+	// get the values of chat
+	values,
+	selectChatlist
+)( state )
+
 export const getChatMembers = compose( mapToMembers, values, selectChatlist )
 export const getOpenChatMembers = compose( mapToMembers, filterClosed, values, selectChatlist )
 export const getAllChats = compose( mapToChat, values, selectChatlist )
