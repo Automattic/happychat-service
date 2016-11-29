@@ -30,7 +30,7 @@ const selectChatlist = view( lensProp( 'chatlist' ) )
 const mapToChat = map( chatView )
 const mapToMembers = map( membersView )
 const matchingStatus = status => filter( compose( equals( status ), statusView ) )
-const filterClosed = compose( not, whereEq( { status: STATUS_CLOSED } ) )
+const filterClosed = filter( compose( not, equals( STATUS_CLOSED ), statusView ) )
 /*
 Selects all chats assigned/associated with given operator id
 */

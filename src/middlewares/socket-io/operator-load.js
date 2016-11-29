@@ -11,7 +11,8 @@ import {
 	ASSIGN_CHAT,
 	SET_CHATS_RECOVERED,
 	SET_OPERATOR_CHATS_ABANDONED,
-	CLOSE_CHAT
+	CLOSE_CHAT,
+	OPERATOR_JOIN
 } from '../../chat-list/actions'
 import { haveAvailableCapacity, isSystemAcceptingCustomers } from '../../operator/selectors';
 import {
@@ -85,6 +86,7 @@ const updateLoadMiddleware = ( { getState, dispatch } ) => next => action => {
 		// event that capacity has increased
 		case OPERATOR_CHAT_LEAVE:
 		case OPERATOR_CHAT_JOIN:
+		case OPERATOR_JOIN:
 		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
 		case CLOSE_CHAT:
 		case SET_CHAT_OPERATOR:
@@ -157,9 +159,4 @@ const chatStatusNotifier = ( { getState, dispatch } ) => next => action => {
 	return result;
 }
 
-// when a chat is disconnected
-const chatDisconnectMonitor = ( { getState, dispatch } ) => next => action => {
-	return next( action );
-}
-
-export default [ updateLoadMiddleware, notifySystemStatus, chatStatusNotifier, chatDisconnectMonitor ]
+export default [ updateLoadMiddleware, notifySystemStatus, chatStatusNotifier ]
