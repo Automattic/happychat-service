@@ -15,7 +15,6 @@ import {
 	not,
 	equals,
 	both,
-	tap
 } from 'ramda'
 import { asString } from '../util'
 import {
@@ -107,7 +106,6 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 
 const whereOperatorIs = id => compose(
 	whereEq( { id } ),
-	tap( v => console.error( 'wth?', id, v ) ),
 	defaultTo( {} ),
 	operatorView
 )
