@@ -18,8 +18,6 @@ const onAuthorized = ( { socket, agent, store } ) => {
   - `author_type`: One of `customer`, `support`, `agent`
 	 */
 	socket.on( 'message', ( message ) => {
-		// TODO: validate message
-		debug( 'received message', message )
 		dispatch( agentInboundMessage( agent, message ) )
 	} )
 
