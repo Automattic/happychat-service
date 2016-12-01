@@ -18,7 +18,7 @@ const logger = () => next => action => {
 		debug( 'ACTION_END', action.type )
 		return result
 	} catch ( e ) {
-		debug( 'ACTION_ERROR', action.type, e.descripton )
+		debug( 'ACTION_ERROR', action.type, e.message )
 		debug( 'ACTION', action )
 		throw ( e )
 	}

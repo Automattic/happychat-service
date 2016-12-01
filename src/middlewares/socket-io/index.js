@@ -52,7 +52,7 @@ const join = ( { socket, store, user, io } ) => {
 		store.dispatch( removeUserSocket( socket, user ) );
 		io.in( user_room ).clients( ( error, clients ) => {
 			if ( error ) {
-				debug( 'failed to query clients', error.description )
+				debug( 'failed to query clients', error.message )
 				return;
 			}
 			if ( clients.length > 0 ) {
@@ -103,7 +103,7 @@ export default ( io, auth ) => ( store ) => {
 	io.on( 'connection', ( socket ) => {
 		auth( socket ).then(
 			user => join( { socket, store, user, io } ),
-			e => debug( 'operator auth failed', e.description )
+			e => debug( 'operator auth failed', e.message )
 		)
 	} )
 

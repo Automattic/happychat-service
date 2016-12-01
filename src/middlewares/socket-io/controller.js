@@ -104,7 +104,7 @@ export default ( middlewares ) => store => {
 			}
 			resolveMiddleware( result )
 		} )
-		.catch( e => debug( e.description ) )
+		.catch( e => debug( e.message ) )
 	} )
 
 	// toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
@@ -112,14 +112,12 @@ export default ( middlewares ) => store => {
 		const { user, socket, chat } = action
 		log.customer.findLog( chat.id )
 		.then( ( messages ) => {
-			debug( 'emitting chat log to customer', user, messages.length, log.customer )
 			socket.emit( 'log', messages )
 		} )
 	}
 
 	const handleOperatorJoin = action => {
 		const { chat, user: operator, socket } = action
-		debug( 'emitting chat log to operator', operator.id )
 		log.operator.findLog( chat.id )
 		.then( ( messages ) => {
 			socket.emit( 'log', chat, messages )
@@ -140,7 +138,6 @@ export default ( middlewares ) => store => {
 	const handleCustomerInboundMessage = ( action ) => {
 		const { chat, message } = action
 		// broadcast the message to
-		debug( 'customer message action', action, chat.id, message.id, message.text )
 		const origin = 'customer'
 		runMiddleware( { origin, destination: 'customer', chat, message } )
 		.then( m => new Promise( ( resolve, reject ) => {
@@ -150,13 +147,13 @@ export default ( middlewares ) => store => {
 		.then( m => store.dispatch(
 			customerReceiveMessage( chat.id, m )
 		) )
-		.catch( e => debug( 'middleware failed ', e.description ) )
+		.catch( e => debug( 'middleware failed ', e.message ) )
 
 		runMiddleware( { origin, destination: 'agent', chat, message } )
 		.then( m => store.dispatch(
 			agentReceiveMessage( formatAgentMessage( 'customer', chat.id, chat.id, m ) ) )
 		)
-		.catch( e => debug( 'middleware failed', e.description ) )
+		.catch( e => debug( 'middleware failed', e.message ) )
 
 		runMiddleware( { origin, destination: 'operator', chat, message } )
 		.then( m => new Promise( ( resolve, reject ) => {
@@ -164,7 +161,7 @@ export default ( middlewares ) => store => {
 			.then( () => resolve( m ), reject )
 		} ) )
 		.then( m => store.dispatch( operatorReceiveMessage( chat.id, m ) ) )
-		.catch( e => debug( 'middleware failed', e.description ) )
+		.catch( e => debug( 'middleware failed', e.message ) )
 	}
 
 	const handleOperatorInboundMessage = action => {

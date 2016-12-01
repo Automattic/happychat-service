@@ -157,7 +157,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		customerAuth( socket )
 		.then(
 			user => join( { socket, user, io: customer_io, store } ),
-			e => debug( 'customer auth failed', e.description )
+			e => debug( 'customer auth failed', e.message )
 		)
 	} )
 
@@ -285,7 +285,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 			{ meta: { operator, event_type: 'leave' } }
 		) ) )
 		removeOperatorFromChat( operator, chat )
-		.catch( e => debug( 'failed to remove operator from chat', e.description ) )
+		.catch( e => debug( 'failed to remove operator from chat', e.message ) )
 	}, chat_id => debug( 'chat.leave without existing chat', chat_id ) )( action.chat_id, action.user )
 
 	const handleCustomerInboundMessage = ( { chat } ) => {
@@ -324,7 +324,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 			{ meta: { event_type: 'close' } }
 		) ) )
 		removeOperatorsFromChat( chat )
-			.catch( e => debug( 'failed to remove operator sockets from chat', chat.id, e.description ) )
+			.catch( e => debug( 'failed to remove operator sockets from chat', chat.id, e.message ) )
 	}
 
 	const handleCloseChat = ( action ) => {
@@ -341,7 +341,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		removeOperatorsFromChat( chat )
 		.then(
 			() => debug( 'removed all operators from chat stream', chat_id ),
-			e => debug( 'failed to remove operator sockets from chat', chat_id, e.description )
+			e => debug( 'failed to remove operator sockets from chat', chat_id, e.message )
 		)
 	}
 
@@ -373,7 +373,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 				store.dispatch( setChatOperator( chat.id, toUser ) )
 			},
 			e => {
-				debug( 'failed to transfer chat', e.description )
+				debug( 'failed to transfer chat', e.message )
 				store.dispatch( setChatMissed( chat.id, e ) )
 			}
 		)
@@ -409,7 +409,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		.then(
 			// NOTE: this may cause existing clients to get notifications of chat.open
 			( result ) => debug( 'Reassigned', result.length, 'to operator client', operator.id ),
-			e => debug( 'failed to reassign chats to operator', operator.id, e.description )
+			e => debug( 'failed to reassign chats to operator', operator.id, e.message )
 		)
 	}
 
@@ -435,7 +435,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 					debug( 'no chats to recover' )
 				}
 			},
-			e => debug( 'Failed to recover chats for operator', operator.id, e.description )
+			e => debug( 'Failed to recover chats for operator', operator.id, e.message )
 		)
 	}
 

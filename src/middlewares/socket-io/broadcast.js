@@ -64,7 +64,7 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 
 	const handleOperatorReady = action => {
 		join( io, action.socket )
-			.catch( e => debug( 'Failed to add user socket to broadcast', action.user.id, e.description ) )
+			.catch( e => debug( 'Failed to add user socket to broadcast', action.user.id, e.message ) )
 		listen( action.socket )
 		sendState( action.socket )
 	}
