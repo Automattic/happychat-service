@@ -15,7 +15,6 @@ const join = ( io, socket ) => new Promise( ( resolve, reject ) => {
 		if ( e ) {
 			return reject( e )
 		}
-		debug( 'broadcasting to socket', socket.id )
 		resolve( socket )
 	} )
 } )
@@ -36,7 +35,6 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 		// socket needs to catch up to current state
 		const stateListener = callback => callback( version, currentState )
 		const dispatchListener = ( remoteAction, callback ) => {
-			debug( 'received remote dispatch', remoteAction.type )
 			const user = selectSocketIdentity( getState(), socket )
 			const action = {
 				type: REMOTE_ACTION_TYPE,
@@ -65,9 +63,8 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 	const sendState = socket => socket.emit( 'broadcast.state', version, currentState )
 
 	const handleOperatorReady = action => {
-		debug( 'setting up broadcast', action.socket.id )
 		join( io, action.socket )
-			.catch( e => debug( 'Failed to add user socket to broadcast', action.user.id, e ) )
+			.catch( e => debug( 'Failed to add user socket to broadcast', action.user.id, e.description ) )
 		listen( action.socket )
 		sendState( action.socket )
 	}

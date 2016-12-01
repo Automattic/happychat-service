@@ -44,7 +44,7 @@ import {
 	assoc,
 	mapObjIndexed
 } from 'ramda'
-const debug = require( 'debug' )( 'happychat:middleware:load' )
+
 const setOrAddOne = ifElse( equals( true ), always( 1 ), add( 1 ) )
 const sumMemberships = ( total, members ) => evolve(
 	// map all keys of members to a function that evolves the merged arguments
@@ -147,7 +147,6 @@ const chatStatusNotifier = ( { getState, dispatch } ) => next => action => {
 	const previous = mapStatus( getState() )( chat_ids )
 	const result = next( action )
 	const current = mapStatus( getState() )( chat_ids )
-	debug( 'time to track the status of', previous, current )
 	mapObjIndexed(
 		( state, id ) => {
 			if ( state !== previous[id] ) {

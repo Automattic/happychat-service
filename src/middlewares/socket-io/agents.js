@@ -31,7 +31,7 @@ const onAuthorized = ( { socket, agent, store } ) => {
 		debug( 'agent joining role', role )
 		socket.join( role, e => {
 			if ( e ) {
-				return debug( 'failed to add agent role', role, e )
+				return debug( 'failed to add agent role', role, e.description )
 			}
 			done()
 		} )
@@ -43,7 +43,7 @@ const onAuthorized = ( { socket, agent, store } ) => {
 export default ( io, auth ) => store => {
 	io.on( 'connection', socket => auth( socket ).then(
 		agent => onAuthorized( { socket, store, agent } ),
-		e => debug( 'connection closed', e )
+		e => debug( 'connection closed', e.description )
 	) )
 		// {
 // 		auth( socket, user => onAuthorized( { socket, store, agent: user } ) )

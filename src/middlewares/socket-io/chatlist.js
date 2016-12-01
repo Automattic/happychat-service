@@ -104,17 +104,13 @@ const whenNoClients = ( io, room ) => new Promise( ( resolve, reject ) => {
 const withTimeout = ( promise, ms = 1000 ) => Promise.race( [
 	promise,
 	new Promise( ( resolve, reject ) => {
-		debug( 'starting timeout timer', ms )
 		setTimeout( () => reject( new Error( 'timeout' ) ), ms )
 	} )
 ] )
 
 const init = ( { user, socket, io, store, chat } ) => () => {
-	debug( 'chat initialized', chat )
-
 	socket.on( 'message', ( { text, id, meta } ) => {
 		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
-		debug( 'received customer message', message )
 		// all customer connections for this user receive the message
 		store.dispatch( customerInboundMessage( chat, message ) )
 	} )
@@ -124,8 +120,6 @@ const init = ( { user, socket, io, store, chat } ) => () => {
 	} )
 
 	socket.on( 'disconnect', () => {
-		debug( 'socket.on.disconnect', user.id );
-
 		store.dispatch( customerSocketDisconnect( socket, chat, user ) )
 
 		whenNoClients( io, customerRoom( chat.id ) )
@@ -137,7 +131,6 @@ const init = ( { user, socket, io, store, chat } ) => () => {
 }
 
 const join = ( { io, user, socket, store } ) => {
-	debug( 'user joined', user )
 	const chat = {
 		user_id: user.id,
 		id: user.session_id,
@@ -161,11 +154,10 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 	const operator_io = io.of( '/operator' )
 	const customer_io = io.of( '/customer' )
 	.on( 'connection', socket => {
-		debug( 'customer connecting' )
 		customerAuth( socket )
 		.then(
 			user => join( { socket, user, io: customer_io, store } ),
-			e => debug( 'customer auth failed', e )
+			e => debug( 'customer auth failed', e.description )
 		)
 	} )
 
@@ -208,14 +200,12 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 			map( socket => new Promise( ( resolve, reject ) => {
 				socket.join( customer_room_name, ( error ) => {
 					if ( error ) return reject( error )
-					debug( 'joined the room', customer_room_name, socket.id )
 					resolve( socket )
 					store.dispatch( operatorJoinChat( socket, chat, operator ) )
 				} )
 			} ), clients )
 		) )
-		.then( ( clients ) => new Promise( resolve => {
-			debug( 'opening chat for clients', clients.length, map( ( { id } ) => id, clients ) )
+		.then( () => new Promise( resolve => {
 			operator_io.to( operator_room_name ).emit( 'chat.open', chat )
 			resolve( { chat, operator } )
 		} ) )
@@ -223,7 +213,6 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 
 	const handleCustomerReceiveMessage = action => {
 		const { id, message } = action
-		debug( 'sending message to customer', customerRoom( id ), message.text )
 		customer_io.to( customerRoom( id ) ).emit( 'message', message )
 	}
 
@@ -259,7 +248,6 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 			debug( 'Customer disconnected without starting chat', chat.id )
 			return;
 		}
-		debug( 'Delaying customer left', customerDisconnectMessageTimeout )
 		store.dispatch( setChatCustomerDisconnect( chat.id ) )
 		store.dispatch( delayAction( customerLeft( chat.id ), customerDisconnectMessageTimeout ) )
 		store.dispatch( delayAction( autocloseChat( chat.id ), customerDisconnectTimeout ) )
@@ -279,12 +267,10 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 	}
 
 	const handleOperatorDisconnect = action => {
-		debug( 'operator disconnected mark chats as abandoned' )
 		store.dispatch( setOperatorChatsAbandoned( action.user.id ) )
 	}
 
 	const handleOperatorChatJoin = action => whenChatExists( ( chat, operator ) => {
-		debug( 'operator joining chat', chat.id, operator )
 		emitChatOpenToOperator( chat, operator )
 		store.dispatch( operatorInboundMessage( chat.id, operator, merge(
 			makeEventMessage( 'operator joined', chat.id ),
@@ -299,13 +285,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 			{ meta: { operator, event_type: 'leave' } }
 		) ) )
 		removeOperatorFromChat( operator, chat )
-		.then(
-			() => {
-				// send redux action to update loads
-				debug( 'removed operator from chat', operator.id )
-			},
-			e => debug( 'failed to remove operator from chat', e )
-		)
+		.catch( e => debug( 'failed to remove operator from chat', e.description ) )
 	}, chat_id => debug( 'chat.leave without existing chat', chat_id ) )( action.chat_id, action.user )
 
 	const handleCustomerInboundMessage = ( { chat } ) => {
@@ -315,7 +295,6 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		const isClosed = isChatStatusClosed( chat.id, state )
 
 		if ( operator && isOperatorAcceptingChats( operator.id, state ) && isClosed ) {
-			debug( 'reassign chat to operator', operator.id )
 			emitChatOpenToOperator( chat, operator )
 			.then(
 				() => store.dispatch( setChatOperator( chat.id, operator ) ),
@@ -337,7 +316,6 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 	const handleAutocloseChat = action => {
 		let chat = getChat( action.id, store.getState() )
 		if ( !chat ) {
-			debug( 'autoclose chat that does not exist' )
 			chat = { id: action.id }
 		}
 		operator_io.to( customerRoom( chat.id ) ).emit( 'chat.close', chat, {} )
@@ -345,18 +323,14 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 			makeEventMessage( 'chat closed after customer left', chat.id ),
 			{ meta: { event_type: 'close' } }
 		) ) )
-		removeOperatorsFromChat( chat ).
-		then(
-			() => debug( 'removed all operators from chat stream', chat.id ),
-			e => debug( 'failed to remove operator sockets from chat', chat.id, e )
-		)
+		removeOperatorsFromChat( chat )
+			.catch( e => debug( 'failed to remove operator sockets from chat', chat.id, e.description ) )
 	}
 
 	const handleCloseChat = ( action ) => {
 		const { chat_id, operator } = action
 		let chat = getChat( chat_id, store.getState() )
 		if ( !chat ) {
-			debug( 'operator tried to close a chat that no longer exists', chat_id, operator.id )
 			chat = { id: chat_id }
 		}
 		operator_io.to( customerRoom( chat_id ) ).emit( 'chat.close', chat, operator )
@@ -367,7 +341,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		removeOperatorsFromChat( chat )
 		.then(
 			() => debug( 'removed all operators from chat stream', chat_id ),
-			e => debug( 'failed to remove operator sockets from chat', chat_id, e )
+			e => debug( 'failed to remove operator sockets from chat', chat_id, e.description )
 		)
 	}
 
@@ -381,7 +355,6 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 	}
 
 	const handleTransferChat = ( action ) => {
-		debug( 'time to do the transfer dance', action, store.getState() )
 		const { chat_id, toUser, user } = action
 		const chat = getChat( chat_id, store.getState() )
 		withTimeout( new Promise( ( resolve, reject ) => {
@@ -400,7 +373,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 				store.dispatch( setChatOperator( chat.id, toUser ) )
 			},
 			e => {
-				debug( 'failed to transfer chat', e )
+				debug( 'failed to transfer chat', e.description )
 				store.dispatch( setChatMissed( chat.id, e ) )
 			}
 		)
@@ -428,9 +401,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 
 	const handleReassignChats = ( action ) => {
 		const { operator } = action
-		debug( 'reassign', operator.id )
 		const chats = getOpenChatsForOperator( operator.id, store.getState() )
-		debug( 'reassign existing chants to operator', operator.id )
 		Promise.all( map(
 			chat => emitChatOpenToOperator( chat, operator ),
 			chats
@@ -438,7 +409,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		.then(
 			// NOTE: this may cause existing clients to get notifications of chat.open
 			( result ) => debug( 'Reassigned', result.length, 'to operator client', operator.id ),
-			e => debug( 'failed to reassign chats to operator', operator.id, e )
+			e => debug( 'failed to reassign chats to operator', operator.id, e.description )
 		)
 	}
 
@@ -464,7 +435,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 					debug( 'no chats to recover' )
 				}
 			},
-			e => debug( 'Failed to recover chats for operator', operator.id, e )
+			e => debug( 'Failed to recover chats for operator', operator.id, e.description )
 		)
 	}
 
@@ -498,11 +469,9 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 	return next => action => {
 		switch ( action.type ) {
 			case NOTIFY_SYSTEM_STATUS_CHANGE:
-				debug( 'NOTIFY_SYSTEM_STATUS_CHANGE', action.enabled )
 				customer_io.emit( 'accept', action.enabled )
 				break;
 			case NOTIFY_CHAT_STATUS_CHANGED:
-				debug( 'NOTIFY_CHAT_STATUS_CHANGED', action.chat_id, action.status, action.lastStatus )
 				const status = getChatStatus( action.chat_id, store.getState() );
 				customer_io.to( customerRoom( action.chat_id ) ).emit( 'status', status )
 				break;

@@ -34,8 +34,6 @@ export const customerRoom = id => `customer/${ id }`;
 export const operatorRoom = id => `operator/${ id }`;
 
 const join = ( { socket, store, user, io } ) => {
-	debug( 'initialize the operator', user )
-
 	const user_room = operatorRoom( user.id )
 
 	const selectIdentity = userId => selectUser( store.getState(), userId );
@@ -54,7 +52,7 @@ const join = ( { socket, store, user, io } ) => {
 		store.dispatch( removeUserSocket( socket, user ) );
 		io.in( user_room ).clients( ( error, clients ) => {
 			if ( error ) {
-				debug( 'failed to query clients', error )
+				debug( 'failed to query clients', error.description )
 				return;
 			}
 			if ( clients.length > 0 ) {
@@ -75,19 +73,15 @@ const join = ( { socket, store, user, io } ) => {
 		const userIdentity = identityForUser( user )
 		const message = { id: id, session_id: chat_id, text, timestamp: timestamp(), user: userIdentity, meta }
 		// all customer connections for this user receive the message
-		debug( 'broadcasting message', user.id, id, message )
-		// store.dispatch( operatorMessage( chat_id, user, message ) );
 		store.dispatch( operatorInboundMessage( chat_id, user, message ) )
 	} )
 
 	socket.on( 'chat.typing', ( chat_id, text ) => {
 		const identity = identityForUser( user )
-		debug( 'received operator `typing` event', identity.id, chat_id, text );
 		store.dispatch( operatorTyping( chat_id, identity, text ) );
 	} )
 
 	socket.on( 'chat.join', ( chat_id ) => {
-		debug( 'client requesting to join', chat_id )
 		store.dispatch( operatorChatJoin( chat_id, user ) )
 	} )
 
@@ -100,7 +94,6 @@ const join = ( { socket, store, user, io } ) => {
 	} )
 
 	socket.on( 'chat.transfer', ( chat_id, user_id ) => {
-		debug( 'transfer', chat_id, 'to', user_id )
 		const toUser = selectIdentity( user_id )
 		store.dispatch( operatorChatTransfer( chat_id, user, toUser ) );
 	} )
@@ -108,10 +101,9 @@ const join = ( { socket, store, user, io } ) => {
 
 export default ( io, auth ) => ( store ) => {
 	io.on( 'connection', ( socket ) => {
-		debug( 'operator connecting' )
 		auth( socket ).then(
 			user => join( { socket, store, user, io } ),
-			e => debug( 'operator auth failed', e )
+			e => debug( 'operator auth failed', e.description )
 		)
 	} )
 

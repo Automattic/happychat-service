@@ -104,7 +104,7 @@ export default ( middlewares ) => store => {
 			}
 			resolveMiddleware( result )
 		} )
-		.catch( e => debug( e.message ) )
+		.catch( e => debug( e.description ) )
 	} )
 
 	// toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
@@ -142,23 +142,21 @@ export default ( middlewares ) => store => {
 		// broadcast the message to
 		debug( 'customer message action', action, chat.id, message.id, message.text )
 		const origin = 'customer'
-		debug( 'run the middleware and log message' )
 		runMiddleware( { origin, destination: 'customer', chat, message } )
 		.then( m => new Promise( ( resolve, reject ) => {
-			debug( 'logging customer message' )
 			log.customer.recordCustomerMessage( chat, m )
 			.then( () => resolve( m ), reject )
 		} ) )
 		.then( m => store.dispatch(
 			customerReceiveMessage( chat.id, m )
 		) )
-		.catch( e => debug( 'middleware failed ', e ) )
+		.catch( e => debug( 'middleware failed ', e.description ) )
 
 		runMiddleware( { origin, destination: 'agent', chat, message } )
 		.then( m => store.dispatch(
 			agentReceiveMessage( formatAgentMessage( 'customer', chat.id, chat.id, m ) ) )
 		)
-		.catch( e => debug( 'middleware failed', e ) )
+		.catch( e => debug( 'middleware failed', e.description ) )
 
 		runMiddleware( { origin, destination: 'operator', chat, message } )
 		.then( m => new Promise( ( resolve, reject ) => {
@@ -166,7 +164,7 @@ export default ( middlewares ) => store => {
 			.then( () => resolve( m ), reject )
 		} ) )
 		.then( m => store.dispatch( operatorReceiveMessage( chat.id, m ) ) )
-		.catch( e => debug( 'middleware failed', e ) )
+		.catch( e => debug( 'middleware failed', e.description ) )
 	}
 
 	const handleOperatorInboundMessage = action => {
