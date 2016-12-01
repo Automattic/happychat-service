@@ -21,7 +21,6 @@ const logger = ( { getState } ) => next => action => {
 		debug( 'ACTION_ERROR', action.type, e )
 		debug( 'STACK_TRACE', e.stack )
 		debug( 'ACTION', action )
-		debug( 'STATE', JSON.stringify( getState(), null, '  ' ) )
 		throw ( e )
 	}
 }
