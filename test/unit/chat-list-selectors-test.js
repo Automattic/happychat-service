@@ -1,10 +1,10 @@
 import {
 	getChatMembers,
 	getOpenChatMembers
-} from '../../src/chat-list/selectors'
+} from 'chat-list/selectors'
 import {
 	STATUS_CLOSED,
-} from '../../src/chat-list/reducer';
+} from 'chat-list/reducer';
 import { deepEqual } from 'assert'
 
 describe( 'Chat List selectors', () => {

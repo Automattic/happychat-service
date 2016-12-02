@@ -24,8 +24,6 @@ import {
 
 const debug = require( 'debug' )( 'happychat:middleware:operators' )
 
-export const STATUS_AVAILABLE = 'available';
-
 const identityForUser = ( { id, displayName, avatarURL } ) => (
 	{ id, displayName, avatarURL }
 )

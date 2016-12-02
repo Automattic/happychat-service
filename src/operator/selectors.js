@@ -9,12 +9,13 @@ import {
 	defaultTo,
 	values,
 	both,
-	equals
+	equals,
+	ifElse,
+	whereEq
 } from 'ramda'
 import { asString } from '../util';
-import {
-	STATUS_AVAILABLE
-} from '../middlewares/socket-io'
+
+export const STATUS_AVAILABLE = 'available';
 
 const weight = ( { load, capacity } ) => ( capacity - load ) / capacity
 const compare = ( a, b ) => {
@@ -50,10 +51,15 @@ export const selectSocketIdentity = ( { operators: { sockets, identities } }, so
 )
 export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
 export const selectTotalCapacity = ( { operators: { identities } }, matchingStatus = STATUS_AVAILABLE ) => reduce( identities,
-	( { load: totalLoad, capacity: totalCapacity }, { load, capacity, status } ) => ( {
-		load: totalLoad + ( status === matchingStatus ? parseInt( load ) : 0 ),
-		capacity: totalCapacity + ( status === matchingStatus ? parseInt( capacity ) : 0 )
-	} ),
+	( { load: totalLoad, capacity: totalCapacity }, { load, capacity, status, online } ) =>
+	ifElse(
+		whereEq( { status: matchingStatus, online: true} ),
+		() => ( {
+			load: totalLoad + parseInt( load ),
+			capacity: totalCapacity + parseInt( capacity )
+		} ),
+		() => ( { load: totalLoad, capacity: totalCapacity } )
+	)( { status, online } ),
 	{ load: 0, capacity: 0 }
 )
 
