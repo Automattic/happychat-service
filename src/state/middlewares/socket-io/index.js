@@ -3,7 +3,7 @@ import {
 	OPERATOR_RECEIVE_MESSAGE,
 	operatorInboundMessage,
 	closeChat
-} from '../../chat-list/actions'
+} from '../../chatlist/actions'
 import {
 	OPERATOR_RECEIVE_TYPING,
 	operatorChatLeave,

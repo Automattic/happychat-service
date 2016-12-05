@@ -1,6 +1,6 @@
 import { ok, deepEqual } from 'assert'
 import util, { authenticators } from './util'
-import { STATUS_CLOSED } from 'chat-list/reducer'
+import { STATUS_CLOSED } from 'state/chatlist/reducer'
 
 const debug = require( 'debug' )( 'happychat:test:join-chat' )
 

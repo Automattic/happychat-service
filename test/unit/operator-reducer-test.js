@@ -1,10 +1,10 @@
 import { deepEqual, equal } from 'assert'
-import { setOperatorCapacity, setOperatorStatus } from 'operator/actions'
-import reducer from 'operator/reducer';
+import { setOperatorCapacity, setOperatorStatus } from 'state/operator/actions'
+import reducer from 'state/operator/reducer';
 import { createStore } from 'redux';
-import { REMOTE_USER_KEY } from 'middlewares/socket-io/broadcast'
+import { REMOTE_USER_KEY } from 'state/middlewares/socket-io/broadcast'
 import { assoc } from 'ramda'
-import { serializeAction } from 'store'
+import { serializeAction } from 'state'
 
 describe( 'Operator reducer', () => {
 	it( 'should set operator status', () => {

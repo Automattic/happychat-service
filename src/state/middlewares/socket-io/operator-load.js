@@ -1,4 +1,8 @@
-import { getOpenChatMembers, getChatsForOperator, getChatStatus } from '../../chat-list/selectors';
+import {
+	getOpenChatMembers,
+	getChatsForOperator,
+	getChatStatus
+} from '../../chatlist/selectors';
 import {
 	assignNextChat,
 	notifySystemStatusChange,
@@ -13,7 +17,7 @@ import {
 	SET_OPERATOR_CHATS_ABANDONED,
 	CLOSE_CHAT,
 	OPERATOR_JOIN
-} from '../../chat-list/actions'
+} from '../../chatlist/actions'
 import { haveAvailableCapacity, isSystemAcceptingCustomers } from '../../operator/selectors';
 import {
 	setUserLoads,

@@ -1,6 +1,6 @@
 import { equal } from 'assert'
 import util, { authenticators } from './util'
-import { STATUS_AVAILABLE } from 'operator/selectors'
+import { STATUS_AVAILABLE } from 'state/operator/selectors'
 
 const debug = require( 'debug' )( 'happychat:test:integration' )
 

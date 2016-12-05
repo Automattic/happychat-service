@@ -1,5 +1,5 @@
 import { equal } from 'assert'
-import { getAvailableCapacity, STATUS_AVAILABLE } from 'operator/selectors'
+import { getAvailableCapacity, STATUS_AVAILABLE } from 'state/operator/selectors'
 
 describe( 'Operator selectors', () => {
 	it( 'should calculate available capacity', () => {

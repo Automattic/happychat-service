@@ -1,7 +1,7 @@
 import { equal } from 'assert'
 import { EventEmitter } from 'events'
 import assign from 'lodash/assign'
-import createStore from 'store'
+import createStore from 'state'
 import { reducer } from 'service'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
@@ -13,7 +13,7 @@ import {
 	AGENT_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_MESSAGE,
 	CUSTOMER_RECEIVE_MESSAGE
-} from 'chat-list/actions'
+} from 'state/chatlist/actions'
 
 describe( 'Controller middleware', () => {
 	let customers, agents, operators, watchingMiddleware

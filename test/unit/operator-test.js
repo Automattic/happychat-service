@@ -2,10 +2,10 @@ import { ok, equal, deepEqual } from 'assert'
 import mockio from '../mock-io'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
-import createStore from 'store'
+import createStore from 'state'
 import { reducer } from 'service'
 import WatchingMiddleware from '../mock-middleware'
-import { INSERT_PENDING_CHAT } from 'chat-list/actions'
+import { INSERT_PENDING_CHAT } from 'state/chatlist/actions'
 import {
 	setAcceptsCustomers,
 	operatorChatJoin,
@@ -13,15 +13,15 @@ import {
 	SET_USER_OFFLINE,
 	OPERATOR_RECEIVE_TYPING,
 	OPERATOR_CHAT_LEAVE
-} from 'operator/actions'
-import { selectTotalCapacity } from 'operator/selectors'
+} from 'state/operator/actions'
+import { selectTotalCapacity } from 'state/operator/selectors'
 import {
 	insertPendingChat,
 	OPERATOR_INBOUND_MESSAGE,
 	SET_CHAT_OPERATOR
-} from 'chat-list/actions'
-import { OPERATOR_READY } from 'operator/actions'
-import { STATUS_AVAILABLE } from 'middlewares/socket-io'
+} from 'state/chatlist/actions'
+import { OPERATOR_READY } from 'state/operator/actions'
+import { STATUS_AVAILABLE } from 'state/middlewares/socket-io'
 
 const debug = require( 'debug' )( 'happychat:operator' )
 

@@ -29,7 +29,7 @@ import {
 	SET_OPERATOR_STATUS,
 	SET_USER_OFFLINE
 } from './actions'
-import { SERIALIZE } from '../store'
+import { SERIALIZE } from '../'
 
 // Reducers
 const user_sockets = ( state = {}, action ) => {

@@ -15,7 +15,7 @@ import {
 	CUSTOMER_TYPING,
 	CUSTOMER_JOIN,
 	OPERATOR_JOIN,
-} from '../../chat-list/actions'
+} from '../../chatlist/actions'
 
 const debug = require( 'debug' )( 'happychat:controller' )
 

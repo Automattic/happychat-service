@@ -1,6 +1,6 @@
 import { equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
-import createStore from 'store'
+import createStore from 'state'
 import { reducer } from 'service'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
@@ -17,12 +17,12 @@ import {
 	customerTyping,
 	customerJoin,
 	customerDisconnect
-} from 'chat-list/actions';
+} from 'state/chatlist/actions';
 import {
 	OPERATOR_RECEIVE_TYPING,
 	updateIdentity,
 	operatorTyping
-} from 'operator/actions';
+} from 'state/operator/actions';
 
 describe( 'Controller', () => {
 	let store, watchingMiddleware, io

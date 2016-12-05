@@ -46,7 +46,7 @@ import {
 	customerDisconnect,
 	customerLeft,
 	autocloseChat
-} from '../../chat-list/actions'
+} from '../../chatlist/actions'
 import {
 	getChat,
 	getChatOperator,
@@ -60,10 +60,10 @@ import {
 	isChatStatusNew,
 	isChatStatusClosed,
 	isAssigningChat,
-} from '../../chat-list/selectors'
+} from '../../chatlist/selectors'
 import {
 	STATUS_CUSTOMER_DISCONNECT,
-} from '../../chat-list/reducer'
+} from '../../chatlist/reducer'
 import {
 	REMOVE_USER,
 	SET_USER_OFFLINE,
@@ -80,7 +80,7 @@ import {
 } from '../../operator/selectors'
 import { makeEventMessage, timestamp } from '../../util'
 
-const debug = require( 'debug' )( 'happychat:middleware:chat-list' )
+const debug = require( 'debug' )( 'happychat:middleware:chatlist' )
 
 import { customerRoom, operatorRoom } from './index'
 

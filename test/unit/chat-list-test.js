@@ -2,7 +2,7 @@ import { ok, equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
 import { merge } from 'ramda'
 import mockio from '../mock-io'
-import createStore from 'store'
+import createStore from 'state'
 import { reducer } from 'service'
 import WatchingMiddleware from '../mock-middleware'
 import {
@@ -19,12 +19,12 @@ import {
 	customerInboundMessage,
 	customerJoin,
 	customerDisconnect
-} from 'chat-list/actions';
-import { STATUS_CLOSED } from 'chat-list/reducer'
-import { OPERATOR_CHAT_TRANSFER } from 'operator/actions'
-import { getChatStatus, getChatOperator } from 'chat-list/selectors'
+} from 'state/chatlist/actions';
+import { STATUS_CLOSED } from 'state/chatlist/reducer'
+import { OPERATOR_CHAT_TRANSFER } from 'state/operator/actions'
+import { getChatStatus, getChatOperator } from 'state/chatlist/selectors'
 
-const debug = require( 'debug' )( 'happychat:chat-list:test' )
+const debug = require( 'debug' )( 'happychat:chatlist:test' )
 
 describe( 'ChatList component', () => {
 	let store

@@ -1,6 +1,6 @@
 import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
-import createStore from 'store'
+import createStore from 'state'
 import { reducer } from 'service'
 import WatchingMiddleware from '../mock-middleware'
 import {
@@ -11,7 +11,7 @@ import {
 	CUSTOMER_DISCONNECT,
 	customerReceiveTyping,
 	customerReceiveMessage
-} from 'chat-list/actions'
+} from 'state/chatlist/actions'
 
 const debug = require( 'debug' )( 'happychat:test:customer' )
 

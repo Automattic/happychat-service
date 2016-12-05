@@ -1,11 +1,13 @@
+import { createStore, combineReducers } from 'redux'
 import { deepEqual, equal, ok } from 'assert'
+
 import reducer, {
 	STATUS_PENDING,
 	STATUS_MISSED,
 	STATUS_ABANDONED,
 	STATUS_ASSIGNED,
 	STATUS_CLOSED
-} from 'chat-list/reducer'
+} from 'state/chatlist/reducer'
 import {
 	// selectors
 	getChatsForOperator,
@@ -15,7 +17,7 @@ import {
 	getOperatorAbandonedChats,
 	getChatsWithStatus,
 	havePendingChat,
-} from 'chat-list/selectors'
+} from 'state/chatlist/selectors'
 import {
 	// actions
 	insertPendingChat,
@@ -23,13 +25,11 @@ import {
 	setChatsRecovered,
 	setOperatorChatsAbandoned,
 	operatorJoinChat,
-} from 'chat-list/actions'
+} from 'state/chatlist/actions'
 import {
 	operatorChatLeave,
 	operatorChatJoin,
-} from 'operator/actions'
-
-import { createStore, combineReducers } from 'redux'
+} from 'state/operator/actions'
 
 const debug = require( 'debug' )( 'happychat:test' )
 

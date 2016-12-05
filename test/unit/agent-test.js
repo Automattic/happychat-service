@@ -1,8 +1,7 @@
-import { EventEmitter } from 'events'
 import { ok, equal, deepEqual } from 'assert'
 import mockIO from '../mock-io'
-import agentMiddleware from 'middlewares/socket-io/agents'
-import { AGENT_INBOUND_MESSAGE, agentReceiveMessage } from 'chat-list/actions'
+import agentMiddleware from 'state/middlewares/socket-io/agents'
+import { AGENT_INBOUND_MESSAGE, agentReceiveMessage } from 'state/chatlist/actions'
 
 const debug = require( 'debug' )( 'happychat:test:agent' )
 
@@ -95,5 +94,4 @@ describe( 'Agent Service', () => {
 		client.on( 'init', () => done() )
 		io.emit( 'connection', socket )
 	} )
-
 } )

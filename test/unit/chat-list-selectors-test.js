@@ -1,11 +1,11 @@
+import { deepEqual } from 'assert'
 import {
 	getChatMembers,
 	getOpenChatMembers
-} from 'chat-list/selectors'
+} from 'state/chatlist/selectors'
 import {
 	STATUS_CLOSED,
-} from 'chat-list/reducer';
-import { deepEqual } from 'assert'
+} from 'state/chatlist/reducer';
 
 describe( 'Chat List selectors', () => {
 	const state = { chatlist: {
