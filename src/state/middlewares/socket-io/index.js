@@ -17,7 +17,8 @@ import {
 	operatorTyping,
 	operatorChatJoin,
 	operatorReady,
-	operatorChatTransfer
+	operatorChatTransfer,
+	operatorChatBacklogRequest
 } from '../../operator/actions'
 
 import {
@@ -96,6 +97,11 @@ const join = ( { socket, store, user, io } ) => {
 	socket.on( 'chat.transfer', ( chat_id, user_id ) => {
 		const toUser = selectIdentity( user_id )
 		store.dispatch( operatorChatTransfer( chat_id, user, toUser ) );
+	} )
+
+	socket.on( 'chat.backlog', ( chat_id, message_id, message_timestamp ) => {
+		debug( 'operator is requesting chat backlog', chat_id, 'before', message_id, message_timestamp )
+		store.dispatch( operatorChatBacklogRequest( chat_id, user, message_id, message_timestamp ) )
 	} )
 }
 

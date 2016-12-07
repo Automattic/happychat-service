@@ -206,6 +206,17 @@ describe( 'Operators', () => {
 				equal( messages.length, 2 )
 			} )
 		} )
+
+		it( 'should request backlog for chat', () => new Promise( resolve => {
+			const [ connection ] = connections;
+			watchForType( OPERATOR_CHAT_BACKLOG_REQUEST, action => {
+				deepEqual( action.user, op )
+				equal( action.message_id, 'message-id' )
+				equal( action.message_timestamp, 'timestamp' )
+				resolve()
+			} )
+			connection.client.emit( 'chat.backlog', 'chat-id', 'message-id', 'timestamp' )
+		} ) )
 	} )
 
 	describe( 'with multiple connected users', () => {
