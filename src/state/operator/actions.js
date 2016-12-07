@@ -16,7 +16,7 @@ import {
 	OPERATOR_READY,
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
-	SET_USER_OFFLINE,
+	SET_USER_OFFLINE
 } from '../action-types'
 
 export const setUserOffline = user => ( {
@@ -84,3 +84,7 @@ export const operatorChatTransfer = ( chat_id, user, toUser ) => (
 export const operatorReady = ( user, socket, room ) => (
 	{ type: OPERATOR_READY, user, socket, room }
 );
+
+export const operatorChatBacklogRequest = ( chat_id, user, message_id, message_timestamp ) => ( {
+	type: OPERATOR_CHAT_BACKLOG_REQUEST, chat_id, user, message_id, message_timestamp
+} )
