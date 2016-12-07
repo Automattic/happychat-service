@@ -1,5 +1,5 @@
 import { ok, equal, deepEqual } from 'assert'
-import { createStore } from 'redux'
+import { createStore, compose, applyMiddleware } from 'redux'
 import mockio from '../mock-io'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
@@ -56,11 +56,13 @@ describe( 'Operators', () => {
 		( { socket, client } = server.newClient( socketid ) )
 		watchingMiddleware = new WatchingMiddleware()
 		// Need to add a real socket io middleware here
-		store = createStore( reducer, enhancer( {
-			io,
-			operatorAuth: doAuth,
-			middlewares: [ watchingMiddleware.middleware() ]
-		} ) )
+		store = createStore( reducer, compose(
+			enhancer( {
+				io,
+				operatorAuth: doAuth
+			} ),
+			applyMiddleware( watchingMiddleware.middleware() )
+		) )
 	} )
 
 	it( 'should send current state to operator', done => {

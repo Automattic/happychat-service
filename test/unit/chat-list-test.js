@@ -1,9 +1,9 @@
 import { ok, equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
 import { merge } from 'ramda'
-import { createStore } from 'redux'
+import { createStore, compose, applyMiddleware } from 'redux'
 import mockio from '../mock-io'
-import ehancer from 'state'
+import enhancer from 'state'
 import { reducer } from 'service'
 import WatchingMiddleware from '../mock-middleware'
 import {
@@ -44,10 +44,14 @@ describe( 'ChatList component', () => {
 	const chatlistWithState = ( state ) => {
 		( { server: io } = mockio() )
 		watchingMiddleware = new WatchingMiddleware()
-		store = createStore( reducer, state, ehancer( {
-			operatorAuth: doAuth,
-			io, middlewares: [ watchingMiddleware.middleware() ], timeout: 100
-		} ) )
+		store = createStore( reducer, state, compose(
+			enhancer( {
+				operatorAuth: doAuth,
+				io,
+				timeout: 100
+			} ),
+			applyMiddleware( watchingMiddleware.middleware() )
+		) )
 	}
 
 	beforeEach( () => {

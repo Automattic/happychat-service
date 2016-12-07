@@ -1,6 +1,6 @@
 import delayedDispatch from 'redux-delayed-dispatch';
 
-import { createStore, applyMiddleware } from 'redux'
+import { applyMiddleware, compose } from 'redux'
 import operatorMiddleware from './middlewares/socket-io'
 import chatlistMiddleware from './middlewares/socket-io/chatlist'
 import broadcastMiddleware from './middlewares/socket-io/broadcast'
@@ -31,24 +31,21 @@ export const serializeAction = () => ( { type: SERIALIZE } )
 export const deserializeAction = () => ( { type: DESERIALIZE } )
 
 export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], middlewares = [], timeout = undefined } ) => {
-	const middleware = applyMiddleware(
+	return applyMiddleware(
 			logger,
-			...middlewares,
 			delayedDispatch,
 			controllerMiddleware( messageMiddlewares ),
 			operatorMiddleware( io.of( '/operator' ), operatorAuth ),
 			agentMiddleware( io.of( '/agent' ), agentAuth ),
-			chatlistMiddleware( { io, timeout, customerDisconnectTimeout: timeout, customerDisconnectMessageTimeout: timeout }, customerAuth ),
+			chatlistMiddleware( {
+				io,
+				timeout,
+				customerDisconnectTimeout: timeout,
+				customerDisconnectMessageTimeout: timeout
+			}, customerAuth ),
 			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
 			...operatorLoadMiddleware,
 	)
-	return createStore => ( reducer, initialState, enhancer ) => {
-		// if there's an enhancer, compose it?
-		if ( enhancer ) {
-			return createStore( reducer, initialState, compose( enhancer, middleware ) )
-		}
-		return createStore( reducer, initialState, middleware )
-	}
 }
 
 // export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], middlewares = [], timeout = undefined }, state, reducer ) => {

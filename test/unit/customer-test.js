@@ -1,4 +1,4 @@
-import { createStore } from 'redux'
+import { createStore, compose, applyMiddleware } from 'redux'
 import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
 import enhancer from 'state'
@@ -32,12 +32,14 @@ describe( 'Customer Service', () => {
 		// export default ( { io, customers, operators, chatlist, middlewares = [], timeout = undefined }, state ) => createStore(
 		const { server: io } = mockIO()
 		watching = new WatchingMiddleware()
-		store = createStore( reducer, enhancer( {
-			io: io,
-			customerAuth: doAuth,
-			timeout: 10,
-			middlewares: [ watching.middleware() ]
-		} ) )
+		store = createStore( reducer, compose(
+			enhancer( {
+				io: io,
+				customerAuth: doAuth,
+				timeout: 10
+			} ),
+			applyMiddleware( watching.middleware() ),
+		) )
 		server = io.of( '/customer' )
 		auth = () => Promise.resolve( mockUser );
 		( { client, socket } = server.newClient() );
@@ -129,7 +131,7 @@ describe( 'Customer Service', () => {
 				ok( !accepted )
 				done()
 			} )
-			customerEvents.emit( 'accept', { id: mockUser.session_id }, false )
+			// customerEvents.emit( 'accept', { id: mockUser.session_id }, false )
 		} )
 	} )
 

@@ -1,6 +1,6 @@
 import { equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
-import { createStore } from 'redux'
+import { createStore, compose, applyMiddleware } from 'redux'
 import enhancer from 'state'
 import { reducer } from 'service'
 import mockio from '../mock-io'
@@ -33,13 +33,15 @@ describe( 'Controller', () => {
 	beforeEach( () => {
 		io = mockio().server
 		watchingMiddleware = new WatchingMiddleware()
-		store = createStore( reducer, enhancer( {
-			io,
-			customerAuth: () => Promise.resolve( 'customer' ),
-			agentAuth: () => Promise.resolve( 'agent' ),
-			operatorAuth: () => Promise.resolve( 'operator' ),
-			middlewares: [ watchingMiddleware.middleware() ]
-		} ) )
+		store = createStore( reducer, compose(
+			enhancer( {
+				io,
+				customerAuth: () => Promise.resolve( 'customer' ),
+				agentAuth: () => Promise.resolve( 'agent' ),
+				operatorAuth: () => Promise.resolve( 'operator' ),
+			} ),
+			applyMiddleware( watchingMiddleware.middleware() )
+		) )
 	} )
 
 	const mockUser = { id: 'user-id', displayName: 'Furiosa' }
