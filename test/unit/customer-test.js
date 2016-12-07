@@ -1,6 +1,7 @@
+import { createStore } from 'redux'
 import mockIO from '../mock-io'
 import { contains, ok, equal, deepEqual } from '../assert'
-import createStore from 'state'
+import enhancer from 'state'
 import { reducer } from 'service'
 import WatchingMiddleware from '../mock-middleware'
 import {
@@ -31,12 +32,12 @@ describe( 'Customer Service', () => {
 		// export default ( { io, customers, operators, chatlist, middlewares = [], timeout = undefined }, state ) => createStore(
 		const { server: io } = mockIO()
 		watching = new WatchingMiddleware()
-		store = createStore( {
+		store = createStore( reducer, enhancer( {
 			io: io,
 			customerAuth: doAuth,
 			timeout: 10,
 			middlewares: [ watching.middleware() ]
-		}, undefined, reducer )
+		} ) )
 		server = io.of( '/customer' )
 		auth = () => Promise.resolve( mockUser );
 		( { client, socket } = server.newClient() );

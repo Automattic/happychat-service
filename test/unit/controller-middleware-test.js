@@ -1,7 +1,8 @@
+import { createStore } from 'redux'
 import { equal } from 'assert'
 import { EventEmitter } from 'events'
 import assign from 'lodash/assign'
-import createStore from 'state'
+import ehancer from 'state'
 import { reducer } from 'service'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
@@ -28,7 +29,7 @@ describe( 'Controller middleware', () => {
 		let chats = new EventEmitter()
 		compat = middlewareInterface()
 		watchingMiddleware = new WatchingMiddleware()
-		store = createStore( {
+		store = createStore( reducer, ehancer( {
 			io: mockio().server,
 			customers,
 			operators,
@@ -36,7 +37,7 @@ describe( 'Controller middleware', () => {
 			chatlist: chats,
 			messageMiddlewares: compat.middlewares(),
 			middlewares: [ watchingMiddleware.middleware() ]
-		}, undefined, reducer )
+		} ) )
 	} )
 
 	it( 'should register middleware', () => {

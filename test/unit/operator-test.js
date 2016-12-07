@@ -1,8 +1,9 @@
 import { ok, equal, deepEqual } from 'assert'
+import { createStore } from 'redux'
 import mockio from '../mock-io'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
-import createStore from 'state'
+import enhancer from 'state'
 import { reducer } from 'service'
 import WatchingMiddleware from '../mock-middleware'
 import { INSERT_PENDING_CHAT } from 'state/chatlist/actions'
@@ -55,11 +56,11 @@ describe( 'Operators', () => {
 		( { socket, client } = server.newClient( socketid ) )
 		watchingMiddleware = new WatchingMiddleware()
 		// Need to add a real socket io middleware here
-		store = createStore( {
+		store = createStore( reducer, enhancer( {
 			io,
 			operatorAuth: doAuth,
 			middlewares: [ watchingMiddleware.middleware() ]
-		}, undefined, reducer )
+		} ) )
 	} )
 
 	it( 'should send current state to operator', done => {

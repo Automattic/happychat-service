@@ -1,7 +1,8 @@
 import IO from 'socket.io'
-import createStore from './state'
+import enhancer from './state'
 import reducer from './state/reducer'
 import middlewareInterface from './middleware-interface'
+import { createStore } from 'redux'
 const debug = require( 'debug' )( 'happychat:main' )
 
 export { reducer }
@@ -24,13 +25,13 @@ export const service = ( server, { customerAuthenticator, agentAuthenticator, op
 		} )
 	} )
 
-	const store = createStore( {
+	const store = createStore( reducer, state, enhancer( {
 		io,
 		operatorAuth: auth( operatorAuthenticator ),
 		customerAuth: auth( customerAuthenticator ),
 		agentAuth: auth( agentAuthenticator ),
 		messageMiddlewares: middlewares.middlewares()
-	}, state, reducer );
+	} ) )
 
 	return { io, controller: middlewares.external, store }
 }

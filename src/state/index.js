@@ -30,11 +30,8 @@ export const DESERIALIZE = 'DESERIALIZE';
 export const serializeAction = () => ( { type: SERIALIZE } )
 export const deserializeAction = () => ( { type: DESERIALIZE } )
 
-export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], middlewares = [], timeout = undefined }, state, reducer ) => {
-	return createStore(
-		reducer,
-		state,
-		applyMiddleware(
+export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], middlewares = [], timeout = undefined } ) => {
+	const middleware = applyMiddleware(
 			logger,
 			...middlewares,
 			delayedDispatch,
@@ -44,6 +41,30 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 			chatlistMiddleware( { io, timeout, customerDisconnectTimeout: timeout, customerDisconnectMessageTimeout: timeout }, customerAuth ),
 			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
 			...operatorLoadMiddleware,
-		)
 	)
+	return createStore => ( reducer, initialState, enhancer ) => {
+		// if there's an enhancer, compose it?
+		if ( enhancer ) {
+			return createStore( reducer, initialState, compose( enhancer, middleware ) )
+		}
+		return createStore( reducer, initialState, middleware )
+	}
 }
+
+// export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], middlewares = [], timeout = undefined }, state, reducer ) => {
+// 	return createStore(
+// 		reducer,
+// 		state,
+// 		applyMiddleware(
+// 			logger,
+// 			...middlewares,
+// 			delayedDispatch,
+// 			controllerMiddleware( messageMiddlewares ),
+// 			operatorMiddleware( io.of( '/operator' ), operatorAuth ),
+// 			agentMiddleware( io.of( '/agent' ), agentAuth ),
+// 			chatlistMiddleware( { io, timeout, customerDisconnectTimeout: timeout, customerDisconnectMessageTimeout: timeout }, customerAuth ),
+// 			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
+// 			...operatorLoadMiddleware,
+// 		)
+// 	)
+// }
