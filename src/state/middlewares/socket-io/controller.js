@@ -17,7 +17,8 @@ import {
 	agentReceiveMessage,
 	customerReceiveMessage,
 	customerReceiveTyping,
-	operatorReceiveMessage
+	operatorReceiveMessage,
+	receiveMessage,
 } from '../../chatlist/actions'
 
 const debug = require( 'debug' )( 'happychat:controller' )
@@ -112,7 +113,7 @@ export default ( middlewares ) => store => {
 
 	// toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 	const handleCustomerJoin = action => {
-		const { user, socket, chat } = action
+		const { socket, chat } = action
 		log.customer.findLog( chat.id )
 		.then( ( messages ) => {
 			socket.emit( 'log', messages )
@@ -120,7 +121,7 @@ export default ( middlewares ) => store => {
 	}
 
 	const handleOperatorJoin = action => {
-		const { chat, user: operator, socket } = action
+		const { chat, socket } = action
 		log.operator.findLog( chat.id )
 		.then( ( messages ) => {
 			socket.emit( 'log', chat, messages )
@@ -139,8 +140,10 @@ export default ( middlewares ) => store => {
 	}
 
 	const handleCustomerInboundMessage = ( action ) => {
-		const { chat, message } = action
+		const { chat, message, user } = action
 		// broadcast the message to
+		store.dispatch( receiveMessage( 'customer', chat, message, user ) )
+
 		const origin = 'customer'
 		runMiddleware( { origin, destination: 'customer', chat, message } )
 		.then( m => new Promise( ( resolve, reject ) => {
@@ -169,10 +172,12 @@ export default ( middlewares ) => store => {
 
 	const handleOperatorInboundMessage = action => {
 		const { chat_id, user: operator, message } = action
-		// TODO: look up chat from store?
+
 		const chat = { id: chat_id }
 		debug( 'operator message', chat.id, message.id )
 		const origin = 'operator'
+
+		store.dispatch( receiveMessage( 'operator', chat, message, operator ) )
 
 		runMiddleware( { origin, destination: 'agent', chat, message, user: operator } )
 		.then( m => store.dispatch(
@@ -197,10 +202,12 @@ export default ( middlewares ) => store => {
 	}
 
 	const handleAgentInboundMessage = action => {
-		const { message } = action
+		const { message, agent } = action
 		const chat = { id: message.session_id }
 		const format = ( m ) => assign( {}, { author_type: 'agent' }, m )
 		const origin = 'agent'
+
+		store.dispatch( receiveMessage( 'agent', chat, message, agent ) )
 
 		runMiddleware( { origin, destination: 'agent', chat, message } )
 		.then( m => store.dispatch(

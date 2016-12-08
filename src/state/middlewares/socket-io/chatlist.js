@@ -113,7 +113,7 @@ const init = ( { user, socket, io, store, chat } ) => () => {
 	socket.on( 'message', ( { text, id, meta } ) => {
 		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
 		// all customer connections for this user receive the message
-		store.dispatch( customerInboundMessage( chat, message ) )
+		store.dispatch( customerInboundMessage( chat, message, user ) )
 	} )
 
 	socket.on( 'typing', ( text ) => {
