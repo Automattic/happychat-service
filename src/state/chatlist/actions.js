@@ -26,7 +26,8 @@ import {
 	CUSTOMER_SOCKET_DISCONNECT,
 	CUSTOMER_DISCONNECT,
 	AUTOCLOSE_CHAT,
-	CUSTOMER_LEFT
+	CUSTOMER_LEFT,
+	RECEIVE_CHAT_MESSAGE
 } from '../action-types'
 
 export const reassignChats = ( operator, socket ) => ( {
@@ -139,4 +140,8 @@ export const customerLeft = id => ( {
 
 export const autocloseChat = id => ( {
 	type: AUTOCLOSE_CHAT, id
+} )
+
+export const receiveMessage = ( origin, chat, message, user ) => ( {
+	type: RECEIVE_CHAT_MESSAGE, origin, chat, message, user
 } )
