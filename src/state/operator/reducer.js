@@ -27,9 +27,9 @@ import {
 	SET_USER_LOADS,
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
-	SET_USER_OFFLINE
-} from './actions'
-import { SERIALIZE } from '../'
+	SET_USER_OFFLINE,
+	SERIALIZE
+} from '../action-types'
 
 // Reducers
 const user_sockets = ( state = {}, action ) => {

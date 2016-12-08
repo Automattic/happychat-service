@@ -1,11 +1,13 @@
 import { timestamp } from '../../util'
 import {
 	OPERATOR_RECEIVE_MESSAGE,
+	OPERATOR_RECEIVE_TYPING,
+} from '../../action-types'
+import {
 	operatorInboundMessage,
 	closeChat
 } from '../../chatlist/actions'
 import {
-	OPERATOR_RECEIVE_TYPING,
 	operatorChatLeave,
 	updateUserStatus,
 	updateCapacity,

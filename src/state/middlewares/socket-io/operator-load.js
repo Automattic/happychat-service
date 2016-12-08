@@ -1,12 +1,4 @@
 import {
-	getOpenChatMembers,
-	getChatsForOperator,
-	getChatStatus
-} from '../../chatlist/selectors';
-import {
-	assignNextChat,
-	notifySystemStatusChange,
-	notifyChatStatusChanged,
 	ASSIGN_NEXT_CHAT,
 	SET_CHAT_MISSED,
 	SET_CHAT_OPERATOR,
@@ -16,11 +8,7 @@ import {
 	SET_CHATS_RECOVERED,
 	SET_OPERATOR_CHATS_ABANDONED,
 	CLOSE_CHAT,
-	OPERATOR_JOIN
-} from '../../chatlist/actions'
-import { haveAvailableCapacity, isSystemAcceptingCustomers } from '../../operator/selectors';
-import {
-	setUserLoads,
+	OPERATOR_JOIN,
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_CHAT_JOIN,
 	SET_USER_LOADS,
@@ -28,9 +16,23 @@ import {
 	REMOVE_USER,
 	SET_USER_OFFLINE,
 	SET_OPERATOR_CAPACITY,
-	SET_OPERATOR_STATUS
+	SET_OPERATOR_STATUS,
+	REMOTE_ACTION_TYPE
+} from '../../action-types'
+import {
+	getOpenChatMembers,
+	getChatsForOperator,
+	getChatStatus
+} from '../../chatlist/selectors';
+import {
+	assignNextChat,
+	notifySystemStatusChange,
+	notifyChatStatusChanged,
+} from '../../chatlist/actions'
+import { haveAvailableCapacity, isSystemAcceptingCustomers } from '../../operator/selectors';
+import {
+	setUserLoads,
 } from '../../operator/actions'
-import { REMOTE_ACTION_TYPE } from './broadcast'
 import {
 	compose,
 	reduce,

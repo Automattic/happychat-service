@@ -8,12 +8,14 @@ import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
 import middlewareInterface from 'middleware-interface'
 import {
-	agentInboundMessage,
-	customerInboundMessage,
-	operatorInboundMessage,
 	AGENT_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_MESSAGE,
 	CUSTOMER_RECEIVE_MESSAGE
+} from 'state/action-types'
+import {
+	agentInboundMessage,
+	customerInboundMessage,
+	operatorInboundMessage,
 } from 'state/chatlist/actions'
 
 describe( 'Controller middleware', () => {

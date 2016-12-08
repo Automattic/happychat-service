@@ -10,6 +10,8 @@ import {
 	CUSTOMER_JOIN,
 	CUSTOMER_SOCKET_DISCONNECT,
 	CUSTOMER_DISCONNECT,
+} from 'state/action-types'
+import {
 	customerReceiveTyping,
 	customerReceiveMessage
 } from 'state/chatlist/actions'

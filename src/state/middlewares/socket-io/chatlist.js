@@ -27,6 +27,14 @@ import {
 	SET_CHAT_MISSED,
 	NOTIFY_SYSTEM_STATUS_CHANGE,
 	NOTIFY_CHAT_STATUS_CHANGED,
+	REMOVE_USER,
+	SET_USER_OFFLINE,
+	OPERATOR_CHAT_LEAVE,
+	OPERATOR_READY,
+	OPERATOR_CHAT_JOIN,
+	OPERATOR_CHAT_TRANSFER
+} from '../../action-types'
+import {
 	assignChat,
 	assignNextChat,
 	insertPendingChat,
@@ -64,14 +72,6 @@ import {
 import {
 	STATUS_CUSTOMER_DISCONNECT,
 } from '../../chatlist/reducer'
-import {
-	REMOVE_USER,
-	SET_USER_OFFLINE,
-	OPERATOR_CHAT_LEAVE,
-	OPERATOR_READY,
-	OPERATOR_CHAT_JOIN,
-	OPERATOR_CHAT_TRANSFER
-} from '../../operator/actions'
 import {
 	isSystemAcceptingCustomers,
 	getAvailableOperators,

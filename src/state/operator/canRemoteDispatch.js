@@ -2,7 +2,7 @@ import {
 	SET_SYSTEM_ACCEPTS_CUSTOMERS,
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS
-} from './actions'
+} from '../action-types'
 
 export default ( { action, user } ) => {
 	if ( ! user ) {

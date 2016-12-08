@@ -6,22 +6,23 @@ import reduce from 'lodash/reduce'
 import enhancer from 'state'
 import { reducer } from 'service'
 import WatchingMiddleware from '../mock-middleware'
-import { INSERT_PENDING_CHAT } from 'state/chatlist/actions'
+import {
+	SET_USER_OFFLINE,
+	OPERATOR_RECEIVE_TYPING,
+	OPERATOR_CHAT_LEAVE,
+	OPERATOR_CHAT_BACKLOG_REQUEST,
+	OPERATOR_INBOUND_MESSAGE,
+	SET_CHAT_OPERATOR,
+	INSERT_PENDING_CHAT,
+	OPERATOR_READY
+} from 'state/action-types'
 import {
 	setAcceptsCustomers,
 	operatorChatJoin,
 	operatorChatClose,
-	SET_USER_OFFLINE,
-	OPERATOR_RECEIVE_TYPING,
-	OPERATOR_CHAT_LEAVE
 } from 'state/operator/actions'
 import { selectTotalCapacity } from 'state/operator/selectors'
-import {
-	insertPendingChat,
-	OPERATOR_INBOUND_MESSAGE,
-	SET_CHAT_OPERATOR
-} from 'state/chatlist/actions'
-import { OPERATOR_READY } from 'state/operator/actions'
+import { insertPendingChat } from 'state/chatlist/actions'
 import { STATUS_AVAILABLE } from 'state/middlewares/socket-io'
 
 const debug = require( 'debug' )( 'happychat:operator' )

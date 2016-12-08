@@ -1,13 +1,12 @@
 import jsondiff from 'simperium-jsondiff'
 import { v4 as uuid } from 'uuid'
-import { OPERATOR_READY } from '../../operator/actions'
+import { OPERATOR_READY, REMOTE_ACTION_TYPE } from '../../action-types'
 import { isEmpty } from 'ramda'
 import { selectSocketIdentity } from '../../operator/selectors'
 import { assoc } from 'ramda'
 
 const debug = require( 'debug' )( 'happychat:socket-io:broadcast' )
 
-export const REMOTE_ACTION_TYPE = 'REMOTE_ACTION_TYPE'
 export const REMOTE_USER_KEY = 'REMOTE_USER_KEY'
 
 const join = ( io, socket ) => new Promise( ( resolve, reject ) => {

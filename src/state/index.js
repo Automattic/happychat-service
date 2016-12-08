@@ -1,6 +1,7 @@
 import delayedDispatch from 'redux-delayed-dispatch';
+import { keys } from 'ramda'
+import { applyMiddleware } from 'redux'
 
-import { applyMiddleware, compose } from 'redux'
 import operatorMiddleware from './middlewares/socket-io'
 import chatlistMiddleware from './middlewares/socket-io/chatlist'
 import broadcastMiddleware from './middlewares/socket-io/broadcast'
@@ -8,7 +9,7 @@ import agentMiddleware from './middlewares/socket-io/agents'
 import controllerMiddleware from './middlewares/socket-io/controller'
 import operatorLoadMiddleware from './middlewares/socket-io/operator-load'
 import canRemoteDispatch from './operator/canRemoteDispatch'
-import { keys } from 'ramda'
+import { DESERIALIZE, SERIALIZE } from './action-types'
 
 const debug = require( 'debug' )( 'happychat:store' )
 const logger = () => next => action => {
@@ -24,13 +25,10 @@ const logger = () => next => action => {
 	}
 }
 
-export const SERIALIZE = 'SERIALIZE';
-export const DESERIALIZE = 'DESERIALIZE';
-
 export const serializeAction = () => ( { type: SERIALIZE } )
 export const deserializeAction = () => ( { type: DESERIALIZE } )
 
-export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], middlewares = [], timeout = undefined } ) => {
+export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], timeout = undefined } ) => {
 	return applyMiddleware(
 			logger,
 			delayedDispatch,

@@ -27,15 +27,14 @@ import {
 	SET_CHAT_MISSED,
 	CLOSE_CHAT,
 	AUTOCLOSE_CHAT,
-	OPERATOR_JOIN
-} from './actions'
-import {
+	OPERATOR_JOIN,
 	OPERATOR_OPEN_CHAT_FOR_CLIENTS,
 	SET_USER_OFFLINE,
 	REMOVE_USER,
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_CHAT_JOIN,
-} from '../operator/actions'
+} from '../action-types'
+
 export const STATUS_NEW = 'new'
 export const STATUS_PENDING = 'pending'
 export const STATUS_MISSED = 'missed'

@@ -1,6 +1,7 @@
 import { getChats } from '../../chatlist/selectors'
 import { selectIdentities } from '../../operator/selectors'
-import { agentInboundMessage, AGENT_RECEIVE_MESSAGE } from '../../chatlist/actions'
+import { AGENT_RECEIVE_MESSAGE } from '../../action-types'
+import { agentInboundMessage } from '../../chatlist/actions'
 
 const debug = require( 'debug' )( 'happychat:agent' )
 

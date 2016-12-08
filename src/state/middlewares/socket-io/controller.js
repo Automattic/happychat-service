@@ -3,18 +3,21 @@ import assign from 'lodash/assign'
 import get from 'lodash/get'
 import set from 'lodash/set'
 
-import { operatorReceiveTyping, OPERATOR_TYPING } from '../../operator/actions'
 import {
-	agentReceiveMessage,
-	customerReceiveMessage,
-	customerReceiveTyping,
-	operatorReceiveMessage,
+	OPERATOR_TYPING,
 	AGENT_INBOUND_MESSAGE,
 	CUSTOMER_INBOUND_MESSAGE,
 	OPERATOR_INBOUND_MESSAGE,
 	CUSTOMER_TYPING,
 	CUSTOMER_JOIN,
 	OPERATOR_JOIN,
+} from '../../action-types'
+import { operatorReceiveTyping } from '../../operator/actions'
+import {
+	agentReceiveMessage,
+	customerReceiveMessage,
+	customerReceiveTyping,
+	operatorReceiveMessage
 } from '../../chatlist/actions'
 
 const debug = require( 'debug' )( 'happychat:controller' )

@@ -6,12 +6,15 @@ import { reducer } from 'service'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
 import {
+	OPERATOR_RECEIVE_TYPING,
 	AGENT_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_MESSAGE,
 	CUSTOMER_RECEIVE_TYPING,
 	CUSTOMER_RECEIVE_MESSAGE,
 	CUSTOMER_JOIN,
 	CUSTOMER_DISCONNECT,
+} from 'state/action-types'
+import {
 	agentInboundMessage,
 	customerInboundMessage,
 	operatorInboundMessage,
@@ -20,7 +23,6 @@ import {
 	customerDisconnect
 } from 'state/chatlist/actions';
 import {
-	OPERATOR_RECEIVE_TYPING,
 	updateIdentity,
 	operatorTyping
 } from 'state/operator/actions';

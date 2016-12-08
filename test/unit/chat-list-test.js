@@ -17,12 +17,14 @@ import {
 	SET_CHATS_RECOVERED,
 	NOTIFY_CHAT_STATUS_CHANGED,
 	SET_CHAT_OPERATOR,
+	OPERATOR_CHAT_TRANSFER
+} from 'state/action-types'
+import {
 	customerInboundMessage,
 	customerJoin,
 	customerDisconnect
 } from 'state/chatlist/actions';
 import { STATUS_CLOSED } from 'state/chatlist/reducer'
-import { OPERATOR_CHAT_TRANSFER } from 'state/operator/actions'
 import { getChatStatus, getChatOperator } from 'state/chatlist/selectors'
 
 const debug = require( 'debug' )( 'happychat:chatlist:test' )
