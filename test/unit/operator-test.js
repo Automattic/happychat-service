@@ -215,7 +215,7 @@ describe( 'Operators', () => {
 				equal( action.message_timestamp, 'timestamp' )
 				resolve()
 			} )
-			connection.client.emit( 'chat.backlog', 'chat-id', 'message-id', 'timestamp' )
+			connection.client.emit( 'chat.transcript', 'chat-id', 'message-id', 'timestamp' )
 		} ) )
 	} )
 

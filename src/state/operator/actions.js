@@ -11,7 +11,7 @@ import {
 	OPERATOR_TYPING,
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_CHAT_JOIN,
-	OPERATOR_CHAT_BACKLOG_REQUEST,
+	OPERATOR_CHAT_TRANSCRIPT_REQUEST,
 	OPERATOR_CHAT_TRANSFER,
 	OPERATOR_READY,
 	SET_OPERATOR_CAPACITY,
@@ -85,6 +85,6 @@ export const operatorReady = ( user, socket, room ) => (
 	{ type: OPERATOR_READY, user, socket, room }
 );
 
-export const operatorChatBacklogRequest = ( chat_id, user, message_id, message_timestamp ) => ( {
-	type: OPERATOR_CHAT_BACKLOG_REQUEST, chat_id, user, message_id, message_timestamp
+export const operatorChatTranscriptRequest = ( user, chat, timestamp ) => ( {
+	type: OPERATOR_CHAT_TRANSCRIPT_REQUEST, user, chat, timestamp
 } )

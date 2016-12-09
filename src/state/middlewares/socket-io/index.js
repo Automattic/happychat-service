@@ -8,6 +8,9 @@ import {
 	closeChat
 } from '../../chatlist/actions'
 import {
+	getChat
+} from '../../chatlist/selectors'
+import {
 	operatorChatLeave,
 	updateUserStatus,
 	updateCapacity,
@@ -18,7 +21,7 @@ import {
 	operatorChatJoin,
 	operatorReady,
 	operatorChatTransfer,
-	operatorChatBacklogRequest
+	operatorChatTranscriptRequest
 } from '../../operator/actions'
 
 import {
@@ -99,9 +102,26 @@ const join = ( { socket, store, user, io } ) => {
 		store.dispatch( operatorChatTransfer( chat_id, user, toUser ) );
 	} )
 
-	socket.on( 'chat.backlog', ( chat_id, message_id, message_timestamp ) => {
-		debug( 'operator is requesting chat backlog', chat_id, 'before', message_id, message_timestamp )
-		store.dispatch( operatorChatBacklogRequest( chat_id, user, message_id, message_timestamp ) )
+	socket.on( 'chat.transcript', ( chat_id, message_timestamp, callback ) => {
+		debug( 'operator is requesting chat backlog', chat_id, 'before', message_timestamp )
+		const chat = getChat( chat_id, store.getState() )
+
+		new Promise( ( resolve, reject ) => {
+			store.dispatch(
+				operatorChatTranscriptRequest( user, chat, message_timestamp )
+			).then( resolve, reject )
+		} )
+		.then(
+			// TODO: run through the middlewares?
+			( messages ) => {
+				debug( 'chat.transcript', chat_id, messages.length )
+				callback( null, messages )
+			},
+			e => {
+				debug( 'failed to get transcript', chat_id, e.message )
+				callback( e.message )
+			}
+		)
 	} )
 }
 
