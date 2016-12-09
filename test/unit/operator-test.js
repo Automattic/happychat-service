@@ -10,7 +10,7 @@ import {
 	SET_USER_OFFLINE,
 	OPERATOR_RECEIVE_TYPING,
 	OPERATOR_CHAT_LEAVE,
-	OPERATOR_CHAT_BACKLOG_REQUEST,
+	OPERATOR_CHAT_TRANSCRIPT_REQUEST,
 	OPERATOR_INBOUND_MESSAGE,
 	SET_CHAT_OPERATOR,
 	INSERT_PENDING_CHAT,
@@ -207,15 +207,14 @@ describe( 'Operators', () => {
 			} )
 		} )
 
-		it( 'should request backlog for chat', () => new Promise( resolve => {
+		it( 'should request transcript for chat', () => new Promise( resolve => {
 			const [ connection ] = connections;
-			watchForType( OPERATOR_CHAT_BACKLOG_REQUEST, action => {
+			watchForType( OPERATOR_CHAT_TRANSCRIPT_REQUEST, action => {
 				deepEqual( action.user, op )
-				equal( action.message_id, 'message-id' )
-				equal( action.message_timestamp, 'timestamp' )
+				equal( action.timestamp, 'timestamp' )
 				resolve()
 			} )
-			connection.client.emit( 'chat.transcript', 'chat-id', 'message-id', 'timestamp' )
+			connection.client.emit( 'chat.transcript', 'chat-id', 'timestamp', () => {} )
 		} ) )
 	} )
 
