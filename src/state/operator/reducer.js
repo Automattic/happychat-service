@@ -85,6 +85,8 @@ const lensRemoteUser = action => lensProp( compose(
 	view( lensPath( [ REMOTE_USER_KEY, 'id' ] ) )
 )( action ) );
 
+export const getRemoteActionUser = view( lensProp( REMOTE_USER_KEY ) )
+
 const identities = ( state = {}, action ) => {
 	const { user } = action
 	switch ( action.type ) {
