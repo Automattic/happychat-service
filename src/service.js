@@ -31,7 +31,7 @@ export const service = ( server, { customerAuthenticator, agentAuthenticator, op
 		customerAuth: auth( customerAuthenticator ),
 		agentAuth: auth( agentAuthenticator ),
 		messageMiddlewares: middlewares.middlewares()
-	} ) ), ... enhancers )
+	} ), ... enhancers ) )
 
 	return { io, controller: middlewares.external, store }
 }
