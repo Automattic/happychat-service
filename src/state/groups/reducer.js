@@ -11,7 +11,7 @@ import {
 	ADD_GROUP_MEMBER,
 	REMOVE_GROUP,
 	REMOVE_GROUP_MEMBER,
-} from './actions'
+} from '../action-types'
 
 const group = ( state = { priority: 0 }, action ) => {
 	switch ( action.type ) {

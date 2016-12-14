@@ -1,7 +1,9 @@
-export const ADD_GROUP = 'ADD_GROUP'
-export const REMOVE_GROUP = 'REMOVE_GROUP'
-export const ADD_GROUP_MEMBER = 'ADD_GROUP_MEMBER'
-export const REMOVE_GROUP_MEMBER = 'REMOVE_GROUP_MEMBER'
+import {
+	ADD_GROUP,
+	REMOVE_GROUP,
+	ADD_GROUP_MEMBER,
+	REMOVE_GROUP_MEMBER,
+} from '../action-types'
 
 export const addGroup = ( id, name, priority ) => ( {
 	type: ADD_GROUP, id, name, priority
