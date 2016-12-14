@@ -17,7 +17,8 @@ import {
 	SET_USER_OFFLINE,
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
-	REMOTE_ACTION_TYPE
+	REMOTE_ACTION_TYPE,
+	AUTOCLOSE_CHAT
 } from '../../action-types'
 import {
 	getOpenChatMembers,
@@ -101,6 +102,7 @@ const updateLoadMiddleware = ( { getState, dispatch } ) => next => action => {
 		case SET_OPERATOR_STATUS:
 		case REMOVE_USER:
 		case SET_USER_OFFLINE:
+		case AUTOCLOSE_CHAT:
 			const result = next( action )
 			dispatch( setUserLoads( reducer( getState() ) ) )
 			return result;
