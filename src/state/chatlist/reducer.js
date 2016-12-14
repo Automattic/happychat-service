@@ -33,6 +33,7 @@ import {
 	REMOVE_USER,
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_CHAT_JOIN,
+	UPDATE_CHAT
 } from '../action-types'
 
 export const STATUS_NEW = 'new'
@@ -72,6 +73,8 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 				setTimestamp( timestamp() ),
 				setChat( action.chat )
 			)( state )
+		case UPDATE_CHAT:
+			return setChat( action.chat )( state );
 		case CLOSE_CHAT:
 		case AUTOCLOSE_CHAT:
 			return setStatus( STATUS_CLOSED, state );
@@ -130,6 +133,7 @@ export default ( state = {}, action ) => {
 		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
 		case ASSIGN_CHAT:
 		case OPERATOR_JOIN:
+		case UPDATE_CHAT:
 			const lens = lensProp( action.chat.id )
 			return assoc( asString( action.chat.id ), chat( view( lens, state ), action ) )( state )
 		case SET_CHATS_RECOVERED:
