@@ -28,7 +28,8 @@ import {
 	AUTOCLOSE_CHAT,
 	CUSTOMER_LEFT,
 	UPDATE_CHAT,
-	RECEIVE_CHAT_MESSAGE
+	RECEIVE_CHAT_MESSAGE,
+	CUSTOMER_CHAT_TRANSCRIPT_REQUEST
 } from '../action-types'
 
 export const reassignChats = ( operator, socket ) => ( {
@@ -149,4 +150,8 @@ export const receiveMessage = ( origin, chat, message, user ) => ( {
 
 export const updateChat = ( chat ) => ( {
 	type: UPDATE_CHAT, chat
+} )
+
+export const customerChatTranscriptRequest = ( chat, timestamp ) => ( {
+	type: CUSTOMER_CHAT_TRANSCRIPT_REQUEST, chat, timestamp
 } )
