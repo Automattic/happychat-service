@@ -1,7 +1,8 @@
-import isEmpty from 'lodash/isEmpty'
 import assign from 'lodash/assign'
 import get from 'lodash/get'
 import set from 'lodash/set'
+import { assoc } from 'ramda'
+import { run } from '../../../middleware-interface'
 
 import {
 	OPERATOR_TYPING,
@@ -59,57 +60,20 @@ export class ChatLog {
 }
 
 // change a lib/customer message to what an agent client expects
-const formatAgentMessage = ( author_type, author_id, session_id, { id, timestamp, text, meta, type } ) => ( {
+const formatAgentMessage = ( author_type, author_id, session_id, { id, timestamp, text, meta, type, source } ) => ( {
 	id, timestamp, text,
 	session_id,
 	author_id,
 	author_type,
 	type,
-	meta
+	meta,
+	source
 } )
 
 export default ( middlewares ) => store => {
 	const log = { operator: new ChatLog(), customer: new ChatLog() }
 
-	const runMiddleware = ( { origin, destination, chat, user, message } ) => new Promise( ( resolveMiddleware ) => {
-		new Promise( middlewareComplete => {
-			if ( isEmpty( middlewares ) ) {
-				debug( 'no middlewares registered' )
-				return middlewareComplete( message )
-			}
-			// copy the middleware
-			const context = middlewares.slice()
-			debug( 'running middleware', context.length )
-			// recursively run each middleware piping the result into
-			// the next middleware
-			const run = ( data, [ head, ... rest ] ) => {
-				if ( !head ) {
-					debug( 'middleware complete', chat.id, data.type )
-					return middlewareComplete( data.message )
-				}
-
-				// Wrapping call to middleware in Promise in case of exception
-				new Promise( resolve => resolve( head( data ) ) )
-				// continue running with remaining middleware
-				.then( nextMessage => run( assign( {}, data, { message: nextMessage } ), rest ) )
-				// if middleware fails, log the error and continue processing
-				.catch( e => {
-					debug( 'middleware failed to run', e )
-					debug( e.stack )
-					run( data, rest )
-				} )
-			}
-			// kick off the middleware processing
-			run( { origin, destination, chat, user, message }, context )
-		} )
-		.then( result => {
-			if ( ! result ) {
-				throw new Error( `middleware prevented message(id:${ message.id }) from being sent from ${ origin } to ${ destination } in chat ${ chat.id }` )
-			}
-			resolveMiddleware( result )
-		} )
-		.catch( e => debug( e.message ) )
-	} )
+	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
 
 	// toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 	const handleCustomerJoin = action => {
@@ -142,10 +106,11 @@ export default ( middlewares ) => store => {
 	const handleCustomerInboundMessage = ( action ) => {
 		const { chat, message, user } = action
 		// broadcast the message to
-		store.dispatch( receiveMessage( 'customer', chat, message, user ) )
+		const customerMessage = assoc( 'source', 'customer', message );
+		store.dispatch( receiveMessage( 'customer', chat, customerMessage, user ) )
 
 		const origin = 'customer'
-		runMiddleware( { origin, destination: 'customer', chat, message } )
+		runMiddleware( { origin, destination: 'customer', chat, message: customerMessage } )
 		.then( m => new Promise( ( resolve, reject ) => {
 			log.customer.recordCustomerMessage( chat, m )
 			.then( () => resolve( m ), reject )
@@ -155,13 +120,13 @@ export default ( middlewares ) => store => {
 		) )
 		.catch( e => debug( 'middleware failed ', e.message ) )
 
-		runMiddleware( { origin, destination: 'agent', chat, message } )
+		runMiddleware( { origin, destination: 'agent', chat, message: customerMessage } )
 		.then( m => store.dispatch(
 			agentReceiveMessage( formatAgentMessage( 'customer', chat.id, chat.id, m ) ) )
 		)
 		.catch( e => debug( 'middleware failed', e.message ) )
 
-		runMiddleware( { origin, destination: 'operator', chat, message } )
+		runMiddleware( { origin, destination: 'operator', chat, message: customerMessage } )
 		.then( m => new Promise( ( resolve, reject ) => {
 			log.operator.recordCustomerMessage( chat, m )
 			.then( () => resolve( m ), reject )
@@ -172,26 +137,26 @@ export default ( middlewares ) => store => {
 
 	const handleOperatorInboundMessage = action => {
 		const { chat_id, user: operator, message } = action
-
+		const operatorMessage = assoc( 'source', 'operator', message )
 		const chat = { id: chat_id }
 		debug( 'operator message', chat.id, message.id )
 		const origin = 'operator'
 
-		store.dispatch( receiveMessage( 'operator', chat, message, operator ) )
+		store.dispatch( receiveMessage( 'operator', chat, operatorMessage, operator ) )
 
-		runMiddleware( { origin, destination: 'agent', chat, message, user: operator } )
+		runMiddleware( { origin, destination: 'agent', chat, message: operatorMessage, user: operator } )
 		.then( m => store.dispatch(
 			agentReceiveMessage( formatAgentMessage( 'operator', operator.id, chat.id, m ) )
 		) )
 
-		runMiddleware( { origin, destination: 'operator', chat, message, user: operator } )
+		runMiddleware( { origin, destination: 'operator', chat, message: operatorMessage, user: operator } )
 		.then( m => new Promise( ( resolve, reject ) => {
 			log.operator.recordOperatorMessage( chat, operator, m )
 			.then( () => resolve( m ), reject )
 		} ) )
 		.then( m => store.dispatch( operatorReceiveMessage( chat.id, m ) ) )
 
-		runMiddleware( { origin, destination: 'customer', chat, message, user: operator } )
+		runMiddleware( { origin, destination: 'customer', chat, message: operatorMessage, user: operator } )
 		.then( m => new Promise( ( resolve, reject ) => {
 			log.customer.recordOperatorMessage( chat, operator, m )
 			.then( () => resolve( m ), reject )
@@ -205,23 +170,24 @@ export default ( middlewares ) => store => {
 		const { message, agent } = action
 		const chat = { id: message.session_id }
 		const format = ( m ) => assign( {}, { author_type: 'agent' }, m )
+		const agentMessage = assoc( 'source', 'agent', message )
 		const origin = 'agent'
 
-		store.dispatch( receiveMessage( 'agent', chat, message, agent ) )
+		store.dispatch( receiveMessage( 'agent', chat, agentMessage, agent ) )
 
-		runMiddleware( { origin, destination: 'agent', chat, message } )
+		runMiddleware( { origin, destination: 'agent', chat, message: agentMessage } )
 		.then( m => store.dispatch(
 			agentReceiveMessage( assign( {}, { author_type: 'agent' }, m ) ) )
 		)
 
-		runMiddleware( { origin, destination: 'operator', chat, message } )
+		runMiddleware( { origin, destination: 'operator', chat, message: agentMessage } )
 		.then( m => new Promise( ( resolve, reject ) => {
 			log.operator.recordAgentMessage( chat, m )
 			.then( () => resolve( m ), reject )
 		} ) )
 		.then( m => store.dispatch( operatorReceiveMessage( chat.id, format( m ) ) ) )
 
-		runMiddleware( { origin, destination: 'customer', chat, message } )
+		runMiddleware( { origin, destination: 'customer', chat, message: agentMessage } )
 		.then( m => new Promise( ( resolve, reject ) => {
 			log.customer.recordAgentMessage( chat, message )
 			.then( () => resolve( m ), reject )
