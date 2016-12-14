@@ -9,14 +9,15 @@ describe( 'Operator', () => {
 		id: 'fake-user-id',
 		displayName: 'Nasuicaä',
 		username: 'nausicaa',
-		avatarURL: 'http://example.com/nausicaa',
+		picture: 'http://example.com/nausicaa',
 		session_id: 'session-id'
 	}
+
 	let opUser = {
 		id: 'operator-id',
 		displayName: 'Ridley',
 		username: 'ridley',
-		avatarURL: 'http://sample.com/ridley'
+		picture: 'http://sample.com/ridley'
 	}
 
 	let service;

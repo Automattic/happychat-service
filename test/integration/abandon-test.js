@@ -13,14 +13,14 @@ describe( 'Abandoned service', () => {
 		id: 'mock-user-id',
 		displayName: 'Nasuicaä',
 		username: 'nausicaa',
-		avatarURL: 'http://example.com/nausicaa',
+		picture: 'http://example.com/nausicaa',
 		session_id: 'mock-session-id'
 	}
 	let opUser = {
 		id: 'operator-id',
 		displayName: 'Ridley',
 		username: 'ridley',
-		avatarURL: 'http://sample.com/ridley'
+		picture: 'http://sample.com/ridley'
 	}
 
 	const service = util( authenticators( mockUser, opUser, {} ) )

@@ -59,7 +59,14 @@ describe( 'Chat logs', () => {
 	} )
 
 	beforeEach( () => {
-		service = util( authenticators( { id: 'customer-a', session_id: '12345' }, { id: 'operator-1' }, {} ) )
+		service = util( authenticators(
+			// customer
+			{ id: 'customer-a', session_id: '12345', picture: '', displayName: '', username: '' },
+			// operator
+			{ id: 'operator-1', picture: '', displayName: '', username: '' },
+			// agent
+			{ id: 'agent', picture: '', displayName: '', username: '' }
+		) )
 		service.service.controller.middleware( ( { destination, message } ) => {
 			if ( destination === 'customer' ) {
 				return assign( {}, message, { text: 'test: ' + message.text } )

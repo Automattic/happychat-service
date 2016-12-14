@@ -12,14 +12,20 @@ const prop = ( name, fallback = undefined ) => ( obj ) => get( obj, name, fallba
 const noop = () => {}
 describe( 'Operators in chat', () => {
 	let operators = [
-		{ id: 'operator-1', capacity: 5 },
-		{ id: 'operator-2', capacity: 4 },
-		{ id: 'operator-3', capacity: 3 }
+		{ id: 'operator-1', username: 'op1', displayName: 'op1', picture: '', capacity: 5 },
+		{ id: 'operator-2', username: 'op2', displayName: 'op2', picture: '', capacity: 4 },
+		{ id: 'operator-3', username: 'op3', displayName: 'op3', picture: '', capacity: 3 }
 	]
 
 	var operatorClients;
 
-	let customer = { id: 'customer', displayName: 'Customer', session_id: 'session' }
+	let customer = {
+		id: 'customer',
+		username: 'customer',
+		displayName: 'Customer',
+		picture: '',
+		session_id: 'session'
+	}
 
 	const service = util( {
 		operatorAuthenticator: ( ( users ) => ( socket, callback ) => {

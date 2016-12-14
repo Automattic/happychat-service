@@ -12,14 +12,14 @@ describe( 'Service', () => {
 		id: 'fake-user-id',
 		displayName: 'Nasuicaä',
 		username: 'nausicaa',
-		avatarURL: 'http://example.com/nausicaa',
+		picture: 'http://example.com/nausicaa',
 		session_id: 'session-id'
 	}
 	let botUser = {
 		id: 'imperator',
-		dispayName: 'Furiosa',
+		displayName: 'Furiosa',
 		username: 'furiosa',
-		avatarURL: 'http://example.com/furiousa'
+		picture: 'http://example.com/furiousa'
 	}
 
 	const service = util( authenticators( mockUser, { id: 'operator-id' }, botUser ) )

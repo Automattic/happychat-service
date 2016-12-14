@@ -8,12 +8,14 @@ describe( 'Integration: Typing', () => {
 		id: 'operator-id',
 		displayName: 'Operator',
 		username: 'operator',
-		avatarURL: 'http://example.com/avatar'
+		picture: 'http://example.com/avatar'
 	}
 
 	const customer = {
 		id: 'customer-id',
 		username: 'customer',
+		displayName: 'Customer',
+		picture: '',
 		session_id: 'customer-session'
 	}
 

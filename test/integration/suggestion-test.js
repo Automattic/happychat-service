@@ -11,9 +11,9 @@ describe( 'Chat logs', () => {
 	let service
 	let botUser = {
 		id: 'imperator',
-		dispayName: 'Furiosa',
+		displayName: 'Furiosa',
 		username: 'furiosa',
-		avatarURL: 'http://example.com/furiousa'
+		picture: 'http://example.com/furiousa'
 	}
 
 	const afterInit = ( { customer, operator, agent } ) => new Promise( ( resolve ) => {
@@ -100,7 +100,11 @@ describe( 'Chat logs', () => {
 	} )
 
 	beforeEach( () => {
-		service = util( authenticators( { id: 'customer', session_id: 'customer-1', username: 'A-Customer' }, { id: 'operator' }, {} ) )
+		service = util( authenticators(
+			{ id: 'customer', username: 'A-Customer', displayName: 'Customer', picture: '', session_id: 'customer-1' },
+			{ id: 'operator', username: 'op', displayName: 'op', picture: '' },
+			{ id: 'agent', username: 'agent', displayName: 'agent', picture: '' }
+		) )
 		return service.start()
 	} )
 
