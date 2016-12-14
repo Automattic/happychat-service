@@ -162,7 +162,7 @@ const join = ( { io, user, socket, store }, middlewares ) => {
 		user_id: user.id,
 		id: user.session_id,
 		username: user.username,
-		name: user.name,
+		name: user.displayName,
 		picture: user.picture
 	}
 	socket.join( customerRoom( chat.id ), init( { user, socket, io, store, chat }, middlewares ) )
