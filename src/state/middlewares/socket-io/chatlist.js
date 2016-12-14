@@ -248,6 +248,11 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 			debug( 'Customer disconnected without starting chat', chat.id )
 			return;
 		}
+
+		if ( isChatStatusClosed( chat.id, store.getState() ) ) {
+			debug( 'Customer disconnected after chat closed' )
+			return
+		}
 		store.dispatch( setChatCustomerDisconnect( chat.id ) )
 		store.dispatch( delayAction( customerLeft( chat.id ), customerDisconnectMessageTimeout ) )
 		store.dispatch( delayAction( autocloseChat( chat.id ), customerDisconnectTimeout ) )
