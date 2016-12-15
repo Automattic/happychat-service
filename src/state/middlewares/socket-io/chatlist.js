@@ -228,7 +228,9 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		const state = store.getState()
 		const status = getChatStatus( chat.id, state )
 		const operator = getChatOperator( chat.id, state )
-		store.dispatch( updateChat( chat ) )
+		if ( ! isChatStatusNew( chat.id, state ) ) {
+			store.dispatch( updateChat( chat ) )
+		}
 		store.dispatch( cancelAction( customerLeft( chat.id ) ) )
 		store.dispatch( cancelAction( autocloseChat( chat.id ) ) )
 		if ( operator && !isEmpty( operator ) && status === STATUS_CUSTOMER_DISCONNECT ) {
