@@ -44,10 +44,10 @@ export const startClients = ( port ) => new Promise( ( resolve, reject ) => {
 	.catch( reject )
 } )
 
-const main = ( authenticators, port = 65115 ) => {
+const main = ( authenticators, enhancers = [], port = 65115 ) => {
 	let server = createServer()
 	return {
-		service: service( server, authenticators ),
+		service: service( server, authenticators, undefined, enhancers ),
 		start: () => startServer( server, port ),
 		stop: () => stopServer( server ),
 		startClients: () => startClients( port ),
