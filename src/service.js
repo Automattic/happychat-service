@@ -52,7 +52,7 @@ export const service = ( server, { customerAuthenticator, agentAuthenticator, op
 		customerAuth: auth( customerAuthenticator, validateKeys( REQUIRED_CUSTOMER_KEYS ) ),
 		agentAuth: auth( agentAuthenticator ),
 		messageMiddlewares: middlewares.middlewares()
-	} ) ), ... enhancers )
+	} ), ... enhancers ) )
 
 	return { io, controller: middlewares.external, store }
 }
