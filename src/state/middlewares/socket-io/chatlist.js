@@ -52,6 +52,7 @@ import {
 	operatorJoinChat,
 	customerSocketDisconnect,
 	customerDisconnect,
+	customerChatTranscriptRequest,
 	customerLeft,
 	autocloseChat,
 	updateChat
@@ -80,6 +81,7 @@ import {
 	haveAvailableCapacity
 } from '../../operator/selectors'
 import { makeEventMessage, timestamp } from '../../util'
+import { run } from '../../../middleware-interface'
 
 const debug = require( 'debug' )( 'happychat:middleware:chatlist' )
 
@@ -109,11 +111,13 @@ const withTimeout = ( promise, ms = 1000 ) => Promise.race( [
 	} )
 ] )
 
-const init = ( { user, socket, io, store, chat } ) => () => {
+const init = ( { user, socket, io, store, chat }, middlewares ) => () => {
+	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
+
 	socket.on( 'message', ( { text, id, meta } ) => {
 		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
 		// all customer connections for this user receive the message
-		store.dispatch( customerInboundMessage( chat, message ) )
+		store.dispatch( customerInboundMessage( chat, message, user ) )
 	} )
 
 	socket.on( 'typing', ( text ) => {
@@ -127,19 +131,41 @@ const init = ( { user, socket, io, store, chat } ) => () => {
 			.then( () => store.dispatch( customerDisconnect( chat, user ) ) )
 	} )
 
+	socket.on( 'transcript', ( transcript_timestamp, callback ) => {
+		store.dispatch(
+			customerChatTranscriptRequest( chat, transcript_timestamp )
+		).then( result => new Promise( ( resolve, reject ) => {
+			Promise.all( map( message => runMiddleware( {
+				origin: message.source,
+				destination: 'customer',
+				user: message.user,
+				message,
+				chat
+			} ), result.messages ) )
+			.then(
+				messages => resolve( { timestamp: result.timestamp, messages } ),
+				reject
+			)
+		} ) )
+		.then(
+			result => callback( null, result ),
+			e => callback( e.message, null )
+		)
+	} )
+
 	socket.emit( 'init', user )
 	store.dispatch( customerJoin( socket, chat, user ) )
 }
 
-const join = ( { io, user, socket, store } ) => {
+const join = ( { io, user, socket, store }, middlewares ) => {
 	const chat = {
 		user_id: user.id,
 		id: user.session_id,
 		username: user.username,
-		name: user.name,
+		name: user.displayName,
 		picture: user.picture
 	}
-	socket.join( customerRoom( chat.id ), init( { user, socket, io, store, chat } ) )
+	socket.join( customerRoom( chat.id ), init( { user, socket, io, store, chat }, middlewares ) )
 }
 
 const getClients = ( server, room ) => new Promise( ( resolve, reject ) => {
@@ -151,13 +177,13 @@ const getClients = ( server, room ) => new Promise( ( resolve, reject ) => {
 	} )
 } )
 
-export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, customerDisconnectMessageTimeout = 10000 }, customerAuth ) => store => {
+export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, customerDisconnectMessageTimeout = 10000 }, customerAuth, middlewares = [] ) => store => {
 	const operator_io = io.of( '/operator' )
 	const customer_io = io.of( '/customer' )
 	.on( 'connection', socket => {
 		customerAuth( socket )
 		.then(
-			user => join( { socket, user, io: customer_io, store } ),
+			user => join( { socket, user, io: customer_io, store }, middlewares ),
 			e => debug( 'customer auth failed', e.message )
 		)
 	} )

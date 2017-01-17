@@ -11,12 +11,12 @@ import {
 	OPERATOR_TYPING,
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_CHAT_JOIN,
-	OPERATOR_CHAT_BACKLOG_REQUEST,
+	OPERATOR_CHAT_TRANSCRIPT_REQUEST,
 	OPERATOR_CHAT_TRANSFER,
 	OPERATOR_READY,
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
-	SET_USER_OFFLINE,
+	SET_USER_OFFLINE
 } from '../action-types'
 
 export const setUserOffline = user => ( {
@@ -84,3 +84,7 @@ export const operatorChatTransfer = ( chat_id, user, toUser ) => (
 export const operatorReady = ( user, socket, room ) => (
 	{ type: OPERATOR_READY, user, socket, room }
 );
+
+export const operatorChatTranscriptRequest = ( user, chat, timestamp ) => ( {
+	type: OPERATOR_CHAT_TRANSCRIPT_REQUEST, user, chat, timestamp
+} )

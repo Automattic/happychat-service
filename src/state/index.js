@@ -33,14 +33,14 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 			logger,
 			delayedDispatch,
 			controllerMiddleware( messageMiddlewares ),
-			operatorMiddleware( io.of( '/operator' ), operatorAuth ),
+			operatorMiddleware( io.of( '/operator' ), operatorAuth, messageMiddlewares ),
 			agentMiddleware( io.of( '/agent' ), agentAuth ),
 			chatlistMiddleware( {
 				io,
 				timeout,
 				customerDisconnectTimeout: timeout,
 				customerDisconnectMessageTimeout: timeout
-			}, customerAuth ),
+			}, customerAuth, messageMiddlewares ),
 			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
 			...operatorLoadMiddleware,
 	)
