@@ -1,5 +1,5 @@
 import assert from 'assert'
-import util, {authenticators} from './util'
+import mockService, { authenticators } from './helpers'
 import { applyMiddleware } from 'redux'
 
 describe( 'Store', () => {
@@ -23,7 +23,7 @@ describe( 'Store', () => {
 		return next( action )
 	}
 
-	const server = util( authenticators( mockUser, opUser, {} ), [ applyMiddleware( enhancerTester ) ] )
+	const server = mockService( authenticators( mockUser, opUser, {} ), [ applyMiddleware( enhancerTester ) ] )
 
 	beforeEach( () => server.start() )
 	afterEach( () => server.stop() )
