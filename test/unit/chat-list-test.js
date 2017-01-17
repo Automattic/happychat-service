@@ -5,6 +5,7 @@ import { createStore, compose, applyMiddleware } from 'redux'
 import mockio from '../mock-io'
 import enhancer from 'state'
 import { reducer } from 'service'
+import { setClientCapacity } from '../integration/helpers'
 import WatchingMiddleware from '../mock-middleware'
 import {
 	AUTOCLOSE_CHAT,
@@ -67,12 +68,8 @@ describe( 'ChatList component', () => {
 		const { client, socket } = operator_io.connectNewClient( undefined, () => {
 			client.once( 'init', ( user ) => {
 				debug( 'init user', user )
-				client.emit( 'status', status, () => {
-					client.emit( 'capacity', capacity, () => {
-						debug( 'operator ready', operator.id )
-						resolve( { client, socket } )
-					} )
-				} )
+				setClientCapacity( client, capacity, status )
+				.then( () => resolve( { client, socket } ) )
 			} )
 		} )
 	} )
@@ -143,7 +140,19 @@ describe( 'ChatList component', () => {
 		const socket = new EventEmitter();
 
 		socket.once( 'accept', ( accepted ) => {
-			ok( ! accepted )
+			deepEqual( accepted, false )
+			done()
+		} )
+
+		store.dispatch( customerJoin( socket, { id: 'session-id' }, { id: 'user-id' } ) )
+	} )
+
+	it( 'should ask operators for status when customer joins in locale', ( done ) => {
+		chatlistWithState( { chatlist: { 'session-id': [ 'assigned' ] } } )
+		const socket = new EventEmitter();
+
+		socket.once( 'accept.locale', ( accepted ) => {
+			deepEqual( accepted, [] )
 			done()
 		} )
 

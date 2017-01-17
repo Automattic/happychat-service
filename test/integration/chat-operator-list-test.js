@@ -2,7 +2,7 @@ import { equal, deepEqual } from 'assert'
 import { series } from 'async'
 import { map, forEach } from 'lodash/collection'
 import { get } from 'lodash/object'
-import util from './util'
+import makeService, { setClientCapacity } from './helpers'
 import { keys } from 'ramda'
 
 const debug = require( 'debug' )( 'happychat:test:integration' )
@@ -27,7 +27,7 @@ describe( 'Operators in chat', () => {
 		session_id: 'session'
 	}
 
-	const service = util( {
+	const service = makeService( {
 		operatorAuthenticator: ( ( users ) => ( socket, callback ) => {
 			const [user, ... rest] = users
 			debug( 'authenticating user', user )
@@ -52,9 +52,7 @@ describe( 'Operators in chat', () => {
 			.then( waitForConnect )
 			.then( ( client ) => {
 				client.on( 'identify', ( identify ) => identify( operator ) )
-				client.emit( 'status', 'available', () => {
-					client.emit( 'capacity', operator.capacity, () => callback( null, client ) )
-				} )
+				setClientCapacity( client, operator.capacity ).then( () => callback( null, client ) )
 			} )
 		} ), ( e, clients ) => {
 			operatorClients = clients
@@ -76,6 +74,7 @@ describe( 'Operators in chat', () => {
 	const waitForChatOperatorList = ( client ) => new Promise( ( resolve ) => {
 		setTimeout( () => {
 			client.emit( 'broadcast.state', ( version, state ) => {
+				debug( 'received state', state.locales.memberships )
 				const [ , , , , members ] = state.chatlist.session
 				resolve( keys( members ) )
 			} )

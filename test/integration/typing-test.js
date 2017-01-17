@@ -1,5 +1,5 @@
 import { equal } from 'assert'
-import util, { authenticators } from './util'
+import makeService, { authenticators } from './helpers'
 
 const debug = require( 'debug' )( 'happychat:test:integration:typing' )
 
@@ -43,7 +43,7 @@ describe( 'Integration: Typing', () => {
 	}
 
 	beforeEach( () => {
-		service = util( authenticators( customer, operator, {} ) )
+		service = makeService( authenticators( customer, operator, {} ) )
 		service.start()
 	} )
 

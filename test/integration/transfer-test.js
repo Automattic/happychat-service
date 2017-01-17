@@ -1,4 +1,4 @@
-import { default as util, authenticators } from './util'
+import makeService, { authenticators, setClientCapacity } from './helpers'
 import assign from 'lodash/assign'
 import reduce from 'lodash/reduce'
 import concat from 'lodash/concat'
@@ -14,7 +14,7 @@ describe( 'Operator Transfer', () => {
 	]
 	const customer = { id: 'customer-id', username: 'customer', picture: '', displayName: '', session_id: 'customer-session' }
 
-	const service = util( assign( authenticators( customer ), {
+	const service = makeService( assign( authenticators( customer ), {
 		operatorAuthenticator: ( socket, auth ) => socket.emit( 'auth', auth )
 	} ) )
 	beforeEach( () => service.start() )
@@ -25,11 +25,8 @@ describe( 'Operator Transfer', () => {
 			client.on( 'connect', () => {
 				client.once( 'auth', auth => auth( null, user ) )
 				client.once( 'init', () => {
-					client.emit( 'status', 'available', () => {
-						resolve( client )
-					} )
+					setClientCapacity( client, user.capacity ).then( resolve )
 				} )
-				// client.on( 'available', ( chat, available ) => available( { capacity: user.capacity, status: 'available', load: 0 } ) )
 			} )
 		} ) )
 

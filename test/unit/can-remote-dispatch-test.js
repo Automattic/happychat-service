@@ -1,5 +1,5 @@
 import { ok } from 'assert'
-import canRemoteDispatch from 'state/operator/canRemoteDispatch'
+import canRemoteDispatch from 'state/operator/can-remote-dispatch'
 import { setOperatorCapacity, setAcceptsCustomers, setOperatorStatus } from 'state/operator/actions'
 
 describe( 'Remote Dispatch', () => {

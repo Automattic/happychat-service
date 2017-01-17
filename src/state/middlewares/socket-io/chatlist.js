@@ -4,11 +4,12 @@ import {
 	ifElse,
 	isEmpty,
 	view,
-	lensPath
+	lensPath,
+	length
 } from 'ramda'
-import {
-	delayAction, cancelAction
-} from 'redux-delayed-dispatch'
+import { delayAction, cancelAction } from 'redux-delayed-dispatch'
+import { v4 as uuid } from 'uuid'
+
 import {
 	ASSIGN_CHAT,
 	ASSIGN_NEXT_CHAT,
@@ -62,11 +63,10 @@ import {
 	getChatOperator,
 	getOpenChatsForOperator,
 	getChatStatus,
-	getNextMissedChat,
-	getNextPendingChat,
+	getChatLocale,
+	getNextAssignableChat,
 	getOperatorAbandonedChats,
-	haveMissedChat,
-	havePendingChat,
+	haveAssignableChat,
 	isChatStatusNew,
 	isChatStatusClosed,
 	isAssigningChat,
@@ -75,17 +75,25 @@ import {
 	STATUS_CUSTOMER_DISCONNECT,
 } from '../../chatlist/reducer'
 import {
-	isSystemAcceptingCustomers,
 	getAvailableOperators,
+	getAvailableLocales,
 	isOperatorAcceptingChats,
 	haveAvailableCapacity
 } from '../../operator/selectors'
-import { makeEventMessage, timestamp } from '../../util'
 import { run } from '../../../middleware-interface'
+import timestamp from '../../timestamp'
 
 const debug = require( 'debug' )( 'happychat:middleware:chatlist' )
 
 import { customerRoom, operatorRoom } from './index'
+
+export const makeEventMessage = ( text, session_id ) => ( {
+	type: 'event',
+	id: uuid(),
+	timestamp: timestamp(),
+	session_id: session_id,
+	text
+} )
 
 // limit the information for the user
 const identityForUser = ( { id, name, username, picture } ) => ( { id, name, username, picture } )
@@ -163,7 +171,8 @@ const join = ( { io, user, socket, store }, middlewares ) => {
 		id: user.session_id,
 		username: user.username,
 		name: user.displayName,
-		picture: user.picture
+		picture: user.picture,
+		locale: user.locale
 	}
 	socket.join( customerRoom( chat.id ), init( { user, socket, io, store, chat }, middlewares ) )
 }
@@ -222,6 +231,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 	const emitChatOpenToOperator = ( chat, operator ) => {
 		const customer_room_name = customerRoom( chat.id )
 		const operator_room_name = operatorRoom( operator.id )
+		debug( 'opening chat', chat.id, operator.id )
 		return getClients( operator_io, operator_room_name )
 		.then( clients => Promise.all(
 			map( socket => new Promise( ( resolve, reject ) => {
@@ -250,8 +260,10 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 
 	const handleCustomerJoin = action => {
 		const { chat, socket } = action
-		socket.emit( 'accept', isSystemAcceptingCustomers( store.getState() ) )
 		const state = store.getState()
+		const locales = getAvailableLocales( state )
+		socket.emit( 'accept', length( locales ) > 0 )
+		socket.emit( 'accept.locale', locales )
 		const status = getChatStatus( chat.id, state )
 		const operator = getChatOperator( chat.id, state )
 		if ( ! isChatStatusNew( chat.id, state ) ) {
@@ -417,7 +429,10 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		const { chat } = action
 		debug( 'attempting to assign chat' )
 
-		const list = getAvailableOperators( store.getState() )
+		const locale = getChatLocale( chat.id, store.getState() )
+		const list = getAvailableOperators( locale, store.getState() )
+
+		debug( 'chat has locale', locale )
 
 		if ( isEmpty( list ) ) {
 			return store.dispatch( setChatMissed( chat.id, new Error( 'no operators available' ) ) )
@@ -427,6 +442,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		const [ next, ... rest ] = list
 
 		// TODO: timeout?
+		debug( 'assigning to operator', next )
 		emitChatOpenToOperator( chat, next ).then(
 			() => store.dispatch( setChatOperator( chat.id, next ) ),
 			e => store.dispatch( setChatMissed( chat.id, e ) )
@@ -474,36 +490,33 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 	}
 
 	const handleAssignNextChat = () => {
-		// TODO: check if we have capacity
-		if ( ! haveAvailableCapacity( store.getState() ) ) {
-			debug( 'no capacity to assign chat' )
-			return
-		}
-
 		if ( isAssigningChat( store.getState() ) ) {
 			debug( 'aready assigning chat, wait until complete' )
 			return
 		}
 
-		if ( haveMissedChat( store.getState() ) ) {
-			debug( 'assign missed chat' )
-			store.dispatch( assignChat( getNextMissedChat( store.getState() ) ) )
+		if ( ! haveAssignableChat( store.getState() ) ) {
+			// no chats waiting to be assigned
 			return
 		}
 
-		if ( havePendingChat( store.getState() ) ) {
-			debug( 'assign pending chat' )
-			store.dispatch( assignChat( getNextPendingChat( store.getState() ) ) )
+		const chat = getNextAssignableChat( store.getState() )
+		const locale = getChatLocale( chat.id, store.getState() )
+
+		// TODO: check if we have capacity
+		if ( ! haveAvailableCapacity( locale, store.getState() ) ) {
+			debug( 'no capacity to assign chat', locale, store.getState().locales.memberships, store.getState().operators.identities )
 			return
 		}
 
-		debug( 'no chats to assign' )
+		store.dispatch( assignChat( chat ) )
 	}
 
 	return next => action => {
 		switch ( action.type ) {
 			case NOTIFY_SYSTEM_STATUS_CHANGE:
-				customer_io.emit( 'accept', action.enabled )
+				customer_io.emit( 'accept', length( action.enabled ) > 0 )
+				customer_io.emit( 'accept.locale', action.enabled )
 				break;
 			case NOTIFY_CHAT_STATUS_CHANGED:
 				const status = getChatStatus( action.chat_id, store.getState() );

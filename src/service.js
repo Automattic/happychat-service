@@ -1,9 +1,12 @@
 import IO from 'socket.io'
 import { compose as r_compose, isNil, prop, anyPass, when, map, join, keys, difference, append } from 'ramda'
+import { createStore, compose } from 'redux'
+
 import enhancer from './state'
 import reducer from './state/reducer'
 import middlewareInterface from './middleware-interface'
-import { createStore, compose } from 'redux'
+import { configureLocales } from './state/locales/actions'
+
 const debug = require( 'debug' )( 'happychat:main' )
 
 export { reducer }
@@ -54,5 +57,12 @@ export const service = ( server, { customerAuthenticator, agentAuthenticator, op
 		messageMiddlewares: middlewares.middlewares()
 	} ), ... enhancers ) )
 
-	return { io, controller: middlewares.external, store }
+	return {
+		io,
+		controller: middlewares.external,
+		store,
+		configureLocales: ( defaultLocale, supportedLocales ) => {
+			store.dispatch( configureLocales( defaultLocale, supportedLocales ) )
+		}
+	}
 }

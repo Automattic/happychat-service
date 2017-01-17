@@ -1,5 +1,4 @@
 import get from 'lodash/get'
-import reduce from 'lodash/reduce'
 import {
 	filter,
 	compose,
@@ -8,40 +7,52 @@ import {
 	sort,
 	defaultTo,
 	values,
-	both,
 	equals,
 	ifElse,
-	whereEq
+	whereEq,
+	not,
+	always,
+	path,
+	reduce,
+	merge,
+	map
 } from 'ramda'
-import { asString } from '../util';
+import asString from '../as-string'
+import {
+	getLocaleMembership,
+	getSupportedLocales
+} from '../locales/selectors'
 
 export const STATUS_AVAILABLE = 'available';
 
-const weight = ( { load, capacity } ) => ( capacity - load ) / capacity
+const weight = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) ) / capacity
 const compare = ( a, b ) => {
 	if ( a.weight === b.weight ) {
 		if ( a.capacity === b.capacity ) {
 			return 0;
 		}
-		return a.capacity > b.capacity ? -1 : 1
+		return a.capacity - a.load > b.capacity - b.load ? -1 : 1
 	}
 	return a.weight > b.weight ? -1 : 1
 }
-export const getAvailableOperators = compose(
-	sort( ( a, b ) => compare(
-		{ weight: weight( a ), capacity: a.capacity },
-		{ weight: weight( b ), capacity: b.capacity }
-	) ),
-	filter( ( { status, load, capacity, online } ) => {
+
+export const getAvailableOperators = ( locale, state ) => compose(
+	sort( compare ),
+	map( user => merge( user, { weight: weight( user ) } ) ),
+	filter( ( { status, online, load, capacity, active } ) => {
 		if ( !online || status !== STATUS_AVAILABLE ) {
-			return false;
+			return false
 		}
-		return capacity - load > 0
+		if ( active !== true ) {
+			return false
+		}
+		return capacity - defaultTo( 0, load ) > 0
 	} ),
+	map( user => merge( user, getLocaleMembership( locale, user.id, state ) ) ),
 	values,
 	defaultTo( {} ),
 	view( lensPath( [ 'operators', 'identities' ] ) )
-)
+)( state )
 
 // Selectors
 export const selectIdentities = ( { operators: { identities } } ) => values( identities )
@@ -50,29 +61,42 @@ export const selectSocketIdentity = ( { operators: { sockets, identities } }, so
 	get( sockets, socket.id )
 )
 export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
-export const selectTotalCapacity = ( { operators: { identities } }, matchingStatus = STATUS_AVAILABLE ) => reduce( identities,
-	( { load: totalLoad, capacity: totalCapacity }, { load, capacity, status, online } ) =>
-	ifElse(
-		whereEq( { status: matchingStatus, online: true} ),
-		() => ( {
-			load: totalLoad + parseInt( load ),
-			capacity: totalCapacity + parseInt( capacity )
-		} ),
-		() => ( { load: totalLoad, capacity: totalCapacity } )
-	)( { status, online } ),
-	{ load: 0, capacity: 0 }
-)
+export const selectTotalCapacity = ( locale, state ) => compose(
+	reduce( ( { load: totalLoad, capacity: totalCapacity }, { id, status, online } ) =>
+		ifElse(
+			whereEq( { status: STATUS_AVAILABLE, online: true } ),
+			() => {
+				const { load, capacity } = getLocaleMembership( locale, id, state )
+				return {
+					load: totalLoad + parseInt( load ),
+					capacity: totalCapacity + parseInt( capacity )
+				}
+			},
+			() => ( { load: totalLoad, capacity: totalCapacity } )
+		)( { status, online } ),
+		{ load: 0, capacity: 0 }
+	),
+	values,
+	path( [ 'operators', 'identities' ] )
+)( state )
 
-export const getAvailableCapacity = state => {
-	const { load, capacity } = selectTotalCapacity( state )
+export const getAvailableCapacity = ( locale, state ) => {
+	const { load, capacity } = selectTotalCapacity( locale, state )
 	return capacity - load
 }
 
-export const haveAvailableCapacity = state => getAvailableCapacity( state ) > 0
+export const haveAvailableCapacity = ( locale, state ) => getAvailableCapacity( locale, state ) > 0
 
 export const getSystemAcceptsCustomers = ( { operators: { system: { acceptsCustomers } } } ) => acceptsCustomers
 
-export const isSystemAcceptingCustomers = both( haveAvailableCapacity, getSystemAcceptsCustomers )
+export const getAvailableLocales = state => ifElse(
+	compose( not, getSystemAcceptsCustomers ),
+	always( [] ),
+	compose(
+		getSupportedLocales,
+		filter( locale => getAvailableCapacity( locale, state ) )
+	)
+)( state )
 
 export const getOperatorIdentity = ( id, state ) => view(
 	lensPath( [ 'operators', 'identities', asString( id ) ] ),

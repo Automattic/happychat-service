@@ -1,6 +1,13 @@
 import { createServer } from 'http'
 import { service } from 'service'
 import { assign } from 'lodash/object'
+import {
+	setOperatorStatus,
+	setOperatorCapacity
+} from 'state/operator/actions'
+import {
+	STATUS_AVAILABLE
+} from 'state/operator/selectors'
 
 import IO from 'socket.io-client'
 
@@ -67,3 +74,9 @@ export const authenticators = ( customer, operator, agent ) => {
 	let operatorAuthenticator = ( socket, callback ) => callback( null, operator )
 	return { customerAuthenticator, agentAuthenticator, operatorAuthenticator }
 }
+
+export const setClientCapacity = ( client, capacity = 1, status = STATUS_AVAILABLE ) => new Promise( resolve => {
+	client.emit( 'broadcast.dispatch', setOperatorStatus( status ), () => {
+		client.emit( 'broadcast.dispatch', setOperatorCapacity( 'en-US', capacity ), () => resolve( client ) )
+	} )
+} )

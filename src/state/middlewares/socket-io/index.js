@@ -1,5 +1,5 @@
 import { map } from 'ramda'
-import { timestamp } from '../../util'
+import timestamp from '../../timestamp'
 import {
 	OPERATOR_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_TYPING,
@@ -13,8 +13,6 @@ import {
 } from '../../chatlist/selectors'
 import {
 	operatorChatLeave,
-	updateUserStatus,
-	updateCapacity,
 	removeUserSocket,
 	setUserOffline,
 	updateIdentity,
@@ -44,16 +42,6 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
 
 	const selectIdentity = userId => selectUser( store.getState(), userId );
-
-	socket.on( 'status', ( status, done ) => {
-		store.dispatch( updateUserStatus( user, status ) );
-		done()
-	} )
-
-	socket.on( 'capacity', ( capacity, done ) => {
-		store.dispatch( updateCapacity( user, capacity ) )
-		done( capacity );
-	} )
 
 	socket.on( 'disconnect', () => {
 		store.dispatch( removeUserSocket( socket, user ) );

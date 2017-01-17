@@ -1,5 +1,5 @@
 import { equal, deepEqual } from 'assert'
-import util, { authenticators } from './util'
+import makeService, { authenticators } from './helpers'
 
 const debug = require( 'debug' )( 'happychat:test:service' )
 
@@ -22,7 +22,7 @@ describe( 'Service', () => {
 		picture: 'http://example.com/furiousa'
 	}
 
-	const service = util( authenticators( mockUser, { id: 'operator-id' }, botUser ) )
+	const service = makeService( authenticators( mockUser, { id: 'operator-id' }, botUser ) )
 	const agent_meta = { meta: 'value' }
 
 	before( () => service.start() )

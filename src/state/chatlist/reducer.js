@@ -16,7 +16,7 @@ import {
 	equals,
 	both,
 } from 'ramda'
-import { asString } from '../util'
+import asString from '../as-string'
 import {
 	INSERT_PENDING_CHAT,
 	SET_CHAT_OPERATOR,
@@ -50,18 +50,21 @@ const chatLens = lensIndex( 1 )
 const operatorLens = lensIndex( 2 )
 const timestampLens = lensIndex( 3 )
 const membersLens = lensIndex( 4 )
+const localeLens = lensIndex( 5 )
 
 export const statusView = view( statusLens )
 export const chatView = view( chatLens )
 export const operatorView = view( operatorLens )
 export const timestampView = view( timestampLens )
 export const membersView = view( membersLens )
+export const localeView = view( localeLens )
 
 const setStatus = set( statusLens )
 const setChat = set( chatLens )
 const setOperator = set( operatorLens )
 const setTimestamp = set( timestampLens )
 const setMembers = set( membersLens )
+const setLocale = set( localeLens )
 
 const timestamp = () => ( new Date() ).getTime()
 
@@ -71,7 +74,8 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 			return compose(
 				setStatus( STATUS_PENDING ),
 				setTimestamp( timestamp() ),
-				setChat( action.chat )
+				setChat( action.chat ),
+				setLocale( action.chat.locale )
 			)( state )
 		case UPDATE_CHAT:
 			return setChat( action.chat )( state );

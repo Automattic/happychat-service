@@ -1,5 +1,5 @@
 import { deepEqual } from 'assert'
-import util, { authenticators } from './util'
+import makeService, { authenticators, setClientCapacity } from './helpers'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
 import assign from 'lodash/assign'
@@ -7,12 +7,11 @@ import assign from 'lodash/assign'
 const debug = require( 'debug' )( 'happychat:test:chat-logs' )
 
 describe( 'Chat logs', () => {
-	var service
+	let service
 
 	const mockMessages = [ 'hello', 'i need some help', 'can you help me?' ]
 
-	const afterInit = ( { customer, operator } ) => new Promise( ( resolve ) => {
-		operator.once( 'available', ( _, available ) => available( { capacity: 0, load: 0 } ) )
+	const afterInit = ( { customer } ) => new Promise( ( resolve ) => {
 		customer.once( 'init', () => resolve( customer ) )
 	} )
 
@@ -42,24 +41,14 @@ describe( 'Chat logs', () => {
 		return reduce( rest, ( p, msg ) => p.then( sendMessage( msg ) ), sendMessage( first )( customer ) )
 	}
 
-	const acceptAllAssignments = ( client ) => new Promise( ( resolve ) => {
-		debug( 'set accepting all chats' )
-		client.once( 'identify', ( callback ) => {
-			callback( { id: 'operator' } )
-		} )
-		client.once( 'available', ( chat, available ) => {
-			debug( 'reporting as available' )
-			available( { capacity: 1, status: 'available', load: 0 } )
-		} )
-		resolve( client )
-	} )
+	const acceptAllAssignments = ( client ) => setClientCapacity( client, 5 )
 
 	const wait = ( ms ) => thing => new Promise( resolve => {
 		setTimeout( () => resolve( thing ), ms )
 	} )
 
 	beforeEach( () => {
-		service = util( authenticators(
+		service = makeService( authenticators(
 			// customer
 			{ id: 'customer-a', session_id: '12345', picture: '', displayName: '', username: '' },
 			// operator

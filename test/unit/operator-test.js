@@ -14,7 +14,9 @@ import {
 	OPERATOR_INBOUND_MESSAGE,
 	SET_CHAT_OPERATOR,
 	INSERT_PENDING_CHAT,
-	OPERATOR_READY
+	OPERATOR_READY,
+	SET_OPERATOR_STATUS,
+	SET_OPERATOR_CAPACITY
 } from 'state/action-types'
 import {
 	setAcceptsCustomers,
@@ -23,9 +25,8 @@ import {
 } from 'state/operator/actions'
 import { selectTotalCapacity } from 'state/operator/selectors'
 import { insertPendingChat } from 'state/chatlist/actions'
-import { STATUS_AVAILABLE } from 'state/middlewares/socket-io'
 
-const debug = require( 'debug' )( 'happychat:operator' )
+const debug = require( 'debug' )( 'happychat:operator-test' )
 
 describe( 'Operators', () => {
 	let socketid = 'socket-id'
@@ -220,12 +221,12 @@ describe( 'Operators', () => {
 
 	describe( 'with multiple connected users', () => {
 		let ops = [
-			{ id: 'hermione', displayName: 'Hermione', avatarURL: 'url', status: 'available', capacity: 4, load: 1 },
-			{ id: 'ripley', displayName: 'Ripley', avatarURL: 'url', status: 'available', capacity: 1, load: 1 },
-			{ id: 'nausica', displayName: 'Nausica', avatarURL: 'url', status: 'available', capacity: 1, load: 0 },
-			{ id: 'furiosa', displayName: 'Furiosa', avatarURL: 'url', status: 'available', capacity: 5, load: 0 },
-			{ id: 'river', displayName: 'River Tam', status: 'available', capacity: 6, load: 3 },
-			{ id: 'buffy', displayName: 'Buffy', status: 'offline', capacity: 20, load: 0 }
+			{ id: 'hermione', displayName: 'Hermione', avatarURL: 'url', status: 'available', capacity: 4 },
+			{ id: 'ripley', displayName: 'Ripley', avatarURL: 'url', status: 'available', capacity: 1 },
+			{ id: 'nausica', displayName: 'Nausica', avatarURL: 'url', status: 'available', capacity: 1 },
+			{ id: 'furiosa', displayName: 'Furiosa', avatarURL: 'url', status: 'available', capacity: 5 },
+			{ id: 'river', displayName: 'River Tam', status: 'available', capacity: 6 },
+			{ id: 'buffy', displayName: 'Buffy', status: 'offline', capacity: 20 }
 		]
 
 		const assign = ( chat_id ) => new Promise( resolve => {
@@ -253,15 +254,16 @@ describe( 'Operators', () => {
 		const connectAll = () => collectPromises( ... ops.map(
 			op => () => new Promise( ( resolve, reject ) => {
 				const io_client = server.newClient()
-				const record = { load: op.load, capacity: op.capacity, status: 'available' }
 				io_client.client
-				.on( 'init', () => io_client.client.emit( 'status', op.status, () => {
-					io_client.client.emit( 'status', record.status, () => {
-						io_client.client.emit( 'capacity', record.capacity, () => {
-							resolve( op )
-						} )
+				.on( 'init', () => {
+					io_client.client.emit( 'broadcast.dispatch', {
+						type: SET_OPERATOR_STATUS, status: op.status
+					}, () => {
+						io_client.client.emit( 'broadcast.dispatch', {
+							type: SET_OPERATOR_CAPACITY, locale: 'en-US', capacity: op.capacity
+						}, () => resolve( op ) )
 					} )
-				} ) )
+				} )
 				connectOperator( io_client, op ).catch( reject )
 			} )
 		) )
@@ -277,27 +279,27 @@ describe( 'Operators', () => {
 		}
 
 		// Starting loads currently can't be set so the expected calculations are off
-		it.skip( 'should assign operators in correct order', () => assignChats( 9 ).then( results => {
+		it( 'should assign operators in correct order', () => assignChats( 9 ).then( results => {
 			deepEqual(
 				map( results, ( { id } ) => id ),
 				[
+					'river',    // 0/6 => 1/6
 					'furiosa',  // 0/5 => 1/5
+					'hermione', // 0/4 => 1/4
+					'ripley',   // 0/1 => 1/1
 					'nausica',  // 0/1 => 1/1
+					'river',    // 1/6 => 2/6
 					'furiosa',  // 1/5 => 2/5
 					'hermione', // 1/4 => 2/4
-					'furiosa',  // 2/5 => 3/5
-					'river',    // 3/6 => 4/6
-					'hermione', // 2/4 => 3/4
-					'furiosa',  // 3/5 => 4/5
-					'river',    // 4/6 => 5/6
+					'river',    // 2/6 => 3/6
 				]
 			)
 		} ) )
 
 		it( 'should report accepting customers', () => {
-			const { load, capacity } = selectTotalCapacity( store.getState(), STATUS_AVAILABLE )
+			const { load, capacity } = selectTotalCapacity( 'en-US', store.getState() )
 			ok( load < capacity )
-			equal( capacity, reduce( ops, ( total, op ) => total + op.capacity, 0 ) )
+			equal( capacity, reduce( ops, ( total, op ) => ( total + ( op.status === 'offline' ? 0 : op.capacity ) ), 0 ) )
 		} )
 	} )
 } )

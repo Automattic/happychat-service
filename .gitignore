@@ -5,3 +5,4 @@ lib/
 coverage/
 typings/
 *.log
+.tm_properties

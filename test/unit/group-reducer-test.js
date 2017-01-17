@@ -9,21 +9,25 @@ import {
 	removeGroupMember
 } from 'state/groups/actions'
 
+import { DEFAULT_GROUP_NAME, DEFAULT_GROUP_ID } from 'state/groups/reducer'
+
 describe( 'group reducer', () => {
 	it( 'should have default state', () => {
 		const { getState } = createStore( groups )
-		deepEqual( getState(), { list: {}, memberships: {} } )
+		deepEqual( getState(), { list: {
+			[ DEFAULT_GROUP_ID ]: { name: DEFAULT_GROUP_NAME, id: DEFAULT_GROUP_ID }
+		}, memberships: {} } )
 	} )
 
 	it( 'should add a group', () => {
 		const { getState, dispatch } = createStore( groups );
 		dispatch( addGroup( 'group-id', 'Group Name', 10 ) )
 
-		deepEqual( getState().list, { 'group-id': {
+		deepEqual( getState().list['group-id'], {
 			name: 'Group Name',
 			id: 'group-id',
 			priority: 10
-		} } )
+		} )
 	} )
 
 	it( 'should remove a group', () => {
@@ -35,9 +39,9 @@ describe( 'group reducer', () => {
 
 	it( 'should add group member', () => {
 		const { getState, dispatch } = createStore( groups )
-		dispatch( addGroupMember( 'group-id', 'operator-id' ) )
+		dispatch( addGroupMember( 'group-id', 'operator-id', 1 ) )
 
-		ok( getState().memberships['group-id']['operator-id'] )
+		deepEqual( getState().memberships['group-id'], { 'operator-id': 1 } )
 	} )
 
 	it( 'should remove group member', () => {

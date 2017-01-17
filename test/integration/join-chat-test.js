@@ -1,5 +1,5 @@
 import { ok, deepEqual } from 'assert'
-import util, { authenticators } from './util'
+import makeService, { authenticators } from './helpers'
 import { STATUS_CLOSED } from 'state/chatlist/reducer'
 
 const debug = require( 'debug' )( 'happychat:test:join-chat' )
@@ -55,7 +55,7 @@ describe( 'Operator', () => {
 	} )
 
 	beforeEach( () => {
-		service = util( authenticators( mockUser, opUser, {} ) )
+		service = makeService( authenticators( mockUser, opUser, {} ) )
 		service.start()
 	} )
 	afterEach( () => service.stop() )

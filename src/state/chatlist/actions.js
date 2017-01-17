@@ -1,6 +1,7 @@
 import {
 	ASSIGN_NEXT_CHAT,
 	ASSIGN_CHAT,
+	ASSIGN_CHATS,
 	CLOSE_CHAT,
 	INSERT_PENDING_CHAT,
 	REASSIGN_CHATS,
@@ -75,6 +76,8 @@ export const setChatCustomerDisconnect = ( chat_id ) => ( {
 export const assignNextChat = () => ( {
 	type: ASSIGN_NEXT_CHAT
 } )
+
+export const assignChats = ( { type: ASSIGN_CHATS } )
 
 export const assignChat = chat => ( {
 	type: ASSIGN_CHAT, chat

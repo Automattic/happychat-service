@@ -2,8 +2,6 @@ import {
 	UPDATE_IDENTITY,
 	REMOVE_USER,
 	REMOVE_USER_SOCKET,
-	UPDATE_USER_STATUS,
-	UPDATE_USER_CAPACITY,
 	OPERATOR_RECEIVE_TYPING,
 	OPERATOR_OPEN_CHAT_FOR_CLIENTS,
 	SET_SYSTEM_ACCEPTS_CUSTOMERS,
@@ -16,8 +14,11 @@ import {
 	OPERATOR_READY,
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
-	SET_USER_OFFLINE
+	SET_USER_OFFLINE,
+	JOIN_LOCALE,
+	LEAVE_LOCALE
 } from '../action-types'
+import { allowRemote } from './can-remote-dispatch'
 
 export const setUserOffline = user => ( {
 	type: SET_USER_OFFLINE, user
@@ -37,21 +38,13 @@ export const removeUserSocket = ( socket, user ) => (
 	{ user, socket, type: REMOVE_USER_SOCKET }
 )
 
-export const updateUserStatus = ( user, status ) => (
-	{ user, status, type: UPDATE_USER_STATUS }
-)
+export const setOperatorCapacity = allowRemote( SET_OPERATOR_CAPACITY, ( locale, capacity ) => ( {
+	locale, capacity
+} ) )
 
-export const updateCapacity = ( user, capacity ) => (
-	{ user, capacity, type: UPDATE_USER_CAPACITY }
-)
-
-export const setOperatorCapacity = ( capacity ) => ( {
-	capacity, type: SET_OPERATOR_CAPACITY
-} )
-
-export const setOperatorStatus = ( status ) => ( {
+export const setOperatorStatus = allowRemote( SET_OPERATOR_STATUS, ( status ) => ( {
 	status, type: SET_OPERATOR_STATUS
-} )
+} ) )
 
 export const setUserLoads = ( loads ) => ( {
 	type: SET_USER_LOADS, loads
@@ -65,9 +58,9 @@ export const operatorOpenChatForClients = ( operator, clients, room, chat, defer
 	{ type: OPERATOR_OPEN_CHAT_FOR_CLIENTS, operator, clients, room, chat, deferred, onDisconnect }
 )
 
-export const setAcceptsCustomers = ( isEnabled ) => (
-	{ type: SET_SYSTEM_ACCEPTS_CUSTOMERS, isEnabled }
-)
+export const setAcceptsCustomers = allowRemote( SET_SYSTEM_ACCEPTS_CUSTOMERS, ( isEnabled ) => (
+	{ isEnabled }
+) )
 
 export const operatorChatLeave = ( chat_id, user ) => (
 	{ type: OPERATOR_CHAT_LEAVE, chat_id, user }
@@ -88,3 +81,11 @@ export const operatorReady = ( user, socket, room ) => (
 export const operatorChatTranscriptRequest = ( user, chat, timestamp ) => ( {
 	type: OPERATOR_CHAT_TRANSCRIPT_REQUEST, user, chat, timestamp
 } )
+
+export const joinLocale = allowRemote( JOIN_LOCALE, ( locale ) => ( {
+	locale
+} ) )
+
+export const leaveLocale = allowRemote( LEAVE_LOCALE, ( locale ) => ( {
+	locale
+} ) )

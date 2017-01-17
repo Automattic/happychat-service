@@ -1,5 +1,5 @@
 import { equal } from 'assert'
-import util, { authenticators } from './util'
+import helpers, { authenticators, setClientCapacity } from './helpers'
 import { STATUS_AVAILABLE } from 'state/operator/selectors'
 
 const debug = require( 'debug' )( 'happychat:test:integration' )
@@ -23,20 +23,12 @@ describe( 'Abandoned service', () => {
 		picture: 'http://sample.com/ridley'
 	}
 
-	const service = util( authenticators( mockUser, opUser, {} ) )
+	const service = helpers( authenticators( mockUser, opUser, {} ) )
 
-	const setOperatorStatus = ( { operator, customer }, status = STATUS_AVAILABLE ) => new Promise( resolve => {
-		operator.emit( 'status', status, () => {
-			operator.emit( 'capacity', 5, () => {
-				resolve( { operator, customer } )
-			} )
-		} )
-	} )
+	const setOperatorStatus = ( { operator, customer }, status = STATUS_AVAILABLE ) =>
+		setClientCapacity( operator, 5, status ).then( () => ( { operator, customer } ) )
 
 	const assignOperator = ( { customer, operator } ) => new Promise( ( resolve ) => {
-		operator.once( 'available', ( chat, callback ) => {
-			callback( { capacity: 1, status: 'available', load: 0 } )
-		} )
 		operator.once( 'chat.open', ( chat ) => {
 			resolve( { customer, operator, chat } )
 		} )

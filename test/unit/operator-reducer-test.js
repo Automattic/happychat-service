@@ -13,12 +13,6 @@ describe( 'Operator reducer', () => {
 		equal( store.getState().identities[ 'user-a' ].status, 'known' )
 	} )
 
-	it( 'should set operator capacity', () => {
-		const store = createStore( reducer, { identities: { 'user-a': { capacity: 0 } } } )
-		store.dispatch( assoc( REMOTE_USER_KEY, { id: 'user-a' }, setOperatorCapacity( 5 ) ) )
-		equal( store.getState().identities[ 'user-a' ].capacity, 5 )
-	} )
-
 	it( 'should fail to set capacity with non-int type', () => {
 		const store = createStore( reducer, { identities: { 'user-a': { capacity: 2 } } } )
 		store.dispatch( assoc( REMOTE_USER_KEY, { id: 'user-a' }, setOperatorCapacity( 'a' ) ) )
@@ -28,7 +22,7 @@ describe( 'Operator reducer', () => {
 	it( 'should update user', () => {
 		const store = createStore( reducer )
 		store.dispatch( { type: 'UPDATE_IDENTITY', user: { id: 1, name: 'hi' }, socket: {} } )
-		deepEqual( store.getState().identities, { 1: { id: 1, name: 'hi', capacity: 3, load: 0, online: false } } )
+		deepEqual( store.getState().identities, { 1: { id: 1, name: 'hi', online: false } } )
 	} )
 
 	it( 'should remove sockets on serialize', () => {

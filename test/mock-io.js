@@ -99,7 +99,7 @@ class Server extends EventEmitter {
 	}
 
 	disconnect( { socket, client } ) {
-		debug( "DISCONNECTING SOCKET", socket.id )
+		debug( 'DISCONNECTING SOCKET', socket.id )
 		forEach( socket.rooms, ( room ) => {
 			debug( 'disonnecting and removing from room', socket.id, room )
 			this.rooms[room] = reject( this.rooms[room], socket )

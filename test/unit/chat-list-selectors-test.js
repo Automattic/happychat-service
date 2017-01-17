@@ -8,28 +8,31 @@ import {
 } from 'state/chatlist/reducer';
 
 describe( 'Chat List selectors', () => {
-	const state = { chatlist: {
-		1: [
-			'assigned',
-			{id: '1'},
-			{id: 5},
-			0,
-			{5: true}
-		],
-		2: [
-			STATUS_CLOSED,
-			{id: 2},
-			{id: 5},
-			0,
-			{5: true}
-		]
-	} }
+	const state = {
+		locales: { defaultLocale: 'en' },
+		chatlist: {
+			1: [
+				'assigned',
+				{id: '1'},
+				{id: 5},
+				0,
+				{5: true}
+			],
+			2: [
+				STATUS_CLOSED,
+				{id: 2},
+				{id: 5},
+				0,
+				{5: true}
+			]
+		}
+	}
 
 	it( 'should get members of open chats', () => {
-		deepEqual( getOpenChatMembers( state ), [ {5: true} ] )
+		deepEqual( getOpenChatMembers( state ).en, [ {5: true} ] )
 	} )
 
-	it( 'should get all memebers of chats', () => {
+	it( 'should get all members of chats', () => {
 		deepEqual( getChatMembers( state ), [ {5: true}, {5: true} ] )
 	} )
 } )

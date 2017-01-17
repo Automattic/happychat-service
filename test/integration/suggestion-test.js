@@ -1,9 +1,11 @@
 import { deepEqual, ok } from 'assert'
-import util, { authenticators } from './util'
+import makeService, { authenticators } from './helpers'
 import { tick } from '../tick'
 import find from 'lodash/find'
 import set from 'lodash/set'
 import every from 'lodash/every'
+
+import { setOperatorStatus, setOperatorCapacity } from 'state/operator/actions'
 
 const debug = require( 'debug' )( 'happychat:test:suggestion-test' )
 
@@ -24,8 +26,8 @@ describe( 'Chat logs', () => {
 			if ( every( ready, value => value === true ) ) {
 				debug( 'clients initialized' )
 				resolve( { customer, operator, agent } )
-				operator.emit( 'status', 'available', () => {
-					operator.emit( 'capacity', 1, () => {
+				operator.emit( 'broadcast.dispatch', setOperatorStatus( 'available' ), () => {
+					operator.emit( 'broadcast.dispatch', setOperatorCapacity( 'en-US', 1 ), () => {
 						resolve( { customer, operator, agent } )
 					} )
 				} )
@@ -68,10 +70,7 @@ describe( 'Chat logs', () => {
 
 	const setOperatorOnline = ( clients ) => new Promise( ( resolve ) => {
 		debug( 'setting operator online' )
-		clients.operator.emit( 'status', 'available', () => {
-			debug( 'now online' )
-			resolve( clients )
-		} )
+		clients.operator.emit( 'broadcast.dispatch', setOperatorStatus( 'available' ), () => resolve( clients ) )
 	} )
 
 	const sendCustomerMessage = ( msg ) => ( clients ) => new Promise( resolve => {
@@ -100,7 +99,7 @@ describe( 'Chat logs', () => {
 	} )
 
 	beforeEach( () => {
-		service = util( authenticators(
+		service = makeService( authenticators(
 			{ id: 'customer', username: 'A-Customer', displayName: 'Customer', picture: '', session_id: 'customer-1' },
 			{ id: 'operator', username: 'op', displayName: 'op', picture: '' },
 			{ id: 'agent', username: 'agent', displayName: 'agent', picture: '' }

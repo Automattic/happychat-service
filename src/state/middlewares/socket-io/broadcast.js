@@ -7,7 +7,7 @@ import { assoc } from 'ramda'
 
 const debug = require( 'debug' )( 'happychat:socket-io:broadcast' )
 
-export const REMOTE_USER_KEY = 'REMOTE_USER_KEY'
+export const REMOTE_USER_KEY = 'REMOTE_USER'
 
 const join = ( io, socket ) => new Promise( ( resolve, reject ) => {
 	socket.join( 'broadcast', e => {
@@ -48,7 +48,10 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 			}
 			dispatch( action ).then(
 				result => callback( null, result ),
-				e => callback( e.message )
+				e => {
+					debug( 'remote dispatch failed', e )
+					callback( e.message )
+				}
 			)
 		}
 		socket.on( 'broadcast.state', stateListener )
@@ -78,6 +81,7 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 							// be up to date with the server version
 							return action.reject( new Error( 'out of date' ) )
 						}
+						debug( 'dispatching remote action', action.action )
 						dispatch( action.action )
 						resolve( version )
 					} catch ( e ) {
@@ -96,7 +100,7 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 		const nextPatch = diff( previousState, nextState )
 
 		// TODO: throttle?
-
+		debug( 'patch', nextPatch )
 		if ( ! isEmpty( nextPatch ) ) {
 			const nextVersion = uuid()
 			patch = nextPatch

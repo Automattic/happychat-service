@@ -16,15 +16,12 @@ import {
 	compose,
 	view
 } from 'ramda'
-import { asString } from '../util'
+import asString from '../as-string'
 import {
 	UPDATE_IDENTITY,
 	REMOVE_USER,
 	REMOVE_USER_SOCKET,
-	UPDATE_USER_STATUS,
-	UPDATE_USER_CAPACITY,
 	SET_SYSTEM_ACCEPTS_CUSTOMERS,
-	SET_USER_LOADS,
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
 	SET_USER_OFFLINE,
@@ -53,14 +50,10 @@ const user_sockets = ( state = {}, action ) => {
 
 const DEFAULT_CAPACITY = 3;
 
-const identity = ( state = { load: 0, capacity: DEFAULT_CAPACITY, online: false }, action ) => {
+const identity = ( state = { online: false }, action ) => {
 	switch ( action.type ) {
 		case UPDATE_IDENTITY:
 			return merge( state, action.user, { online: true } )
-		case UPDATE_USER_STATUS:
-			return merge( state, { status: action.status, online: true } )
-		case UPDATE_USER_CAPACITY:
-			return merge( state, { capacity: action.capacity, online: true } )
 		case SET_OPERATOR_STATUS:
 			return merge( state, { status: action.status, online: true } )
 		case SET_OPERATOR_CAPACITY:
@@ -91,8 +84,6 @@ const identities = ( state = {}, action ) => {
 	const { user } = action
 	switch ( action.type ) {
 		case UPDATE_IDENTITY:
-		case UPDATE_USER_STATUS:
-		case UPDATE_USER_CAPACITY:
 		case SET_USER_OFFLINE:
 			return set_ramda(
 				lensUser( action ),
@@ -106,11 +97,6 @@ const identities = ( state = {}, action ) => {
 			)( state )
 		case REMOVE_USER:
 			return omit( state, user.id )
-		case SET_USER_LOADS:
-			return mapObjIndexed( ( operator, id ) => merge(
-				operator,
-				{ load: defaultTo( 0, action.loads[id] ) }
-			), state )
 		default:
 			return state
 	}

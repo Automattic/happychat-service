@@ -7,8 +7,8 @@ import chatlistMiddleware from './middlewares/socket-io/chatlist'
 import broadcastMiddleware from './middlewares/socket-io/broadcast'
 import agentMiddleware from './middlewares/socket-io/agents'
 import controllerMiddleware from './middlewares/socket-io/controller'
-import operatorLoadMiddleware from './middlewares/socket-io/operator-load'
-import canRemoteDispatch from './operator/canRemoteDispatch'
+import systemMiddleware from './middlewares/system'
+import canRemoteDispatch from './operator/can-remote-dispatch'
 import { DESERIALIZE, SERIALIZE } from './action-types'
 
 const debug = require( 'debug' )( 'happychat:store' )
@@ -42,24 +42,6 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 				customerDisconnectMessageTimeout: timeout
 			}, customerAuth, messageMiddlewares ),
 			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
-			...operatorLoadMiddleware,
+			...systemMiddleware,
 	)
 }
-
-// export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], middlewares = [], timeout = undefined }, state, reducer ) => {
-// 	return createStore(
-// 		reducer,
-// 		state,
-// 		applyMiddleware(
-// 			logger,
-// 			...middlewares,
-// 			delayedDispatch,
-// 			controllerMiddleware( messageMiddlewares ),
-// 			operatorMiddleware( io.of( '/operator' ), operatorAuth ),
-// 			agentMiddleware( io.of( '/agent' ), agentAuth ),
-// 			chatlistMiddleware( { io, timeout, customerDisconnectTimeout: timeout, customerDisconnectMessageTimeout: timeout }, customerAuth ),
-// 			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
-// 			...operatorLoadMiddleware,
-// 		)
-// 	)
-// }

@@ -11,13 +11,22 @@ import {
 	defaultTo,
 	isEmpty,
 	head,
-	not
+	not,
+	prop,
+	anyPass,
+	when,
+	flip,
+	contains,
+	always,
+	groupBy,
+	mapObjIndexed
 } from 'ramda'
 import {
 	statusView,
 	chatView,
 	operatorView,
 	membersView,
+	localeView,
 	STATUS_ABANDONED,
 	STATUS_MISSED,
 	STATUS_NEW,
@@ -25,8 +34,17 @@ import {
 	STATUS_ASSIGNING,
 	STATUS_CLOSED
 } from './reducer'
+import {
+	getDefaultLocale,
+	getSupportedLocales
+} from '../locales/selectors'
 
 const selectChatlist = view( lensProp( 'chatlist' ) )
+const selectChat = id => compose(
+	defaultTo( [] ),
+	prop( id ),
+	selectChatlist
+)
 const mapToChat = map( chatView )
 const mapToMembers = map( membersView )
 const matchingStatus = status => filter( compose( equals( status ), statusView ) )
@@ -74,7 +92,30 @@ export const getOpenChatsForOperator = ( operator_id, state ) => compose(
 )( state )
 
 export const getChatMembers = compose( mapToMembers, values, selectChatlist )
-export const getOpenChatMembers = compose( mapToMembers, filterClosed, values, selectChatlist )
+
+const getLocale = ( locale, state ) => {
+	const systemLocale = getDefaultLocale( state )
+	const supported = getSupportedLocales( state )
+	return compose(
+		when(
+			compose( not, flip( contains )( supported ) ),
+			always( systemLocale )
+		),
+		defaultTo( systemLocale ),
+	)( locale )
+}
+
+export const getOpenChatMembers = state => compose(
+	mapObjIndexed( mapToMembers ),
+	groupBy( compose(
+		flip( getLocale )( state ),
+		localeView,
+	) ),
+	filterClosed,
+	values,
+	selectChatlist
+)( state )
+
 export const getAllChats = compose( mapToChat, values, selectChatlist )
 export const getChatsWithStatus = ( status, state ) => compose(
 	mapToChat,
@@ -98,16 +139,12 @@ export const getMissedChats = ( state ) => getChatsWithStatus( STATUS_MISSED, st
 
 export const getChatOperator = ( chat_id, state ) => compose(
 	operatorView,
-	defaultTo( [] ),
-	view( lensProp( chat_id ) ),
-	selectChatlist
+	selectChat( chat_id )
 )( state )
 
 export const getChat = ( chat_id, state ) => compose(
 	chatView,
-	defaultTo( [] ),
-	view( lensProp( chat_id ) ),
-	selectChatlist
+	selectChat( chat_id ),
 )( state )
 
 export const getChats = state => compose(
@@ -118,9 +155,7 @@ export const getChats = state => compose(
 
 export const getChatStatus = ( chat_id, state ) => defaultTo( STATUS_NEW )( compose(
 	statusView,
-	defaultTo( [] ),
-	view( lensProp( chat_id ) ),
-	selectChatlist
+	selectChat( chat_id )
 )( state ) )
 
 export const isChatStatusNew = ( chat_id, state ) => equals(
@@ -146,3 +181,34 @@ export const getNextMissedChat = state => head(
 )
 
 export const isAssigningChat = state => haveChatWithStatus( STATUS_ASSIGNING, state )
+
+// Get the locale assigned to the chat. If no locale, use the system default
+// If the locale is not explicity supported by the system, use the system default
+export const getChatLocale = ( chat_id, state ) => {
+	return compose(
+		flip( getLocale )( state ),
+		localeView,
+		selectChat( chat_id )
+	)( state )
+}
+
+const getAssignableChats = compose(
+	filter( compose(
+		anyPass( map( equals, [ STATUS_NEW, STATUS_PENDING ] ) ),
+		statusView
+	) ),
+	values,
+	selectChatlist
+)
+
+export const haveAssignableChat = compose(
+	not,
+	isEmpty,
+	getAssignableChats
+)
+
+export const getNextAssignableChat = compose(
+	chatView,
+	head,
+	getAssignableChats
+)
