@@ -15,7 +15,8 @@ import {
 	path,
 	reduce,
 	merge,
-	map
+	map,
+	when
 } from 'ramda'
 import asString from '../as-string'
 import {
@@ -63,16 +64,18 @@ export const selectSocketIdentity = ( { operators: { sockets, identities } }, so
 export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
 export const selectTotalCapacity = ( locale, state ) => compose(
 	reduce( ( { load: totalLoad, capacity: totalCapacity }, { id, status, online } ) =>
-		ifElse(
+		when(
 			whereEq( { status: STATUS_AVAILABLE, online: true } ),
 			() => {
-				const { load, capacity } = getLocaleMembership( locale, id, state )
+				const { load, capacity, active } = getLocaleMembership( locale, id, state )
+				if ( !active ) {
+					return { load: 0, capacity: 0 }
+				}
 				return {
 					load: totalLoad + parseInt( load ),
 					capacity: totalCapacity + parseInt( capacity )
 				}
-			},
-			() => ( { load: totalLoad, capacity: totalCapacity } )
+			}
 		)( { status, online } ),
 		{ load: 0, capacity: 0 }
 	),
@@ -93,8 +96,8 @@ export const getAvailableLocales = state => ifElse(
 	compose( not, getSystemAcceptsCustomers ),
 	always( [] ),
 	compose(
-		getSupportedLocales,
-		filter( locale => getAvailableCapacity( locale, state ) )
+		filter( locale => getAvailableCapacity( locale, state ) > 0 ),
+		getSupportedLocales
 	)
 )( state )
 
