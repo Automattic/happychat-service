@@ -64,7 +64,7 @@ export const selectSocketIdentity = ( { operators: { sockets, identities } }, so
 export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
 export const selectTotalCapacity = ( locale, state ) => compose(
 	reduce( ( { load: totalLoad, capacity: totalCapacity }, { id, status, online } ) =>
-		when(
+		ifElse(
 			whereEq( { status: STATUS_AVAILABLE, online: true } ),
 			() => {
 				const { load, capacity, active } = getLocaleMembership( locale, id, state )
@@ -75,7 +75,8 @@ export const selectTotalCapacity = ( locale, state ) => compose(
 					load: totalLoad + parseInt( load ),
 					capacity: totalCapacity + parseInt( capacity )
 				}
-			}
+			},
+			() => ( { load: totalLoad, capacity: totalCapacity } )
 		)( { status, online } ),
 		{ load: 0, capacity: 0 }
 	),

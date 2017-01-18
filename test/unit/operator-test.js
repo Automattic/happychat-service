@@ -296,10 +296,11 @@ describe( 'Operators', () => {
 			)
 		} ) )
 
-		it( 'should report accepting customers', () => {
-			const { load, capacity } = selectTotalCapacity( 'en-US', store.getState() )
-			ok( load < capacity )
-			equal( capacity, reduce( ops, ( total, op ) => ( total + ( op.status === 'offline' ? 0 : op.capacity ) ), 0 ) )
+		it( 'should calculate locale capacity', () => {
+			deepEqual( selectTotalCapacity( 'en-US', store.getState() ), {
+				load: 0,
+				capacity: 17
+			} )
 		} )
 	} )
 } )
