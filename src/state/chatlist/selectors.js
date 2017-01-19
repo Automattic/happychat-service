@@ -11,13 +11,16 @@ import {
 	defaultTo,
 	isEmpty,
 	head,
-	not
+	not,
+	lt,
+	subtract
 } from 'ramda'
 import {
 	statusView,
 	chatView,
 	operatorView,
 	membersView,
+	timestampView,
 	STATUS_ABANDONED,
 	STATUS_MISSED,
 	STATUS_NEW,
@@ -146,3 +149,14 @@ export const getNextMissedChat = state => head(
 )
 
 export const isAssigningChat = state => haveChatWithStatus( STATUS_ASSIGNING, state )
+const now = () => ( new Date() ).getTime()
+
+export const getClosedChatsOlderThan = ( ageInSeconds, state ) => compose(
+	mapToChat,
+	filter( both(
+		compose( equals( STATUS_CLOSED ), statusView ),
+		compose( lt( ageInSeconds * 1000 ), subtract( now() ), timestampView )
+	) ),
+	values,
+	selectChatlist
+)( state )
