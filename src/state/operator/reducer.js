@@ -7,14 +7,15 @@ import omit from 'lodash/omit'
 import { REMOTE_USER_KEY } from '../middlewares/socket-io/broadcast'
 import { combineReducers } from 'redux'
 import {
-	mapObjIndexed,
-	defaultTo,
 	merge,
 	lensPath,
 	lensProp,
 	set as set_ramda,
 	compose,
-	view
+	view,
+	map,
+	flip,
+	curryN
 } from 'ramda'
 import asString from '../as-string'
 import {
@@ -25,7 +26,8 @@ import {
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
 	SET_USER_OFFLINE,
-	SERIALIZE
+	SERIALIZE,
+	DESERIALIZE
 } from '../action-types'
 
 // Reducers
@@ -52,6 +54,8 @@ const DEFAULT_CAPACITY = 3;
 
 const identity = ( state = { online: false }, action ) => {
 	switch ( action.type ) {
+		case DESERIALIZE:
+			return merge( state, { online: false } )
 		case UPDATE_IDENTITY:
 			return merge( state, action.user, { online: true } )
 		case SET_OPERATOR_STATUS:
@@ -83,6 +87,8 @@ export const getRemoteActionUser = view( lensProp( REMOTE_USER_KEY ) )
 const identities = ( state = {}, action ) => {
 	const { user } = action
 	switch ( action.type ) {
+		case DESERIALIZE:
+			return map( curryN( 2, flip( identity ) )( action ), state )
 		case UPDATE_IDENTITY:
 		case SET_USER_OFFLINE:
 			return set_ramda(
