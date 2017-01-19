@@ -33,7 +33,8 @@ import {
 	REMOVE_USER,
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_CHAT_JOIN,
-	UPDATE_CHAT
+	UPDATE_CHAT,
+	REMOVE_CHAT
 } from '../action-types'
 
 export const STATUS_NEW = 'new'
@@ -123,6 +124,8 @@ const whereStatusIsNot = status => compose(
 
 export default ( state = {}, action ) => {
 	switch ( action.type ) {
+		case REMOVE_CHAT:
+			return dissoc( asString( action.id ), state )
 		case AUTOCLOSE_CHAT:
 			return assoc( action.id, chat( view( lensProp( action.id ), state ), action ), state )
 		case SET_CHAT_MISSED:

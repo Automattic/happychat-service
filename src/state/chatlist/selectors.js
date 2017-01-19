@@ -19,7 +19,9 @@ import {
 	contains,
 	always,
 	groupBy,
-	mapObjIndexed
+	mapObjIndexed,
+	subtract,
+	lt
 } from 'ramda'
 import {
 	statusView,
@@ -27,6 +29,7 @@ import {
 	operatorView,
 	membersView,
 	localeView,
+	timestampView,
 	STATUS_ABANDONED,
 	STATUS_MISSED,
 	STATUS_NEW,
@@ -39,7 +42,7 @@ import {
 	getSupportedLocales
 } from '../locales/selectors'
 
-const selectChatlist = view( lensProp( 'chatlist' ) )
+export const selectChatlist = view( lensProp( 'chatlist' ) )
 const selectChat = id => compose(
 	defaultTo( [] ),
 	prop( id ),
@@ -212,3 +215,15 @@ export const getNextAssignableChat = compose(
 	head,
 	getAssignableChats
 )
+
+const now = () => ( new Date() ).getTime()
+
+export const getClosedChatsOlderThan = ( ageInSeconds, state ) => compose(
+	mapToChat,
+	filter( both(
+		compose( equals( STATUS_CLOSED ), statusView ),
+		compose( lt( ageInSeconds * 1000 ), subtract( now() ), timestampView )
+	) ),
+	values,
+	selectChatlist
+)( state )

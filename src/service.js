@@ -4,6 +4,8 @@ import { createStore, compose } from 'redux'
 
 import enhancer from './state'
 import reducer from './state/reducer'
+import { removeChat } from './state/chatlist/actions'
+import { getClosedChatsOlderThan } from './state/chatlist/selectors'
 import middlewareInterface from './middleware-interface'
 import { configureLocales } from './state/locales/actions'
 
@@ -27,6 +29,17 @@ const validateKeys = fields => when(
 		);
 	}
 )
+
+const FOUR_HOURS_IN_SECONDS = 60 * 60 * 4
+const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_HOURS_IN_SECONDS ) => () => {
+	map(
+		( chat ) => {
+			debug( 'remove chat', chat.id )
+			dispatch( removeChat( chat.id ) )
+		},
+		getClosedChatsOlderThan( maxAgeIsSeconds, getState() )
+	)
+}
 
 export const service = ( server, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, state, enhancers = [] ) => {
 	debug( 'configuring socket.io server' )
@@ -57,6 +70,9 @@ export const service = ( server, { customerAuthenticator, agentAuthenticator, op
 		messageMiddlewares: middlewares.middlewares()
 	} ), ... enhancers ) )
 
+	const removeStaleChats = buildRemoveStaleChats( store )
+	setInterval( removeStaleChats, 1000 * 60 ) // every minute
+	process.nextTick( removeStaleChats )
 	return {
 		io,
 		controller: middlewares.external,
