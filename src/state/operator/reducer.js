@@ -14,7 +14,10 @@ import {
 	lensProp,
 	set as set_ramda,
 	compose,
-	view
+	view,
+	map,
+	flip,
+	curryN
 } from 'ramda'
 import { asString } from '../util'
 import {
@@ -28,7 +31,8 @@ import {
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
 	SET_USER_OFFLINE,
-	SERIALIZE
+	SERIALIZE,
+	DESERIALIZE
 } from '../action-types'
 
 // Reducers
@@ -55,6 +59,8 @@ const DEFAULT_CAPACITY = 3;
 
 const identity = ( state = { load: 0, capacity: DEFAULT_CAPACITY, online: false }, action ) => {
 	switch ( action.type ) {
+		case DESERIALIZE:
+			return merge( state, { online: false } )
 		case UPDATE_IDENTITY:
 			return merge( state, action.user, { online: true } )
 		case UPDATE_USER_STATUS:
@@ -90,6 +96,8 @@ export const getRemoteActionUser = view( lensProp( REMOTE_USER_KEY ) )
 const identities = ( state = {}, action ) => {
 	const { user } = action
 	switch ( action.type ) {
+		case DESERIALIZE:
+			return map( curryN( 2, flip( identity ) )( action ), state )
 		case UPDATE_IDENTITY:
 		case UPDATE_USER_STATUS:
 		case UPDATE_USER_CAPACITY:
