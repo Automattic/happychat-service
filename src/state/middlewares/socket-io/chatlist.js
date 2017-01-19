@@ -140,9 +140,12 @@ const init = ( { user, socket, io, store, chat }, middlewares ) => () => {
 	} )
 
 	socket.on( 'transcript', ( transcript_timestamp, callback ) => {
-		store.dispatch(
-			customerChatTranscriptRequest( chat, transcript_timestamp )
-		).then( result => new Promise( ( resolve, reject ) => {
+		new Promise( ( resolve, reject ) => {
+			store.dispatch(
+				customerChatTranscriptRequest( chat, transcript_timestamp )
+			).then( resolve, reject )
+		} )
+		.then( result => new Promise( ( resolve, reject ) => {
 			Promise.all( map( message => runMiddleware( {
 				origin: message.source,
 				destination: 'customer',

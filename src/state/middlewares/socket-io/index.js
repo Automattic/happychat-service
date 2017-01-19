@@ -102,7 +102,6 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 				operatorChatTranscriptRequest( user, chat, message_timestamp )
 			).then( resolve, reject )
 		} )
-		// TODO: run through the middlewares?
 		.then( result => new Promise( ( resolve, reject ) => {
 			debug( 'chat.transcript', chat_id, result.timestamp, result.messages.length )
 			// debug time to run each message through middleware
