@@ -25,6 +25,7 @@ import {
 	setChatsRecovered,
 	setOperatorChatsAbandoned,
 	operatorJoinChat,
+	removeChat
 } from 'state/chatlist/actions'
 import {
 	operatorChatLeave,
@@ -206,5 +207,11 @@ describe( 'ChatList reducer', () => {
 			deepEqual( getChatStatus( 451, state ), STATUS_CLOSED )
 		},
 		{ 451: [null, { id: '451' }, null, null, null ] }
+	) )
+
+	it( 'should remove a chat', dispatchAction(
+		removeChat( 123 ),
+		state => deepEqual( state, { chatlist: {} } ),
+		{ 123: [ ] }
 	) )
 } )
