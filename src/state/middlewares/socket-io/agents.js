@@ -1,5 +1,5 @@
 import { getChats } from '../../chatlist/selectors'
-import { selectIdentities } from '../../operator/selectors'
+import { getOperators } from '../../operator/selectors'
 import { AGENT_RECEIVE_MESSAGE } from '../../action-types'
 import { agentInboundMessage } from '../../chatlist/actions'
 
@@ -23,7 +23,7 @@ const onAuthorized = ( { socket, agent, store } ) => {
 	} )
 
 	socket.on( 'system.info', done => {
-		const operators = selectIdentities( getState() );
+		const operators = getOperators( getState() );
 		const chats = getChats( getState() );
 		done( { chats, operators } )
 	} )
