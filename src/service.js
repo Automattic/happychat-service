@@ -1,5 +1,20 @@
 import IO from 'socket.io'
-import { compose as r_compose, isNil, prop, anyPass, when, map, join, keys, difference, append } from 'ramda'
+import {
+	compose as r_compose,
+	isNil,
+	prop,
+	anyPass,
+	when,
+	map,
+	join,
+	keys,
+	difference,
+	append,
+	once,
+	length,
+	values
+} from 'ramda'
+
 import { createStore, compose } from 'redux'
 
 import enhancer from './state'
@@ -8,6 +23,7 @@ import { removeChat } from './state/chatlist/actions'
 import { getClosedChatsOlderThan } from './state/chatlist/selectors'
 import middlewareInterface from './middleware-interface'
 import { configureLocales } from './state/locales/actions'
+import upgradeCapacities from './upgrade-capacities'
 
 const debug = require( 'debug' )( 'happychat:main' )
 
@@ -36,12 +52,13 @@ const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_H
 		( chat ) => {
 			debug( 'remove chat', chat.id )
 			dispatch( removeChat( chat.id ) )
+			debug( length( values( getState().chatlist ) ) )
 		},
 		getClosedChatsOlderThan( maxAgeIsSeconds, getState() )
 	)
 }
 
-export const service = ( server, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, state, enhancers = [] ) => {
+export const service = ( server, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, initialState, enhancers = [] ) => {
 	debug( 'configuring socket.io server' )
 
 	const io = new IO( server )
@@ -62,7 +79,7 @@ export const service = ( server, { customerAuthenticator, agentAuthenticator, op
 		socket.emit( 'unauthorized' )
 	} )
 
-	const store = createStore( reducer, state, compose( enhancer( {
+	const store = createStore( reducer, initialState, compose( enhancer( {
 		io,
 		operatorAuth: auth( operatorAuthenticator, validateKeys( REQUIRED_OPERATOR_KEYS ) ),
 		customerAuth: auth( customerAuthenticator, validateKeys( REQUIRED_CUSTOMER_KEYS ) ),
@@ -73,12 +90,18 @@ export const service = ( server, { customerAuthenticator, agentAuthenticator, op
 	const removeStaleChats = buildRemoveStaleChats( store )
 	setInterval( removeStaleChats, 1000 * 60 ) // every minute
 	process.nextTick( removeStaleChats )
+
+	const upgradeCapacitiesOnce = once( upgradeCapacities( store ) )
+
 	return {
 		io,
 		controller: middlewares.external,
 		store,
 		configureLocales: ( defaultLocale, supportedLocales ) => {
 			store.dispatch( configureLocales( defaultLocale, supportedLocales ) )
+			// go through each identity and remove the capacities and loads
+			// set use the capacity to set the users capacity for the default locale
+			upgradeCapacitiesOnce()
 		}
 	}
 }
