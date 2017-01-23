@@ -15,7 +15,8 @@ import {
 	view,
 	map,
 	flip,
-	curryN
+	curryN,
+	exclude
 } from 'ramda'
 import asString from '../as-string'
 import {
@@ -23,7 +24,6 @@ import {
 	REMOVE_USER,
 	REMOVE_USER_SOCKET,
 	SET_SYSTEM_ACCEPTS_CUSTOMERS,
-	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
 	SET_USER_OFFLINE,
 	SERIALIZE,
@@ -50,22 +50,16 @@ const user_sockets = ( state = {}, action ) => {
 	}
 }
 
-const DEFAULT_CAPACITY = 3;
-
 const identity = ( state = { online: false }, action ) => {
 	switch ( action.type ) {
+		case SERIALIZE:
+			return exclude( [ 'capacity', 'load' ], state )
 		case DESERIALIZE:
 			return merge( state, { online: false } )
 		case UPDATE_IDENTITY:
 			return merge( state, action.user, { online: true } )
 		case SET_OPERATOR_STATUS:
 			return merge( state, { status: action.status, online: true } )
-		case SET_OPERATOR_CAPACITY:
-			const capacity = parseInt( action.capacity )
-			if ( isNaN( capacity ) ) {
-				return state
-			}
-			return merge( state, { capacity, online: true } )
 		case SET_USER_OFFLINE:
 			return merge( state, { online: false } )
 	}
@@ -96,7 +90,6 @@ const identities = ( state = {}, action ) => {
 				identity( view( lensUser( action ), state ), action )
 			)( state )
 		case SET_OPERATOR_STATUS:
-		case SET_OPERATOR_CAPACITY:
 			return set_ramda(
 				lensRemoteUser( action ),
 				identity( view( lensRemoteUser( action ), state ), action )
