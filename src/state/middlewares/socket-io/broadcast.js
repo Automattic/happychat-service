@@ -1,5 +1,6 @@
 import jsondiff from 'simperium-jsondiff'
 import { v4 as uuid } from 'uuid'
+import debounce from 'lodash/debounce'
 import { OPERATOR_READY, REMOTE_ACTION_TYPE } from '../../action-types'
 import { isEmpty } from 'ramda'
 import { selectSocketIdentity } from '../../operator/selectors'
@@ -68,6 +69,20 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 		sendState( action.socket )
 	}
 
+	const update = debounce( ( state ) => {
+		const nextState = selector( state )
+		const nextPatch = diff( currentState, nextState )
+
+		debug( 'patch', JSON.stringify( nextPatch ) )
+		if ( ! isEmpty( nextPatch ) ) {
+			const nextVersion = uuid()
+			patch = nextPatch
+			broadcastVersion( io, version, nextVersion, patch )
+			version = nextVersion
+			currentState = nextState
+		}
+	}, 20, { maxTime: 100 } )
+
 	return next => action => {
 		switch ( action.type ) {
 			case REMOTE_ACTION_TYPE:
@@ -90,21 +105,8 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 				break;
 		}
 
-		const previousState = getState()
 		const result = next( action )
-		const nextState = currentState = selector( getState() )
-		const nextPatch = diff( previousState, nextState )
-
-		// TODO: throttle?
-
-		if ( ! isEmpty( nextPatch ) ) {
-			const nextVersion = uuid()
-			patch = nextPatch
-			broadcastVersion( io, version, nextVersion, patch )
-			version = nextVersion
-			currentState = nextState
-		}
-
+		update( getState() )
 		return result
 	}
 }
