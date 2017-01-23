@@ -5,7 +5,8 @@ import {
 	isEmpty,
 	view,
 	lensPath,
-	length
+	length,
+	contains
 } from 'ramda'
 import { delayAction, cancelAction } from 'redux-delayed-dispatch'
 import { v4 as uuid } from 'uuid'
@@ -80,6 +81,7 @@ import {
 	isOperatorAcceptingChats,
 	haveAvailableCapacity
 } from '../../operator/selectors'
+import { getDefaultLocale } from '../../locales/selectors'
 import { run } from '../../../middleware-interface'
 import timestamp from '../../timestamp'
 
@@ -265,7 +267,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		const { chat, socket } = action
 		const state = store.getState()
 		const locales = getAvailableLocales( state )
-		socket.emit( 'accept', length( locales ) > 0 )
+		socket.emit( 'accept', contains( getDefaultLocale( state ), locales ) )
 		socket.emit( 'accept.locale', locales )
 		const status = getChatStatus( chat.id, state )
 		const operator = getChatOperator( chat.id, state )
@@ -518,8 +520,10 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 	return next => action => {
 		switch ( action.type ) {
 			case NOTIFY_SYSTEM_STATUS_CHANGE:
-				customer_io.emit( 'accept', length( action.enabled ) > 0 )
-				customer_io.emit( 'accept.locale', action.enabled )
+				const available = getAvailableLocales( store.getState() )
+				debug( 'notify system status', available )
+				customer_io.emit( 'accept', contains( getDefaultLocale( store.getState() ), available ) )
+				customer_io.emit( 'accept.locale', available )
 				break;
 			case NOTIFY_CHAT_STATUS_CHANGED:
 				const status = getChatStatus( action.chat_id, store.getState() );
