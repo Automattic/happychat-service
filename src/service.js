@@ -31,8 +31,10 @@ const FOUR_HOURS_IN_SECONDS = 60 * 60 * 4
 const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_HOURS_IN_SECONDS ) => () => {
 	map(
 		( chat ) => {
-			debug( 'remove chat', chat.id )
-			dispatch( removeChat( chat.id ) )
+			if ( chat ) {
+				debug( 'remove chat', chat.id )
+				dispatch( removeChat( chat.id ) )
+			}
 		},
 		getClosedChatsOlderThan( maxAgeIsSeconds, getState() )
 	)
