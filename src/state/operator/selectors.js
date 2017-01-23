@@ -16,7 +16,6 @@ import {
 	reduce,
 	merge,
 	map,
-	when
 } from 'ramda'
 import asString from '../as-string'
 import {
@@ -56,7 +55,9 @@ export const getAvailableOperators = ( locale, state ) => compose(
 )( state )
 
 // Selectors
-export const selectIdentities = ( { operators: { identities } } ) => values( identities )
+
+export const selectIdentities = path( [ 'operators', 'identities' ] )
+export const getOperators = compose( values, selectIdentities )
 export const selectSocketIdentity = ( { operators: { sockets, identities } }, socket ) => get(
 	identities,
 	get( sockets, socket.id )
