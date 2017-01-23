@@ -64,7 +64,9 @@ const localeUserPath = action => [
 	asString( action[REMOTE_USER_KEY].id )
 ]
 
-const membership = ( state = { capacity: 0, load: 0, active: true }, action ) => {
+const DEFAULT_CAPACITY = 3;
+
+const membership = ( state = { capacity: DEFAULT_CAPACITY, load: 0, active: true }, action ) => {
 	switch ( action.type ) {
 		case JOIN_LOCALE:
 			return merge( state, { active: true } )
