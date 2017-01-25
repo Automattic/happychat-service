@@ -140,7 +140,6 @@ const chatStatusNotifier = ( { getState, dispatch } ) => next => action => {
 			break;
 		// select chats for operator action.operator_id
 		case SET_OPERATOR_CHATS_ABANDONED:
-			break;
 			chat_ids = map(
 				view( lensProp( 'id' ) ),
 				getChatsForOperator( action.operator_id, getState() )
