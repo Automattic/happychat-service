@@ -1,5 +1,5 @@
-import { combineReducers } from 'redux'
 import {
+	merge,
 	assoc,
 	dissoc,
 	dissocPath,
@@ -11,53 +11,68 @@ import {
 	ADD_GROUP_MEMBER,
 	REMOVE_GROUP,
 	REMOVE_GROUP_MEMBER,
-	UPDATE_OPERATOR_GROUP_CAPACITY
+	UPDATE_OPERATOR_MEMBERSHIP
 } from '../action-types'
 import { REMOTE_USER_KEY } from '../middlewares/socket-io/broadcast'
 
 export const DEFAULT_GROUP_ID = '__default'
 export const DEFAULT_GROUP_NAME = 'Default'
 
-const group = ( state = { priority: 0 }, action ) => {
+const group = ( state = { exclusive: false, members: {} }, action ) => {
 	switch ( action.type ) {
 		case ADD_GROUP:
-			return { id: action.id, name: action.name, priority: action.priority }
+			return merge(
+				state,
+				{
+					id: action.id,
+					name: action.name,
+					exclusive: !! action.exclusive
+				}
+			)
 	}
 	return state
 }
 
-const list = ( state = { [DEFAULT_GROUP_ID]: { id: DEFAULT_GROUP_ID, name: DEFAULT_GROUP_NAME } }, action ) => {
+const memberPath = action => [
+	asString( action.group_id ),
+	'members',
+	asString( action.operator_id )
+]
+
+const remoteMemberPath = action => [
+	asString( action.group_id ),
+	'members',
+	asString( action[REMOTE_USER_KEY].id )
+]
+
+export default ( state = { [DEFAULT_GROUP_ID]: { id: DEFAULT_GROUP_ID, name: DEFAULT_GROUP_NAME } }, action ) => {
 	switch ( action.type ) {
 		case REMOVE_GROUP:
 			return dissoc( asString( action.id ), state )
 		case ADD_GROUP:
 			return assoc( asString( action.id ), group( undefined, action ) )( state )
-		default:
-
-	}
-	return state
-}
-
-const memberPath = action => [ asString( action.group_id ), asString( action.operator_id ) ]
-
-const memberships = ( state = {}, action ) => {
-	switch ( action.type ) {
 		case ADD_GROUP_MEMBER:
 			return assocPath(
 				memberPath( action ),
-				action.capacity
+				true
 			)( state )
 		case REMOVE_GROUP_MEMBER:
 			return dissocPath(
 				memberPath( action ),
 			)( state )
-		case UPDATE_OPERATOR_GROUP_CAPACITY:
-			return assocPath(
-				[ asString( action.group_id ), asString( action[REMOTE_USER_KEY].id ) ],
-				parseInt( action.capacity )
-			)( state );
+		case UPDATE_OPERATOR_MEMBERSHIP:
+			if ( action.isMember ) {
+				return assocPath(
+					remoteMemberPath( action ),
+					true
+				)( state )
+			}
+			if ( ! action.isMember ) {
+				return dissocPath(
+					remoteMemberPath( action )
+				)( state )
+			}
+			return state
 	}
 	return state
 }
-
-export default combineReducers( { list, memberships } )

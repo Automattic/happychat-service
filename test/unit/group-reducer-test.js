@@ -1,4 +1,4 @@
-import { deepEqual, ok } from 'assert'
+import { deepEqual } from 'assert'
 import { createStore } from 'redux'
 
 import groups from 'state/groups/reducer'
@@ -6,50 +6,66 @@ import {
 	addGroup,
 	removeGroup,
 	addGroupMember,
-	removeGroupMember
+	removeGroupMember,
+	updateOperatorMembership
 } from 'state/groups/actions'
-
 import { DEFAULT_GROUP_NAME, DEFAULT_GROUP_ID } from 'state/groups/reducer'
+import { remoteAction } from '../helpers'
 
 describe( 'group reducer', () => {
 	it( 'should have default state', () => {
 		const { getState } = createStore( groups )
-		deepEqual( getState(), { list: {
+		deepEqual( getState(), {
 			[ DEFAULT_GROUP_ID ]: { name: DEFAULT_GROUP_NAME, id: DEFAULT_GROUP_ID }
-		}, memberships: {} } )
+		} )
 	} )
 
 	it( 'should add a group', () => {
 		const { getState, dispatch } = createStore( groups );
-		dispatch( addGroup( 'group-id', 'Group Name', 10 ) )
+		dispatch( addGroup( 'group-id', 'Group Name' ) )
 
-		deepEqual( getState().list['group-id'], {
+		deepEqual( getState()['group-id'], {
 			name: 'Group Name',
 			id: 'group-id',
-			priority: 10
+			members: {},
+			exclusive: false
 		} )
 	} )
 
 	it( 'should remove a group', () => {
-		const { getState, dispatch } = createStore( groups, { list: { id: { id: 'id' } } } )
+		const { getState, dispatch } = createStore( groups, { id: { id: 'id' } } )
 		dispatch( removeGroup( 'id' ) )
 
-		deepEqual( getState().list, {} )
+		deepEqual( getState(), {} )
 	} )
 
 	it( 'should add group member', () => {
-		const { getState, dispatch } = createStore( groups )
-		dispatch( addGroupMember( 'group-id', 'operator-id', 1 ) )
+		const { getState, dispatch } = createStore( groups, { 'group-id': {
+			members: {}
+		} } )
+		dispatch( addGroupMember( 'group-id', 'operator-id' ) )
 
-		deepEqual( getState().memberships['group-id'], { 'operator-id': 1 } )
+		deepEqual( getState()['group-id'].members, { 'operator-id': true } )
 	} )
 
 	it( 'should remove group member', () => {
-		const { getState, dispatch } = createStore( groups, { memberships: {
-			'group-id': { 'operator-id': true }
-		} } )
+		const { getState, dispatch } = createStore( groups, {
+			'group-id': { members: { 'operator-id': true } }
+		} )
 		dispatch( removeGroupMember( 'group-id', 'operator-id' ) )
 
-		ok( getState().memberships, {} )
+		deepEqual( getState()['group-id'].members, {} )
+	} )
+
+	it( 'should add a group member via remote dispatch', () => {
+		const { getState, dispatch } = createStore( groups )
+		dispatch( remoteAction( updateOperatorMembership( 'group-id', true ) ) )
+		deepEqual( getState()['group-id'].members, { 'remote-user': true } )
+	} )
+
+	it( 'should remove a group member via remote dispatch', () => {
+		const { getState, dispatch } = createStore( groups, { 'group-id': { members: { 'remote-user': true } } } )
+		dispatch( remoteAction( updateOperatorMembership( 'group-id', false ) ) )
+		deepEqual( getState()['group-id'].members, {} )
 	} )
 } )
