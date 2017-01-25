@@ -2,11 +2,11 @@ import delayedDispatch from 'redux-delayed-dispatch';
 import { keys } from 'ramda'
 import { applyMiddleware } from 'redux'
 
-import operatorMiddleware from './middlewares/socket-io'
+import operatorMiddleware from './middlewares/socket-io/operator'
 import chatlistMiddleware from './middlewares/socket-io/chatlist'
 import broadcastMiddleware from './middlewares/socket-io/broadcast'
 import agentMiddleware from './middlewares/socket-io/agents'
-import controllerMiddleware from './middlewares/socket-io/controller'
+import controllerMiddleware from './middlewares/system/controller'
 import systemMiddleware from './middlewares/system'
 import canRemoteDispatch from './operator/can-remote-dispatch'
 import { DESERIALIZE, SERIALIZE } from './action-types'

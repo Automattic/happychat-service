@@ -1,5 +1,5 @@
 import { equal } from 'assert'
-import { ChatLog } from 'state/middlewares/socket-io/controller'
+import { ChatLog } from 'state/middlewares/system/controller'
 import { reduce } from 'lodash/collection'
 
 describe( 'ChatLog', () => {

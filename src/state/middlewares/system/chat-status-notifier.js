@@ -16,8 +16,7 @@ import {
 	SET_CHATS_RECOVERED,
 	SET_OPERATOR_CHATS_ABANDONED
 } from '../../action-types'
-import { getChatsForOperator } from '../../operator/selectors'
-import { getChatStatus } from '../../chatlist/selectors'
+import { getChatStatus, getChatsForOperator } from '../../chatlist/selectors'
 import { notifyChatStatusChanged } from '../../chatlist/actions'
 
 const mapStatus = state => ids => reduce(

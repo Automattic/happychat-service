@@ -84,10 +84,9 @@ import {
 import { getDefaultLocale } from '../../locales/selectors'
 import { run } from '../../../middleware-interface'
 import timestamp from '../../timestamp'
+import { customerRoom, operatorRoom } from './operator'
 
 const debug = require( 'debug' )( 'happychat:middleware:chatlist' )
-
-import { customerRoom, operatorRoom } from './index'
 
 export const makeEventMessage = ( text, session_id ) => ( {
 	type: 'event',
