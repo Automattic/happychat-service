@@ -15,6 +15,10 @@ import { REMOTE_USER_KEY } from './state/middlewares/socket-io/broadcast'
 
 const debug = require( 'debug' )( 'happychat:upgrade-capacities' )
 
+/**
+ * When the system adds locale support, the existing capacities store in the
+ * operator identities will be added to the default locales.
+ */
 export default ( store ) => {
 	const state = store.getState()
 	return () => {
