@@ -21,7 +21,10 @@ import {
 	groupBy,
 	mapObjIndexed,
 	subtract,
-	lt
+	lt,
+	either,
+	isNil,
+	curryN
 } from 'ramda'
 import {
 	statusView,
@@ -30,6 +33,7 @@ import {
 	membersView,
 	localeView,
 	timestampView,
+	groupView,
 	STATUS_ABANDONED,
 	STATUS_MISSED,
 	STATUS_NEW,
@@ -41,6 +45,12 @@ import {
 	getDefaultLocale,
 	getSupportedLocales
 } from '../locales/selectors'
+import {
+	getGroup
+} from '../groups/selectors'
+import {
+	DEFAULT_GROUP_ID
+} from '../groups/reducer'
 
 export const selectChatlist = view( lensProp( 'chatlist' ) )
 const selectChat = id => compose(
@@ -187,13 +197,18 @@ export const isAssigningChat = state => haveChatWithStatus( STATUS_ASSIGNING, st
 
 // Get the locale assigned to the chat. If no locale, use the system default
 // If the locale is not explicity supported by the system, use the system default
-export const getChatLocale = ( chat_id, state ) => {
-	return compose(
-		flip( getLocale )( state ),
-		localeView,
-		selectChat( chat_id )
-	)( state )
-}
+export const getChatLocale = ( chat_id, state ) => compose(
+	flip( getLocale )( state ),
+	localeView,
+	selectChat( chat_id )
+)( state )
+
+export const getChatGroups = ( chat_id, state ) => compose(
+	map( curryN( 2, flip( getGroup ) )( state ) ),
+	when( either( isEmpty, isNil ), always( [ DEFAULT_GROUP_ID ] ) ),
+	groupView,
+	selectChat( chat_id ),
+)( state )
 
 const getAssignableChats = compose(
 	filter( compose(

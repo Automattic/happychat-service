@@ -1,7 +1,11 @@
 import { deepEqual } from 'assert'
+import { merge } from 'ramda'
+
+import groups from 'state/groups/reducer'
 import {
 	getChatMembers,
-	getOpenChatMembers
+	getOpenChatMembers,
+	getChatGroups
 } from 'state/chatlist/selectors'
 import {
 	STATUS_CLOSED,
@@ -10,6 +14,7 @@ import {
 describe( 'Chat List selectors', () => {
 	const state = {
 		locales: { defaultLocale: 'en' },
+		groups: groups( undefined, {} ),
 		chatlist: {
 			1: [
 				'assigned',
@@ -23,7 +28,9 @@ describe( 'Chat List selectors', () => {
 				{id: 2},
 				{id: 5},
 				0,
-				{5: true}
+				{5: true},
+				'en',
+				[ 'super' ]
 			]
 		}
 	}
@@ -34,5 +41,22 @@ describe( 'Chat List selectors', () => {
 
 	it( 'should get all members of chats', () => {
 		deepEqual( getChatMembers( state ), [ {5: true}, {5: true} ] )
+	} )
+
+	it( 'should get default group when chat is not assigned to one', () => {
+		deepEqual(
+			getChatGroups( 1, state ),
+			[ { id: '__default', name: 'Default' } ]
+		)
+	} )
+
+	it( 'should get groups chat is assigned to', () => {
+		const group = { name: 'Super', id: 'super' }
+		deepEqual(
+			getChatGroups( 2, merge( state, { groups: {
+				super: group
+			} } ) ),
+			[group]
+		)
 	} )
 } )

@@ -80,4 +80,6 @@ describe( 'Chatlist Assignment', () => {
 		equal( action.type, SET_CHAT_OPERATOR )
 		equal( action.operator.id, 'pt1' )
 	} ) )
+
+	it( 'should assign chat to default group' )
 } )
