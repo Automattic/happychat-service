@@ -2,8 +2,6 @@ import get from 'lodash/get'
 import {
 	filter,
 	compose,
-	view,
-	lensPath,
 	sort,
 	defaultTo,
 	values,
@@ -16,6 +14,7 @@ import {
 	reduce,
 	merge,
 	map,
+	mergeAll
 } from 'ramda'
 import asString from '../as-string'
 import {
@@ -25,25 +24,38 @@ import {
 
 export const STATUS_AVAILABLE = 'available';
 
-const weight = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) ) / capacity
+const percentAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) ) / capacity
+const totalAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) )
 const compare = ( a, b ) => {
-	if ( a.weight === b.weight ) {
-		if ( a.capacity === b.capacity ) {
+	if ( a.percentAvailable === b.percentAvailable ) {
+		if ( a.totalAvailable === b.totalAvailable ) {
 			return 0;
 		}
-		return a.capacity - a.load > b.capacity - b.load ? -1 : 1
+		return a.totalAvailable > b.totalAvailable ? -1 : 1
 	}
-	return a.weight > b.weight ? -1 : 1
+	return a.percentAvailable > b.percentAvailable ? -1 : 1
 }
 
-export const getAvailableOperators = ( locale, state ) => compose(
+const isMemberOfGroups = ( userID, groups ) => compose(
+	defaultTo( false ),
+	path( [ 'members', asString( userID ) ] ),
+	mergeAll
+)( groups )
+
+export const getAvailableOperators = ( locale, groups, state ) => compose(
 	sort( compare ),
-	map( user => merge( user, { weight: weight( user ) } ) ),
-	filter( ( { status, online, load, capacity, active } ) => {
+	map( user => merge( user, {
+		percentAvailable: percentAvailable( user ),
+		totalAvailable: totalAvailable( user )
+	} ) ),
+	filter( ( { status, online, load, capacity, active, id } ) => {
 		if ( !online || status !== STATUS_AVAILABLE ) {
 			return false
 		}
 		if ( active !== true ) {
+			return false
+		}
+		if ( ! isMemberOfGroups( id, groups ) ) {
 			return false
 		}
 		return capacity - defaultTo( 0, load ) > 0
@@ -51,10 +63,8 @@ export const getAvailableOperators = ( locale, state ) => compose(
 	map( user => merge( user, getLocaleMembership( locale, user.id, state ) ) ),
 	values,
 	defaultTo( {} ),
-	view( lensPath( [ 'operators', 'identities' ] ) )
+	path( [ 'operators', 'identities' ] )
 )( state )
-
-// Selectors
 
 export const selectIdentities = path( [ 'operators', 'identities' ] )
 export const getOperators = compose( values, selectIdentities )
@@ -63,14 +73,14 @@ export const selectSocketIdentity = ( { operators: { sockets, identities } }, so
 	get( sockets, socket.id )
 )
 export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
-export const selectTotalCapacity = ( locale, state ) => compose(
+export const selectTotalCapacity = ( locale, groups, state ) => compose(
 	reduce( ( { load: totalLoad, capacity: totalCapacity }, { id, status, online } ) =>
 		ifElse(
 			whereEq( { status: STATUS_AVAILABLE, online: true } ),
 			() => {
 				const { load, capacity, active } = getLocaleMembership( locale, id, state )
-				if ( !active ) {
-					return { load: 0, capacity: 0 }
+				if ( ! active || ! isMemberOfGroups( id, groups ) ) {
+					return { load: totalLoad, capacity: totalCapacity }
 				}
 				return {
 					load: totalLoad + parseInt( load ),
@@ -85,12 +95,12 @@ export const selectTotalCapacity = ( locale, state ) => compose(
 	path( [ 'operators', 'identities' ] )
 )( state )
 
-export const getAvailableCapacity = ( locale, state ) => {
-	const { load, capacity } = selectTotalCapacity( locale, state )
+export const getAvailableCapacity = ( locale, groups, state ) => {
+	const { load, capacity } = selectTotalCapacity( locale, groups, state )
 	return capacity - load
 }
 
-export const haveAvailableCapacity = ( locale, state ) => getAvailableCapacity( locale, state ) > 0
+export const haveAvailableCapacity = ( locale, groups, state ) => getAvailableCapacity( locale, groups, state ) > 0
 
 export const getSystemAcceptsCustomers = ( { operators: { system: { acceptsCustomers } } } ) => acceptsCustomers
 
@@ -103,18 +113,18 @@ export const getAvailableLocales = state => ifElse(
 	)
 )( state )
 
-export const getOperatorIdentity = ( id, state ) => view(
-	lensPath( [ 'operators', 'identities', asString( id ) ] ),
+export const getOperatorIdentity = ( id, state ) => path(
+	[ 'operators', 'identities', asString( id ) ],
 	state
 )
 
-export const getOperatorOnline = ( id, state ) => view(
-	lensPath( [ 'operators', 'identities', asString( id ), 'online' ] ),
+export const getOperatorOnline = ( id, state ) => path(
+	[ 'operators', 'identities', asString( id ), 'online' ],
 	state
 )
 export const isOperatorStatusAvailable = ( id, state ) => equals(
-	view(
-		lensPath( [ 'operators', 'identities', asString( id ), 'status' ] ),
+	path(
+		[ 'operators', 'identities', asString( id ), 'status' ],
 		state
 	),
 	STATUS_AVAILABLE

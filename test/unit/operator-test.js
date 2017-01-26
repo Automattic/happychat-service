@@ -1,5 +1,6 @@
 import { ok, equal, deepEqual } from 'assert'
 import { createStore, compose, applyMiddleware } from 'redux'
+import { values } from 'ramda'
 import mockio from '../mock-io'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
@@ -25,6 +26,7 @@ import {
 } from 'state/operator/actions'
 import { selectTotalCapacity } from 'state/operator/selectors'
 import { insertPendingChat } from 'state/chatlist/actions'
+import { getGroups } from 'state/groups/selectors'
 
 const debug = require( 'debug' )( 'happychat:operator-test' )
 
@@ -297,7 +299,7 @@ describe( 'Operators', () => {
 		} ) )
 
 		it( 'should calculate locale capacity', () => {
-			deepEqual( selectTotalCapacity( 'en-US', store.getState() ), {
+			deepEqual( selectTotalCapacity( 'en-US', values( getGroups( store.getState() ) ), store.getState() ), {
 				load: 0,
 				capacity: 17
 			} )

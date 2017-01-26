@@ -4,13 +4,10 @@ import {
 	OPERATOR_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_TYPING,
 } from '../../action-types'
-import {
-	operatorInboundMessage,
-	closeChat
-} from '../../chatlist/actions'
-import {
-	getChat
-} from '../../chatlist/selectors'
+import { operatorInboundMessage, closeChat } from '../../chatlist/actions'
+import { getChat } from '../../chatlist/selectors'
+import { DEFAULT_GROUP_ID, isOperatorMemberOfAnyGroup } from '../../groups/selectors'
+import { addGroupMember } from '../../groups/actions'
 import {
 	operatorChatLeave,
 	removeUserSocket,
@@ -59,6 +56,11 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 
 	socket.join( user_room, () => {
 		store.dispatch( updateIdentity( socket, user ) )
+		// If the operator is not a member of any groups they should be
+		// assigned to the default group
+		if ( ! isOperatorMemberOfAnyGroup( user ) ) {
+			store.dispatch( addGroupMember( DEFAULT_GROUP_ID, user.id ) )
+		}
 		store.dispatch( operatorReady( user, socket, user_room ) )
 		socket.emit( 'init', user )
 	} )

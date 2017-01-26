@@ -9,6 +9,6 @@ export const getSupportedLocales = compose(
 )
 
 export const getLocaleMembership = ( locale, user_id, state ) => compose(
-	defaultTo( { capacity: 0, load: 0 } ),
+	defaultTo( { capacity: 0, load: 0, active: false } ),
 	path( [ 'locales', 'memberships', normalizeLocale( locale ), user_id ] )
 )( state )

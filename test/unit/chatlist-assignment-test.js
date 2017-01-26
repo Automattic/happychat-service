@@ -1,4 +1,6 @@
-import { equal } from 'assert'
+import { equal, deepEqual } from 'assert'
+import { merge } from 'ramda'
+
 import chatlistMiddleware from 'state/middlewares/socket-io/chatlist'
 import mockio from '../mock-io'
 
@@ -16,6 +18,9 @@ import {
 import {
 	STATUS_AVAILABLE
 } from 'state/operator/selectors'
+import {
+	DEFAULT_GROUP_ID
+} from 'state/groups/reducer'
 
 const noop = () => {}
 
@@ -45,7 +50,10 @@ describe( 'Chatlist Assignment', () => {
 			},
 			locales: { defaultLocale: 'en-US', memberships: {
 				'en-US': { op1: { load: 0, capacity: 1, active: true } }
-			} }
+			} },
+			groups: { [ DEFAULT_GROUP_ID ]: { members: {
+				op1: true
+			} } }
 		}
 	).then( action => {
 		equal( action.type, SET_CHAT_OPERATOR )
@@ -55,15 +63,26 @@ describe( 'Chatlist Assignment', () => {
 
 	const ptbrState = {
 		locales: { defaultLocale: 'fr', supported: [ 'fr', 'pt-BR' ], memberships: {
-			'pt-BR': { pt1: { load: 0, capacity: 1, active: true } }
+			'pt-BR': { pt1: { load: 0, capacity: 1, active: true } },
+			fr: {
+				en1: { capacity: 3, active: true },
+				op: { capacity: 1, active: true }
+			}
 		} },
 		chatlist: {
-			id: [ STATUS_PENDING, { id: 'id' }, null, 1, {}, 'pt-BR' ]
+			pt: [ STATUS_PENDING, { id: 'pt' }, null, 1, {}, 'pt-BR' ],
+			chat: [ STATUS_PENDING, { id: 'chat' }, null, 2, {} ],
+			group: [ STATUS_PENDING, { id: 'group'}, null, 3, {}, null, [ 'a-group' ] ]
 		},
 		operators: { identities: {
 			en1: { id: 'en1', status: STATUS_AVAILABLE, online: true },
-			pt1: { id: 'pt1', status: STATUS_AVAILABLE, online: true }
-		} }
+			pt1: { id: 'pt1', status: STATUS_AVAILABLE, online: true },
+			op: { id: 'op', status: STATUS_AVAILABLE, online: true }
+		} },
+		groups: {
+			[ DEFAULT_GROUP_ID ]: { members: { en1: true, pt1: true } },
+			'a-group': { members: { op: true } }
+		}
 	}
 
 	it( 'should assign next chat', () => dispatchAction(
@@ -74,12 +93,26 @@ describe( 'Chatlist Assignment', () => {
 	} ) )
 
 	it( 'should assign operator in locale matching chat', () => dispatchAction(
-		assignChat( { id: 'id', locale: 'pt-BR' } ),
+		assignChat( { id: 'pt' } ),
 		ptbrState
 	).then( action => {
 		equal( action.type, SET_CHAT_OPERATOR )
 		equal( action.operator.id, 'pt1' )
 	} ) )
 
-	it( 'should assign chat to default group' )
+	it( 'should assign chat to default group', () => dispatchAction(
+		assignChat( { id: 'chat' } ),
+		ptbrState
+	).then( action => {
+		equal( action.type, SET_CHAT_OPERATOR )
+		equal( action.operator.id, 'en1' )
+	} ) )
+
+	it( 'should assign chat to specified group', () => dispatchAction(
+		assignChat( { id: 'group' } ),
+		ptbrState
+	).then( action => {
+		equal( action.type, SET_CHAT_OPERATOR )
+		equal( action.operator.id, 'op' )
+	} ) )
 } )

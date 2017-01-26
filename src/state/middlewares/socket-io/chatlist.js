@@ -71,6 +71,7 @@ import {
 	isChatStatusNew,
 	isChatStatusClosed,
 	isAssigningChat,
+	getChatGroups
 } from '../../chatlist/selectors'
 import {
 	STATUS_CUSTOMER_DISCONNECT,
@@ -438,18 +439,17 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		debug( 'attempting to assign chat' )
 
 		const locale = getChatLocale( chat.id, store.getState() )
-		const list = getAvailableOperators( locale, store.getState() )
+		const groups = getChatGroups( chat.id, store.getState() )
+		const list = getAvailableOperators( locale, groups, store.getState() )
 
-		debug( 'chat has locale', locale )
+		debug( 'chat has locale', locale, groups )
 
 		if ( isEmpty( list ) ) {
 			return store.dispatch( setChatMissed( chat.id, new Error( 'no operators available' ) ) )
 		}
 
-		// TODO: assign to next operator on failure
-		const [ next, ... rest ] = list
+		const [ next ] = list
 
-		// TODO: timeout?
 		debug( 'assigning to operator', next )
 		emitChatOpenToOperator( chat, next ).then(
 			() => store.dispatch( setChatOperator( chat.id, next ) ),
@@ -499,7 +499,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 
 	const handleAssignNextChat = () => {
 		if ( isAssigningChat( store.getState() ) ) {
-			debug( 'aready assigning chat, wait until complete' )
+			debug( 'already assigning chat, wait until complete' )
 			return
 		}
 
@@ -510,10 +510,14 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 
 		const chat = getNextAssignableChat( store.getState() )
 		const locale = getChatLocale( chat.id, store.getState() )
+		const groups = getChatGroups( chat.id, store.getState() )
 
-		// TODO: check if we have capacity
-		if ( ! haveAvailableCapacity( locale, store.getState() ) ) {
-			debug( 'no capacity to assign chat', locale, store.getState().locales.memberships, store.getState().operators.identities )
+		debug( 'checking capacity to assign chat', locale, groups )
+
+		if ( ! haveAvailableCapacity( locale, groups, store.getState() ) ) {
+			// TODO: Set chat as missed and let other chats through
+			debug( 'no capacity to assign chat',
+				chat.id, locale, groups )
 			return
 		}
 
