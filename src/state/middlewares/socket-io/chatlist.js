@@ -177,7 +177,8 @@ const join = ( { io, user, socket, store }, middlewares ) => {
 		username: user.username,
 		name: user.displayName,
 		picture: user.picture,
-		locale: user.locale
+		locale: user.locale,
+		groups: user.groups
 	}
 	socket.join( customerRoom( chat.id ), init( { user, socket, io, store, chat }, middlewares ) )
 }
@@ -528,6 +529,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		switch ( action.type ) {
 			case NOTIFY_SYSTEM_STATUS_CHANGE:
 				const available = getAvailableLocales( store.getState() )
+				// TODO: availability is now dependent on groups as well
 				debug( 'notify system status', available )
 				customer_io.emit( 'accept', contains( getDefaultLocale( store.getState() ), available ) )
 				customer_io.emit( 'accept.locale', available )

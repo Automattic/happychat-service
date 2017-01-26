@@ -33,7 +33,7 @@ import {
 	membersView,
 	localeView,
 	timestampView,
-	groupView,
+	groupsView,
 	STATUS_ABANDONED,
 	STATUS_MISSED,
 	STATUS_NEW,
@@ -204,9 +204,10 @@ export const getChatLocale = ( chat_id, state ) => compose(
 )( state )
 
 export const getChatGroups = ( chat_id, state ) => compose(
+	// TODO: if a group is exclusive, only consider that group
 	map( curryN( 2, flip( getGroup ) )( state ) ),
 	when( either( isEmpty, isNil ), always( [ DEFAULT_GROUP_ID ] ) ),
-	groupView,
+	groupsView,
 	selectChat( chat_id ),
 )( state )
 
