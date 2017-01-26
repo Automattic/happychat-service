@@ -16,7 +16,8 @@ import {
 	map,
 	flip,
 	curryN,
-	exclude
+	exclude,
+	mergeAll
 } from 'ramda'
 import asString from '../as-string'
 import {
@@ -57,7 +58,7 @@ const identity = ( state = { online: false }, action ) => {
 		case DESERIALIZE:
 			return merge( state, { online: false } )
 		case UPDATE_IDENTITY:
-			return merge( state, action.user, { online: true } )
+			return mergeAll( [ state, action.user, { online: true } ] )
 		case SET_OPERATOR_STATUS:
 			return merge( state, { status: action.status, online: true } )
 		case SET_USER_OFFLINE:
