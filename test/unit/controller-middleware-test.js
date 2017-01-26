@@ -140,7 +140,7 @@ describe( 'Controller middleware', () => {
 		) )
 	} )
 
-	it.skip( 'should prevent message from sending by returning falsey message', ( done ) => {
+	it( 'should prevent message from sending by returning falsey message', ( done ) => {
 		const failOnEmit = ( ... args ) => {
 			done( new Error( 'message emitted: ' + JSON.stringify( args, null, '\t' ) ) )
 		}

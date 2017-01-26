@@ -126,15 +126,6 @@ describe( 'Customer Service', () => {
 			} )
 			store.dispatch( customerReceiveTyping( mockUser.session_id, mockUser, false ) )
 		} )
-
-		it.skip( 'should handle accept event', done => {
-			server.once( 'accept', ( accepted ) => {
-				// TODO: this test is not determinant for the value of accepted
-				ok( !accepted )
-				done()
-			} )
-			// customerEvents.emit( 'accept', { id: mockUser.session_id }, false )
-		} )
 	} )
 
 	it( 'should authenticate and init client', ( done ) => {

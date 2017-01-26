@@ -120,7 +120,7 @@ describe( 'ChatList component', () => {
 		} )
 	)
 
-	it.skip( 'should timeout if no operator provided', () =>
+	it( 'should timeout if no operator provided', () =>
 		connectOperator( { id: 'ripley' } )
 		.then( ( { socket } ) => new Promise( resolve => {
 			// Makes socket.join timeout
@@ -216,7 +216,7 @@ describe( 'ChatList component', () => {
 			client.emit( 'chat.transfer', chat.id, 'other-user' )
 		} )
 
-		it( 'should timeout when transfering chat to unavailable operator', ( done ) => {
+		it( 'should timeout when transferring chat to unavailable operator', ( done ) => {
 			const newOperator = { id: 'new-operator' }
 			watchingMiddleware.watchForTypeOnce( SET_CHAT_MISSED, action => {
 				equal( action.chat_id, chat.id )
