@@ -1,8 +1,9 @@
 import { deepEqual } from 'assert'
-import makeService, { authenticators, setClientCapacity } from './helpers'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
 import assign from 'lodash/assign'
+
+import makeService, { authenticators, setClientCapacity, setSystemAvailable } from './helpers'
 
 const debug = require( 'debug' )( 'happychat:test:chat-logs' )
 
@@ -30,9 +31,13 @@ describe( 'Chat logs', () => {
 		resolve( customer )
 	} )
 
-	const listenForLog = ( customer ) => new Promise( ( resolve ) => {
+	const listenForLog = ( client ) => new Promise( ( resolve ) => {
+		if ( client._logs ) {
+			debug( 'already received the logs' )
+			return resolve( client._logs )
+		}
 		debug( 'waiting for logs' )
-		customer.once( 'log', ( ... args ) => resolve( args ) )
+		client.once( 'log', ( ... args ) => resolve( args ) )
 	} )
 
 	const sendMessages = ( messages ) => ( customer ) => {
@@ -41,7 +46,10 @@ describe( 'Chat logs', () => {
 		return reduce( rest, ( p, msg ) => p.then( sendMessage( msg ) ), sendMessage( first )( customer ) )
 	}
 
-	const acceptAllAssignments = ( client ) => setClientCapacity( client, 5 )
+	const acceptAllAssignments = ( client ) => {
+		client.once( 'log', ( ... args ) => client._logs = args )
+		return setClientCapacity( client, 5 )
+	}
 
 	const wait = ( ms ) => thing => new Promise( resolve => {
 		setTimeout( () => resolve( thing ), ms )
@@ -83,11 +91,12 @@ describe( 'Chat logs', () => {
 		} )
 	)
 
-	it.skip( 'should deliver logs to operator when joining chat', () => {
+	it( 'should deliver logs to operator when joining chat', () => {
 		return service.startClients()
 		.then( afterInit )
 		.then( sendMessages( mockMessages ) )
 		.then( () => service.startOperator() )
+		.then( setSystemAvailable )
 		.then( acceptAllAssignments )
 		.then( listenForLog )
 		.then( ( [ , messages ] ) => {

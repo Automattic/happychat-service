@@ -3,7 +3,8 @@ import { service } from 'service'
 import { assign } from 'lodash/object'
 import {
 	setOperatorStatus,
-	setOperatorCapacity
+	setOperatorCapacity,
+	setAcceptsCustomers
 } from 'state/operator/actions'
 import {
 	STATUS_AVAILABLE
@@ -79,4 +80,8 @@ export const setClientCapacity = ( client, capacity = 1, status = STATUS_AVAILAB
 	client.emit( 'broadcast.dispatch', setOperatorStatus( status ), () => {
 		client.emit( 'broadcast.dispatch', setOperatorCapacity( 'en-US', capacity ), () => resolve( client ) )
 	} )
+} )
+
+export const setSystemAvailable = ( client ) => new Promise( resolve => {
+	client.emit( 'broadcast.dispatch', setAcceptsCustomers( true ), () => resolve( client ) )
 } )
