@@ -52,6 +52,7 @@ const operatorLens = lensIndex( 2 )
 const timestampLens = lensIndex( 3 )
 const membersLens = lensIndex( 4 )
 const localeLens = lensIndex( 5 )
+const groupLens = lensIndex( 6 )
 
 export const statusView = view( statusLens )
 export const chatView = view( chatLens )
@@ -59,6 +60,7 @@ export const operatorView = view( operatorLens )
 export const timestampView = view( timestampLens )
 export const membersView = view( membersLens )
 export const localeView = view( localeLens )
+export const groupView = view( groupLens )
 
 const setStatus = set( statusLens )
 const setChat = set( chatLens )
@@ -66,6 +68,7 @@ const setOperator = set( operatorLens )
 const setTimestamp = set( timestampLens )
 const setMembers = set( membersLens )
 const setLocale = set( localeLens )
+const setGroup = set( groupLens )
 
 const timestamp = () => ( new Date() ).getTime()
 
@@ -76,7 +79,8 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 				setStatus( STATUS_PENDING ),
 				setTimestamp( timestamp() ),
 				setChat( action.chat ),
-				setLocale( action.chat.locale )
+				setLocale( action.chat.locale ),
+				setGroup( action.chat.group )
 			)( state )
 		case UPDATE_CHAT:
 			return setChat( action.chat )( state );
