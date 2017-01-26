@@ -235,17 +235,20 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 	const emitChatOpenToOperator = ( chat, operator ) => {
 		const customer_room_name = customerRoom( chat.id )
 		const operator_room_name = operatorRoom( operator.id )
-		debug( 'opening chat', chat.id, operator.id )
+		debug( 'opening chat with timeout', chat.id, operator.id, timeout )
 		return getClients( operator_io, operator_room_name )
-		.then( clients => Promise.all(
-			map( socket => new Promise( ( resolve, reject ) => {
+		.then( clients => Promise.race( [
+			Promise.all( map( socket => new Promise( ( resolve, reject ) => {
 				socket.join( customer_room_name, ( error ) => {
 					if ( error ) return reject( error )
 					resolve( socket )
 					store.dispatch( operatorJoinChat( socket, chat, operator ) )
 				} )
-			} ), clients )
-		) )
+			} ), clients ) ),
+			new Promise( ( resolve, reject ) => setTimeout( () => {
+				reject( new Error( 'timeout' ) )
+			}, timeout ) )
+		] ) )
 		.then( () => new Promise( resolve => {
 			operator_io.to( operator_room_name ).emit( 'chat.open', chat )
 			resolve( { chat, operator } )
@@ -321,11 +324,12 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 	}
 
 	const handleOperatorChatJoin = action => whenChatExists( ( chat, operator ) => {
-		emitChatOpenToOperator( chat, operator )
-		store.dispatch( operatorInboundMessage( chat.id, operator, merge(
-			makeEventMessage( 'operator joined', chat.id ),
-			{	meta: { operator, event_type: 'join' } }
-		) ) )
+		emitChatOpenToOperator( chat, operator ).then( () => {
+			store.dispatch( operatorInboundMessage( chat.id, operator, merge(
+				makeEventMessage( 'operator joined', chat.id ),
+				{	meta: { operator, event_type: 'join' } }
+			) ) )
+		} )
 	}, chat_id => debug( 'chat.join without existing chat', chat_id ) )( action.chat_id, action.user )
 
 	const handleOperatorChatLeave = action => whenChatExists( ( chat, operator ) => {
