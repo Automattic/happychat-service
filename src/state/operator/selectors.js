@@ -151,7 +151,7 @@ export const isOperatorAcceptingChats = ( id, state ) => isOperatorOnline( id, s
 export const canAcceptChat = ( chatID, state ) => both(
 	getSystemAcceptsCustomers,
 	curryN( 3, haveAvailableCapacity )(
-		getChatLocale( chatID ),
-		getChatGroups( chatID )
+		getChatLocale( chatID, state ),
+		getChatGroups( chatID, state )
 	)
 )( state )
