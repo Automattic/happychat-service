@@ -9,6 +9,7 @@ import {
 import {
 	STATUS_AVAILABLE
 } from 'state/operator/selectors'
+import { addGroup } from 'state/groups/actions'
 
 import IO from 'socket.io-client'
 
@@ -54,7 +55,7 @@ export const startClients = ( port ) => new Promise( ( resolve, reject ) => {
 
 const main = ( authenticators, enhancers = [], port = 65115 ) => {
 	let server = createServer()
-	return {
+	const result = {
 		service: service( server, authenticators, undefined, enhancers ),
 		start: () => startServer( server, port ),
 		stop: () => stopServer( server ),
@@ -63,6 +64,9 @@ const main = ( authenticators, enhancers = [], port = 65115 ) => {
 		startAgent: () => startAgent( port ),
 		startOperator: () => startOperator( port )
 	}
+	result.service.store.dispatch( addGroup( 'other', 'Other' ) )
+	result.service.configureLocales( 'en-US', [ 'es' ] )
+	return result
 }
 
 export { main as default }
