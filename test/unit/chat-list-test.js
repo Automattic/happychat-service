@@ -137,22 +137,11 @@ describe( 'ChatList component', () => {
 
 	it( 'should ask operators for status when customer joins', ( done ) => {
 		chatlistWithState( { chatlist: { 'session-id': [ 'assigned' ] } } )
-		const socket = new EventEmitter();
+		const { socket, client } = io.of( '/customer' ).newClient( 'test' )
 
-		socket.once( 'accept', ( accepted ) => {
+		socket.join( 'customer/session-id' )
+		client.once( 'accept', ( accepted ) => {
 			deepEqual( accepted, false )
-			done()
-		} )
-
-		store.dispatch( customerJoin( socket, { id: 'session-id' }, { id: 'user-id' } ) )
-	} )
-
-	it( 'should ask operators for status when customer joins in locale', ( done ) => {
-		chatlistWithState( { chatlist: { 'session-id': [ 'assigned' ] } } )
-		const socket = new EventEmitter();
-
-		socket.once( 'accept.locale', ( accepted ) => {
-			deepEqual( accepted, [] )
 			done()
 		} )
 
