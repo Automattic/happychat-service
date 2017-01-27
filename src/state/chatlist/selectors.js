@@ -168,10 +168,11 @@ export const getChats = state => compose(
 	selectChatlist
 )( state )
 
-export const getChatStatus = ( chat_id, state ) => defaultTo( STATUS_NEW )( compose(
+export const getChatStatus = ( chat_id, state ) => compose(
+	defaultTo( STATUS_NEW ),
 	statusView,
 	selectChat( chat_id )
-)( state ) )
+)( state )
 
 export const isChatStatusNew = ( chat_id, state ) => equals(
 	STATUS_NEW, getChatStatus( chat_id, state )
