@@ -51,7 +51,7 @@ describe( 'Chat List selectors', () => {
 	} )
 
 	it( 'should get groups chat is assigned to', () => {
-		const group = { name: 'Super', id: 'super' }
+		const group = { name: 'Super', id: 'super', exclusive: true }
 		deepEqual(
 			getChatGroups( 2, merge( state, { groups: {
 				super: group

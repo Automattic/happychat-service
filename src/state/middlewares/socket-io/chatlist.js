@@ -446,8 +446,6 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		const groups = getChatGroups( chat.id, store.getState() )
 		const list = getAvailableOperators( locale, groups, store.getState() )
 
-		debug( 'chat has locale', locale, groups )
-
 		if ( isEmpty( list ) ) {
 			return store.dispatch( setChatMissed( chat.id, new Error( 'no operators available' ) ) )
 		}

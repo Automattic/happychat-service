@@ -14,8 +14,6 @@ import {
 	compose,
 	view,
 	map,
-	flip,
-	curryN,
 	exclude,
 	mergeAll
 } from 'ramda'
@@ -83,12 +81,13 @@ const identities = ( state = {}, action ) => {
 	const { user } = action
 	switch ( action.type ) {
 		case DESERIALIZE:
-			return map( curryN( 2, flip( identity ) )( action ), state )
+			return map( identityState => identity( identityState, action ), state )
 		case UPDATE_IDENTITY:
 		case SET_USER_OFFLINE:
+			const lens = lensUser( action )
 			return set_ramda(
-				lensUser( action ),
-				identity( view( lensUser( action ), state ), action )
+				lens,
+				identity( view( lens, state ), action )
 			)( state )
 		case SET_OPERATOR_STATUS:
 			return set_ramda(

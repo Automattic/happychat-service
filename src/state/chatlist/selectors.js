@@ -24,7 +24,9 @@ import {
 	lt,
 	either,
 	isNil,
-	curryN
+	append,
+	find,
+	identity
 } from 'ramda'
 import {
 	statusView,
@@ -207,10 +209,25 @@ export const getChatLocale = ( chat_id, state ) => compose(
 )( state )
 
 export const getChatGroups = ( chat_id, state ) => compose(
-	// TODO: if a group is exclusive, only consider that group
-	map( curryN( 2, flip( getGroup ) )( state ) ),
+	either(
+		// if a non exclusive group is found select only an array of that single
+		// group
+		compose(
+			when( compose( not, isNil ), flip( append )( [] ) ),
+			find( whereEq( { exclusive: true } ) )
+		),
+		// if no exclusive groups were found, pass the list as is
+		identity
+	),
+	// map the group ids te their group dato using the group selector
+	map( id => getGroup( id, state ) ),
+	// if the list of group ids does not have the default group, add it
+	when( compose( not, contains( DEFAULT_GROUP_ID ) ), append( DEFAULT_GROUP_ID ) ),
+	// when the list of groups is empty, return a list of the default group id
 	when( either( isEmpty, isNil ), always( [ DEFAULT_GROUP_ID ] ) ),
+	// select the group ids from the record
 	groupsView,
+	// get the chat record from state
 	selectChat( chat_id ),
 )( state )
 

@@ -14,12 +14,11 @@ import {
 	reduce,
 	merge,
 	map,
-	mergeAll,
-	curryN,
 	both,
 	pickBy,
 	keys,
-	flatten
+	flatten,
+	mergeAll,
 } from 'ramda'
 import asString from '../as-string'
 import {
@@ -46,6 +45,11 @@ const compare = ( a, b ) => {
 	return a.percentAvailable > b.percentAvailable ? -1 : 1
 }
 
+const isMemberOfGroup = ( userID, group ) => compose(
+	defaultTo( false ),
+	path( [ 'members', asString( userID ) ] ),
+)( group )
+
 const isMemberOfGroups = ( userID, groups ) => compose(
 	defaultTo( false ),
 	path( [ 'members', asString( userID ) ] ),
@@ -53,23 +57,26 @@ const isMemberOfGroups = ( userID, groups ) => compose(
 )( groups )
 
 export const getAvailableOperators = ( locale, groups, state ) => compose(
-	sort( compare ),
-	map( user => merge( user, {
-		percentAvailable: percentAvailable( user ),
-		totalAvailable: totalAvailable( user )
-	} ) ),
-	filter( ( { status, online, load, capacity, active, id } ) => {
-		if ( !online || status !== STATUS_AVAILABLE ) {
-			return false
-		}
-		if ( active !== true ) {
-			return false
-		}
-		if ( ! isMemberOfGroups( id, groups ) ) {
-			return false
-		}
-		return capacity - defaultTo( 0, load ) > 0
-	} ),
+	flatten,
+	operators => map( group => compose(
+		sort( compare ),
+		map( user => merge( user, {
+			percentAvailable: percentAvailable( user ),
+			totalAvailable: totalAvailable( user )
+		} ) ),
+		filter( ( { status, online, load, capacity, active, id } ) => {
+			if ( !online || status !== STATUS_AVAILABLE ) {
+				return false
+			}
+			if ( active !== true ) {
+				return false
+			}
+			if ( ! isMemberOfGroup( id, group ) ) {
+				return false
+			}
+			return capacity - defaultTo( 0, load ) > 0
+		} )
+	)( operators ), groups ),
 	map( user => merge( user, getLocaleMembership( locale, user.id, state ) ) ),
 	values,
 	defaultTo( {} ),
@@ -138,6 +145,7 @@ export const getOperatorOnline = ( id, state ) => path(
 	[ 'operators', 'identities', asString( id ), 'online' ],
 	state
 )
+
 export const isOperatorStatusAvailable = ( id, state ) => equals(
 	path(
 		[ 'operators', 'identities', asString( id ), 'status' ],
@@ -145,13 +153,17 @@ export const isOperatorStatusAvailable = ( id, state ) => equals(
 	),
 	STATUS_AVAILABLE
 )
+
 export const isOperatorOnline = getOperatorOnline
-export const isOperatorAcceptingChats = ( id, state ) => isOperatorOnline( id, state ) && isOperatorStatusAvailable( id, state )
+
+export const isOperatorAcceptingChats = ( id, state ) =>
+	isOperatorOnline( id, state ) && isOperatorStatusAvailable( id, state )
 
 export const canAcceptChat = ( chatID, state ) => both(
 	getSystemAcceptsCustomers,
-	curryN( 3, haveAvailableCapacity )(
+	() => haveAvailableCapacity(
 		getChatLocale( chatID, state ),
-		getChatGroups( chatID, state )
+		getChatGroups( chatID, state ),
+		state
 	)
 )( state )

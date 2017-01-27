@@ -1,5 +1,4 @@
-import { equal, deepEqual } from 'assert'
-import { merge } from 'ramda'
+import { equal } from 'assert'
 
 import chatlistMiddleware from 'state/middlewares/socket-io/chatlist'
 import mockio from '../mock-io'
@@ -10,7 +9,8 @@ import {
 } from 'state/chatlist/actions'
 import {
 	ASSIGN_CHAT,
-	SET_CHAT_OPERATOR
+	SET_CHAT_OPERATOR,
+	SET_CHAT_MISSED
 } from 'state/action-types'
 import {
 	STATUS_PENDING
@@ -72,7 +72,8 @@ describe( 'Chatlist Assignment', () => {
 		chatlist: {
 			pt: [ STATUS_PENDING, { id: 'pt' }, null, 1, {}, 'pt-BR' ],
 			chat: [ STATUS_PENDING, { id: 'chat' }, null, 2, {} ],
-			group: [ STATUS_PENDING, { id: 'group'}, null, 3, {}, null, [ 'a-group' ] ]
+			group: [ STATUS_PENDING, { id: 'group'}, null, 3, {}, null, [ 'a-group' ] ],
+			special: [ STATUS_PENDING, { id: 'special' }, null, 4, {}, null, [ 'exclusive' ] ]
 		},
 		operators: { identities: {
 			en1: { id: 'en1', status: STATUS_AVAILABLE, online: true },
@@ -81,7 +82,8 @@ describe( 'Chatlist Assignment', () => {
 		} },
 		groups: {
 			[ DEFAULT_GROUP_ID ]: { members: { en1: true, pt1: true } },
-			'a-group': { members: { op: true } }
+			'a-group': { members: { op: true } },
+			exclusive: { members: { op2: true }, exclusive: true }
 		}
 	}
 
@@ -114,5 +116,12 @@ describe( 'Chatlist Assignment', () => {
 	).then( action => {
 		equal( action.type, SET_CHAT_OPERATOR )
 		equal( action.operator.id, 'op' )
+	} ) )
+
+	it( 'should filter out other groups when there is an exclusive group', () => dispatchAction(
+		assignChat( { id: 'special' } ),
+		ptbrState
+	).then( action => {
+		equal( action.type, SET_CHAT_MISSED )
 	} ) )
 } )
