@@ -58,7 +58,8 @@ import {
 	customerChatTranscriptRequest,
 	customerLeft,
 	autocloseChat,
-	updateChat
+	updateChat,
+	removeChat
 } from '../../chatlist/actions'
 import {
 	getChat,
@@ -299,6 +300,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		const { chat } = action
 		if ( isChatStatusNew( chat.id, store.getState() ) ) {
 			debug( 'Customer disconnected without starting chat', chat.id )
+			store.dispatch( removeChat( chat.id ) )
 			return;
 		}
 
