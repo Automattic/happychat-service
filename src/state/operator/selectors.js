@@ -14,9 +14,15 @@ import {
 	reduce,
 	merge,
 	map,
-	mergeAll
+	mergeAll,
+	curryN,
+	both
 } from 'ramda'
 import asString from '../as-string'
+import {
+	getChatLocale,
+	getChatGroups
+} from '../chatlist/selectors'
 import {
 	getLocaleMembership,
 	getSupportedLocales
@@ -131,3 +137,11 @@ export const isOperatorStatusAvailable = ( id, state ) => equals(
 )
 export const isOperatorOnline = getOperatorOnline
 export const isOperatorAcceptingChats = ( id, state ) => isOperatorOnline( id, state ) && isOperatorStatusAvailable( id, state )
+
+export const canAcceptChat = ( chatID, state ) => both(
+	getSystemAcceptsCustomers,
+	curryN( 3, haveAvailableCapacity )(
+		getChatLocale( chatID ),
+		getChatGroups( chatID )
+	)
+)( state )

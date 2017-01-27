@@ -18,6 +18,7 @@ import {
 } from 'ramda'
 import asString from '../as-string'
 import {
+	INSERT_NEW_CHAT,
 	INSERT_PENDING_CHAT,
 	SET_CHAT_OPERATOR,
 	SET_OPERATOR_CHATS_ABANDONED,
@@ -72,21 +73,35 @@ const setGroups = set( groupsLens )
 
 const timestamp = () => ( new Date() ).getTime()
 
+const updateChat = chat => compose(
+		setChat( chat ),
+		setLocale( chat.locale ),
+		setTimestamp( timestamp() ),
+		setGroups( chat.groups )
+)
+
+const updateStatus = ( status, state ) => compose(
+	setTimestamp( timestamp() ),
+	setStatus( status )
+)( state )
+
 const chat = ( state = [ null, null, null, null, {} ], action ) => {
 	switch ( action.type ) {
+		case INSERT_NEW_CHAT:
+			return compose(
+				setStatus( STATUS_NEW ),
+				updateChat( action.chat )
+			)( state )
 		case INSERT_PENDING_CHAT:
 			return compose(
 				setStatus( STATUS_PENDING ),
-				setTimestamp( timestamp() ),
-				setChat( action.chat ),
-				setLocale( action.chat.locale ),
-				setGroups( action.chat.groups )
+				updateChat( action.chat )
 			)( state )
 		case UPDATE_CHAT:
-			return setChat( action.chat )( state );
+			return updateChat( action.chat )( state )
 		case CLOSE_CHAT:
 		case AUTOCLOSE_CHAT:
-			return setStatus( STATUS_CLOSED, state );
+			return updateStatus( STATUS_CLOSED, state );
 		case SET_CHAT_OPERATOR:
 		case SET_CHATS_RECOVERED:
 			return compose(
@@ -95,11 +110,11 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 				setOperator( action.operator ),
 			)( state )
 		case SET_OPERATOR_CHATS_ABANDONED:
-			return setStatus( STATUS_ABANDONED, state )
+			return updateStatus( STATUS_ABANDONED, state )
 		case ASSIGN_CHAT:
-			return setStatus( STATUS_ASSIGNING, state )
+			return updateStatus( STATUS_ASSIGNING, state )
 		case SET_CHAT_MISSED:
-			return setStatus( STATUS_MISSED, state )
+			return updateStatus( STATUS_MISSED, state )
 		case OPERATOR_CHAT_LEAVE:
 		case SET_USER_OFFLINE:
 		case REMOVE_USER:
@@ -110,7 +125,7 @@ const chat = ( state = [ null, null, null, null, {} ], action ) => {
 		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
 			return setMembers( set( lensProp( action.operator.id ), true, membersView( state ) ), state )
 		case SET_CHAT_CUSTOMER_DISCONNECT:
-			return setStatus( STATUS_CUSTOMER_DISCONNECT, state )
+			return updateStatus( STATUS_CUSTOMER_DISCONNECT, state )
 	}
 	return state
 }
@@ -141,6 +156,7 @@ export default ( state = {}, action ) => {
 			const chatIdLens = lensProp( action.chat_id )
 			return set( chatIdLens, chat( view( chatIdLens, state ), action ) )( state )
 		case INSERT_PENDING_CHAT:
+		case INSERT_NEW_CHAT:
 		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
 		case ASSIGN_CHAT:
 		case OPERATOR_JOIN:

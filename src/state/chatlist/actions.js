@@ -31,7 +31,8 @@ import {
 	UPDATE_CHAT,
 	RECEIVE_CHAT_MESSAGE,
 	CUSTOMER_CHAT_TRANSCRIPT_REQUEST,
-	REMOVE_CHAT
+	REMOVE_CHAT,
+	INSERT_NEW_CHAT
 } from '../action-types'
 
 export const reassignChats = ( operator, socket ) => ( {
@@ -44,6 +45,10 @@ export const setOperatorChatsAbandoned = ( operator_id ) => ( {
 
 export const recoverChats = ( operator, socket ) => ( {
 	type: RECOVER_CHATS, operator, socket
+} )
+
+export const insertNewChat = chat => ( {
+	type: INSERT_NEW_CHAT, chat
 } )
 
 export const insertPendingChat = chat => ( {
