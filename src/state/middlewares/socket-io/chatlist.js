@@ -6,7 +6,8 @@ import {
 	view,
 	lensPath,
 	compose,
-	tap
+	tap,
+	when
 } from 'ramda'
 import { delayAction, cancelAction } from 'redux-delayed-dispatch'
 import { v4 as uuid } from 'uuid'
@@ -74,7 +75,8 @@ import {
 	isChatStatusClosed,
 	isAssigningChat,
 	getChatGroups,
-	getAllNewChats
+	getAllNewChats,
+	getAllMissedChats
 } from '../../chatlist/selectors'
 import {
 	STATUS_CUSTOMER_DISCONNECT,
@@ -538,6 +540,15 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 					.emit( 'accept', canAcceptChat( chat.id, store.getState() ) )
 			} ) ),
 			getAllNewChats
+		)( store.getState() )
+
+		// check if missed chats can be accepted and added to pending status
+		compose(
+			map( tap( when(
+				chat => canAcceptChat( chat.id, store.getState() ),
+				chat => console.error( 'set chat to pending', chat.id )
+			) ) ),
+			getAllMissedChats
 		)( store.getState() )
 	}
 

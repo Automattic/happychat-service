@@ -140,6 +140,7 @@ export const getChatsWithStatus = ( status, state ) => compose(
 )( state )
 
 export const getAllNewChats = state => getChatsWithStatus( STATUS_NEW, state )
+export const getAllMissedChats = state => getChatsWithStatus( STATUS_MISSED, state )
 
 export const getOperatorAbandonedChats = ( id, state ) => compose(
 	mapToChat,
