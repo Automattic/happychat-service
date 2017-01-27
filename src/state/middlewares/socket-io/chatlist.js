@@ -5,8 +5,8 @@ import {
 	isEmpty,
 	view,
 	lensPath,
-	length,
-	contains
+	compose,
+	tap
 } from 'ramda'
 import { delayAction, cancelAction } from 'redux-delayed-dispatch'
 import { v4 as uuid } from 'uuid'
@@ -40,6 +40,7 @@ import {
 	assignChat,
 	assignNextChat,
 	insertPendingChat,
+	insertNewChat,
 	reassignChats,
 	recoverChats,
 	setChatMissed,
@@ -71,18 +72,18 @@ import {
 	isChatStatusNew,
 	isChatStatusClosed,
 	isAssigningChat,
-	getChatGroups
+	getChatGroups,
+	getAllNewChats
 } from '../../chatlist/selectors'
 import {
 	STATUS_CUSTOMER_DISCONNECT,
 } from '../../chatlist/reducer'
 import {
 	getAvailableOperators,
-	getAvailableLocales,
 	isOperatorAcceptingChats,
-	haveAvailableCapacity
+	haveAvailableCapacity,
+	canAcceptChat
 } from '../../operator/selectors'
-import { getDefaultLocale } from '../../locales/selectors'
 import { run } from '../../../middleware-interface'
 import timestamp from '../../timestamp'
 import { customerRoom, operatorRoom } from './operator'
@@ -268,15 +269,17 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 	}
 
 	const handleCustomerJoin = action => {
-		const { chat, socket } = action
+		const { chat } = action
 		const state = store.getState()
-		const locales = getAvailableLocales( state )
-		socket.emit( 'accept', contains( getDefaultLocale( state ), locales ) )
-		socket.emit( 'accept.locale', locales )
+
+		const accept = canAcceptChat( chat.id, state )
+		customer_io.to( customerRoom( chat.id ) ).emit( 'accept', accept )
 		const status = getChatStatus( chat.id, state )
 		const operator = getChatOperator( chat.id, state )
 		if ( ! isChatStatusNew( chat.id, state ) ) {
 			store.dispatch( updateChat( chat ) )
+		} else {
+			store.dispatch( insertNewChat( chat ) )
 		}
 		store.dispatch( cancelAction( customerLeft( chat.id ) ) )
 		store.dispatch( cancelAction( autocloseChat( chat.id ) ) )
@@ -525,14 +528,23 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		store.dispatch( assignChat( chat ) )
 	}
 
+	const handleNotifiSystemStatusChange = () => {
+		// get all new chats and notify their status
+		debug( 'notify new chats of status' )
+		compose(
+			map( tap( chat => {
+				customer_io
+					.to( customerRoom( chat.id ) )
+					.emit( 'accept', canAcceptChat( chat.id, store.getState() ) )
+			} ) ),
+			getAllNewChats
+		)( store.getState() )
+	}
+
 	return next => action => {
 		switch ( action.type ) {
 			case NOTIFY_SYSTEM_STATUS_CHANGE:
-				const available = getAvailableLocales( store.getState() )
-				// TODO: availability is now dependent on groups as well
-				debug( 'notify system status', available )
-				customer_io.emit( 'accept', contains( getDefaultLocale( store.getState() ), available ) )
-				customer_io.emit( 'accept.locale', available )
+				handleNotifiSystemStatusChange( action )
 				break;
 			case NOTIFY_CHAT_STATUS_CHANGED:
 				const status = getChatStatus( action.chat_id, store.getState() );
