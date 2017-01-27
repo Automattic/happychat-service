@@ -216,7 +216,7 @@ export const getChatGroups = ( chat_id, state ) => compose(
 
 const getAssignableChats = compose(
 	filter( compose(
-		anyPass( map( equals, [ STATUS_NEW, STATUS_PENDING ] ) ),
+		anyPass( map( equals, [ STATUS_PENDING ] ) ),
 		statusView
 	) ),
 	values,
