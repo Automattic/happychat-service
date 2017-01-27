@@ -16,7 +16,10 @@ import {
 	map,
 	mergeAll,
 	curryN,
-	both
+	both,
+	pickBy,
+	keys,
+	flatten
 } from 'ramda'
 import asString from '../as-string'
 import {
@@ -27,6 +30,7 @@ import {
 	getLocaleMembership,
 	getSupportedLocales
 } from '../locales/selectors'
+import { getGroups } from '../groups/selectors'
 
 export const STATUS_AVAILABLE = 'available';
 
@@ -114,7 +118,13 @@ export const getAvailableLocales = state => ifElse(
 	compose( not, getSystemAcceptsCustomers ),
 	always( [] ),
 	compose(
-		filter( locale => getAvailableCapacity( locale, state ) > 0 ),
+		flatten,
+		map( locale => compose(
+				map( group => `${ locale }-${ group }` ),
+				keys,
+				pickBy( group => haveAvailableCapacity( locale, [ group ], state ) ),
+				getGroups
+		)( state ) ),
 		getSupportedLocales
 	)
 )( state )
