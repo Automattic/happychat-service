@@ -137,6 +137,8 @@ export const getChatsWithStatus = ( status, state ) => compose(
 	selectChatlist
 )( state )
 
+export const getAllNewChats = state => getChatsWithStatus( STATUS_NEW, state )
+
 export const getOperatorAbandonedChats = ( id, state ) => compose(
 	mapToChat,
 	filter( both(
