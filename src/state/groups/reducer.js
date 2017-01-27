@@ -10,7 +10,8 @@ import {
 	always,
 	compose,
 	pickBy,
-	isNil
+	isNil,
+	prop
 } from 'ramda'
 import asString from '../as-string'
 import {
@@ -18,7 +19,8 @@ import {
 	ADD_GROUP_MEMBER,
 	REMOVE_GROUP,
 	REMOVE_GROUP_MEMBER,
-	UPDATE_OPERATOR_MEMBERSHIP
+	UPDATE_OPERATOR_MEMBERSHIP,
+	DESERIALIZE
 } from '../action-types'
 import { REMOTE_USER_KEY } from '../middlewares/socket-io/broadcast'
 
@@ -54,6 +56,10 @@ const remoteMemberPath = action => [
 
 export default ( state = { [DEFAULT_GROUP_ID]: { id: DEFAULT_GROUP_ID, name: DEFAULT_GROUP_NAME } }, action ) => {
 	switch ( action.type ) {
+		case DESERIALIZE:
+			return pickBy(
+				compose( not, isNil, prop( 'id' ) )
+			)( state )
 		case REMOVE_GROUP:
 			return when(
 				compose( not, equals( DEFAULT_GROUP_ID ), always( action.id ) ),
