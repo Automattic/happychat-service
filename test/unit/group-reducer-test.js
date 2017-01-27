@@ -1,4 +1,4 @@
-import { deepEqual } from 'assert'
+import { deepEqual, equal, ok } from 'assert'
 import { createStore } from 'redux'
 
 import groups from 'state/groups/reducer'
@@ -7,7 +7,8 @@ import {
 	removeGroup,
 	addGroupMember,
 	removeGroupMember,
-	updateOperatorMembership
+	updateOperatorMembership,
+	setDefaultGroupName
 } from 'state/groups/actions'
 import { DEFAULT_GROUP_NAME, DEFAULT_GROUP_ID } from 'state/groups/reducer'
 import { remoteAction } from '../helpers'
@@ -30,6 +31,18 @@ describe( 'group reducer', () => {
 			members: {},
 			exclusive: false
 		} )
+	} )
+
+	it( 'should not remove default group', () => {
+		const { getState, dispatch } = createStore( groups )
+		dispatch( removeGroup( DEFAULT_GROUP_ID ) )
+		ok( getState()[DEFAULT_GROUP_ID] )
+	} )
+
+	it( 'should set default group name', () => {
+		const { getState, dispatch } = createStore( groups )
+		dispatch( setDefaultGroupName( 'Everyone' ) )
+		equal( getState()[DEFAULT_GROUP_ID].name, 'Everyone' )
 	} )
 
 	it( 'should remove a group', () => {

@@ -3,7 +3,14 @@ import {
 	assoc,
 	dissoc,
 	dissocPath,
-	assocPath
+	assocPath,
+	when,
+	not,
+	equals,
+	always,
+	compose,
+	pickBy,
+	isNil
 } from 'ramda'
 import asString from '../as-string'
 import {
@@ -23,11 +30,11 @@ const group = ( state = { exclusive: false, members: {} }, action ) => {
 		case ADD_GROUP:
 			return merge(
 				state,
-				{
+				pickBy( compose( not, isNil ), {
 					id: action.id,
 					name: action.name,
-					exclusive: !! action.exclusive
-				}
+					exclusive: action.exclusive
+				} )
 			)
 	}
 	return state
@@ -48,7 +55,10 @@ const remoteMemberPath = action => [
 export default ( state = { [DEFAULT_GROUP_ID]: { id: DEFAULT_GROUP_ID, name: DEFAULT_GROUP_NAME } }, action ) => {
 	switch ( action.type ) {
 		case REMOVE_GROUP:
-			return dissoc( asString( action.id ), state )
+			return when(
+				compose( not, equals( DEFAULT_GROUP_ID ), always( action.id ) ),
+				dissoc( asString( action.id ) )
+			)( state )
 		case ADD_GROUP:
 			return assoc( asString( action.id ), group( undefined, action ) )( state )
 		case ADD_GROUP_MEMBER:

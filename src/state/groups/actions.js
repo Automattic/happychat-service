@@ -6,6 +6,7 @@ import {
 	UPDATE_OPERATOR_MEMBERSHIP
 } from '../action-types'
 import { allowRemote } from '../operator/can-remote-dispatch'
+import { DEFAULT_GROUP_ID } from './reducer'
 
 export const addGroup = ( id, name, exclusive ) => ( {
 	type: ADD_GROUP, id, name, exclusive
@@ -27,3 +28,7 @@ export const updateOperatorMembership = allowRemote(
 	UPDATE_OPERATOR_MEMBERSHIP,
 	( group_id, isMember ) => ( { group_id, isMember } )
 )
+
+export const setDefaultGroupName = name => ( {
+	type: ADD_GROUP, id: DEFAULT_GROUP_ID, name
+} )
