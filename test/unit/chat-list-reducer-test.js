@@ -109,12 +109,6 @@ describe( 'ChatList reducer', () => {
 		)
 	} )
 
-	it( 'should have pending chat', () => {
-		ok( havePendingChat( { chatlist: {
-			id: [ STATUS_PENDING, { id: 'id' } ]
-		} } ) )
-	} )
-
 	it( 'should insert pending chat', dispatchAction(
 		insertPendingChat( { id: 'chat-id' } ),
 		state => {

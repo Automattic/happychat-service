@@ -185,18 +185,8 @@ export const isChatStatusClosed = ( chat_id, state ) => equals(
 	STATUS_CLOSED, getChatStatus( chat_id, state )
 )
 
-export const haveChatWithStatus = ( status, state ) => ! isEmpty(
+const haveChatWithStatus = ( status, state ) => ! isEmpty(
 	getChatsWithStatus( status, state )
-)
-
-export const havePendingChat = state => haveChatWithStatus( STATUS_PENDING, state )
-export const getNextPendingChat = state => head(
-	getChatsWithStatus( STATUS_PENDING, state )
-)
-
-export const haveMissedChat = state => haveChatWithStatus( STATUS_MISSED, state )
-export const getNextMissedChat = state => head(
-	getChatsWithStatus( STATUS_MISSED, state )
 )
 
 export const isAssigningChat = state => haveChatWithStatus( STATUS_ASSIGNING, state )
