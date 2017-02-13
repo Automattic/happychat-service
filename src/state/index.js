@@ -1,5 +1,5 @@
 import delayedDispatch from 'redux-delayed-dispatch';
-import { keys } from 'ramda'
+import { keys, evolve, filter, compose, equals } from 'ramda'
 import { applyMiddleware } from 'redux'
 
 import operatorMiddleware from './middlewares/socket-io/operator'
@@ -10,6 +10,7 @@ import controllerMiddleware from './middlewares/system/controller'
 import systemMiddleware from './middlewares/system'
 import canRemoteDispatch from './operator/can-remote-dispatch'
 import { DESERIALIZE, SERIALIZE } from './action-types'
+import { STATUS_ASSIGNED, statusView } from './chatlist/reducer'
 
 const debug = require( 'debug' )( 'happychat:store' )
 const logger = () => next => action => {
@@ -24,6 +25,11 @@ const logger = () => next => action => {
 		throw ( e )
 	}
 }
+
+const onlyOpen = filter( compose(
+	equals( STATUS_ASSIGNED ),
+	statusView,
+) )
 
 export const serializeAction = () => ( { type: SERIALIZE } )
 export const deserializeAction = () => ( { type: DESERIALIZE } )
@@ -41,7 +47,7 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 				customerDisconnectTimeout: timeout,
 				customerDisconnectMessageTimeout: timeout
 			}, customerAuth, messageMiddlewares ),
-			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
+			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch, evolve( { chatlist: onlyOpen } ) ),
 			...systemMiddleware,
 	)
 }

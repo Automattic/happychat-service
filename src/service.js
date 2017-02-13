@@ -1,4 +1,3 @@
-import IO from 'socket.io'
 import {
 	compose as r_compose,
 	isNil,
@@ -57,10 +56,8 @@ const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_H
 	)
 }
 
-export const service = ( server, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, initialState, enhancers = [] ) => {
+export const service = ( io, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, initialState, enhancers = [] ) => {
 	debug( 'configuring socket.io server' )
-
-	const io = new IO( server )
 
 	const middlewares = middlewareInterface()
 
