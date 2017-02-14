@@ -26,7 +26,8 @@ import {
 	isNil,
 	append,
 	find,
-	identity
+	identity,
+	toLower,
 } from 'ramda'
 import {
 	statusView,
@@ -110,14 +111,11 @@ export const getChatMembers = compose( mapToMembers, values, selectChatlist )
 
 const getLocale = ( locale, state ) => {
 	const systemLocale = getDefaultLocale( state )
-	const supported = getSupportedLocales( state )
+	const supportedLocales = getSupportedLocales( state )
 	return compose(
-		when(
-			compose( not, flip( contains )( supported ) ),
-			always( systemLocale )
-		),
 		defaultTo( systemLocale ),
-	)( locale )
+		find( compose( equals( toLower( locale ) ), toLower ) )
+	)( supportedLocales )
 }
 
 export const getOpenChatMembers = state => compose(

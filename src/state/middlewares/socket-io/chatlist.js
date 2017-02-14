@@ -273,17 +273,17 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 
 	const handleCustomerJoin = action => {
 		const { chat } = action
-		const state = store.getState()
 
-		const accept = canAcceptChat( chat.id, state )
-		customer_io.to( customerRoom( chat.id ) ).emit( 'accept', accept )
-		const status = getChatStatus( chat.id, state )
-		const operator = getChatOperator( chat.id, state )
-		if ( ! isChatStatusNew( chat.id, state ) ) {
+		if ( ! isChatStatusNew( chat.id, store.getState() ) ) {
 			store.dispatch( updateChat( chat ) )
 		} else {
 			store.dispatch( insertNewChat( chat ) )
 		}
+		const accept = canAcceptChat( chat.id, store.getState() )
+
+		customer_io.to( customerRoom( chat.id ) ).emit( 'accept', accept )
+		const status = getChatStatus( chat.id, store.getState() )
+		const operator = getChatOperator( chat.id, store.getState() )
 		store.dispatch( cancelAction( customerLeft( chat.id ) ) )
 		store.dispatch( cancelAction( autocloseChat( chat.id ) ) )
 		if ( operator && !isEmpty( operator ) && status === STATUS_CUSTOMER_DISCONNECT ) {

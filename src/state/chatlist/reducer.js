@@ -75,10 +75,10 @@ const setGroups = set( groupsLens )
 const timestamp = () => ( new Date() ).getTime()
 
 const updateChat = chat => compose(
-		setChat( chat ),
-		setLocale( chat.locale ),
-		setTimestamp( timestamp() ),
-		setGroups( chat.groups )
+	setChat( chat ),
+	setLocale( chat.locale ),
+	setTimestamp( timestamp() ),
+	setGroups( chat.groups ),
 )
 
 const updateStatus = ( status, state ) => compose(
@@ -86,7 +86,7 @@ const updateStatus = ( status, state ) => compose(
 	setStatus( status )
 )( state )
 
-const chat = ( state = [ null, null, null, null, {} ], action ) => {
+const chat = ( state = [ null, null, null, null, {}, null, null ], action ) => {
 	switch ( action.type ) {
 		case INSERT_NEW_CHAT:
 			return compose(
