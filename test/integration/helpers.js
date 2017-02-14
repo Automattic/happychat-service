@@ -11,6 +11,7 @@ import {
 } from 'state/operator/selectors'
 import { addGroup } from 'state/groups/actions'
 
+import IOServer from 'socket.io'
 import IO from 'socket.io-client'
 
 const debug = require( 'debug' )( 'happychat:mock:service' )
@@ -54,9 +55,10 @@ export const startClients = ( port ) => new Promise( ( resolve, reject ) => {
 } )
 
 const main = ( authenticators, enhancers = [], port = 65115 ) => {
-	let server = createServer()
+	const server = createServer()
+	const io = new IOServer( server )
 	const result = {
-		service: service( server, authenticators, undefined, enhancers ),
+		service: service( io, authenticators, undefined, enhancers ),
 		start: () => startServer( server, port ),
 		stop: () => stopServer( server ),
 		startClients: () => startClients( port ),
