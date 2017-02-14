@@ -68,7 +68,7 @@ const main = ( authenticators, enhancers = [], port = 65115 ) => {
 	}
 	result.service.store.dispatch( addGroup( 'other', 'Other' ) )
 	result.service.configureLocales( 'en-US', [ 'es' ] )
-	return result
+	return { ... result, ... result.service.store }
 }
 
 export { main as default }
