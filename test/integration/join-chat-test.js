@@ -1,6 +1,7 @@
-import { ok, deepEqual } from 'assert'
+import { ok, deepEqual, equal } from 'assert'
 import makeService, { authenticators } from './helpers'
-import { STATUS_CLOSED } from 'state/chatlist/reducer'
+import { STATUS_CLOSED, STATUS_PENDING } from 'state/chatlist/reducer'
+import { getChatStatus } from 'state/chatlist/selectors'
 
 const debug = require( 'debug' )( 'happychat:test:join-chat' )
 
@@ -86,15 +87,12 @@ describe( 'Operator', () => {
 			} )
 		)
 
-		it( 'should close chat', () => requestState( operator )
-			.then( state => {
-				ok( state.chatlist['session-id'] )
-				closeChat( operator, mockUser.session_id )
+		it( 'should close chat', () => {
+			equal( getChatStatus( 'session-id', service.getState() ), STATUS_PENDING )
+			closeChat( operator, mockUser.session_id )
+			return requestState( operator ).then( () => {
+				equal( getChatStatus( 'session-id', service.getState() ), STATUS_CLOSED )
 			} )
-			.then( () => requestState( operator ) )
-			.then( state => {
-				deepEqual( state.chatlist['session-id'][0], STATUS_CLOSED )
-			} )
-		)
+		} )
 	} )
 } )
