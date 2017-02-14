@@ -114,7 +114,10 @@ const getLocale = ( locale, state ) => {
 	const supportedLocales = getSupportedLocales( state )
 	return compose(
 		defaultTo( systemLocale ),
-		find( compose( equals( toLower( locale ) ), toLower ) )
+		find( compose(
+			equals( compose( toLower, defaultTo( systemLocale ) )( locale ) ),
+			toLower
+		) )
 	)( supportedLocales )
 }
 
