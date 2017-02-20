@@ -1,6 +1,6 @@
 {
   "name": "happychat-service",
-  "version": "0.11.1",
+  "version": "0.11.3",
   "description": "Socket.IO based chat server for happychat.",
   "main": "index.js",
   "scripts": {
@@ -33,7 +33,6 @@
     "socket.io-client": "^1.4.8"
   },
   "dependencies": {
-    "async": "^2.0.0-rc.2",
     "lodash": "^4.11.1",
     "ramda": "^0.22.1",
     "redux": "^3.5.2",
