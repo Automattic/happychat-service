@@ -1,4 +1,4 @@
-import { equal } from 'assert'
+import { equal, deepEqual } from 'assert'
 import { ChatLog } from 'state/middlewares/socket-io/controller'
 import { forEach, range } from 'ramda'
 
@@ -42,16 +42,26 @@ describe( 'ChatLog', () => {
 		equal( log.findLog( 1 ).length, 0 )
 	} )
 
-	it( 'should limit the size of the chat log cache', () => {
-		forEach(
-			i => log.recordMessage( chat, { id: `message-${i}`, text: `message-${i}` } ),
-			range( 0, 20 )
-		)
-		const messages = log.findLog( chat.id )
-		const [ first, ... remaining ] = messages
-		const [ last ] = remaining.reverse()
-		equal( messages.length, maxMessages )
-		equal( last.id, 'message-19' )
-		equal( first.id, 'message-10' )
+	describe( 'with many messages', () => {
+		beforeEach( () => {
+			forEach(
+				i => log.recordMessage( chat, { id: `message-${i}`, text: `message-${i}` } ),
+				range( 0, 20 )
+			)
+		} )
+
+		it( 'should limit the size of the chat log cache', () => {
+			const messages = log.findLog( chat.id )
+			const [ first, ... remaining ] = messages
+			const [ last ] = remaining.reverse()
+			equal( messages.length, maxMessages )
+			equal( last.id, 'message-19' )
+			equal( first.id, 'message-10' )
+		} )
+
+		it( 'should remove log', () => {
+			log.evict( chat.id )
+			deepEqual( log.findLog( chat.id ), [] )
+		} )
 	} )
 } )
