@@ -1,4 +1,4 @@
-import { assoc, dissoc, compose, slice, append, defaultTo, prop, merge } from 'ramda'
+import { assoc, dissoc, compose, slice, append, defaultTo, prop, merge, pipe, when, path, not, isNil } from 'ramda'
 import { run } from '../../../middleware-interface'
 
 import {
@@ -9,6 +9,8 @@ import {
 	CUSTOMER_TYPING,
 	CUSTOMER_JOIN,
 	OPERATOR_JOIN,
+	REMOVE_CHAT,
+	CLOSE_CHAT
 } from '../../action-types'
 import { operatorReceiveTyping } from '../../operator/actions'
 import {
@@ -175,6 +177,18 @@ export default ( middlewares ) => store => {
 		} )
 	}
 
+	const evictChat = idPath => pipe(
+		when( pipe( not, isNil ), id => {
+			log.operator.evict( id )
+			log.customer.evict( id )
+		} ),
+		path( idPath )
+	)
+
+	const handleCloseChat = evictChat( [ 'chat', 'id' ] )
+
+	const handleRemoveChat = evictChat( [ 'id' ] )
+
 	return next => action => {
 		switch ( action.type ) {
 			case AGENT_INBOUND_MESSAGE:
@@ -197,6 +211,12 @@ export default ( middlewares ) => store => {
 				break;
 			case OPERATOR_JOIN:
 				handleOperatorJoin( action )
+				break;
+			case CLOSE_CHAT:
+				handleCloseChat( action )
+				break;
+			case REMOVE_CHAT:
+				handleRemoveChat( action )
 				break;
 		}
 		return next( action )
