@@ -1,6 +1,6 @@
-import { equal } from 'assert'
+import { equal, deepEqual } from 'assert'
 import { ChatLog } from 'state/middlewares/socket-io/controller'
-import { reduce } from 'lodash/collection'
+import { forEach, range } from 'ramda'
 
 describe( 'ChatLog', () => {
 	const maxMessages = 10
@@ -15,58 +15,53 @@ describe( 'ChatLog', () => {
 	it( 'should append customer message', () => {
 		const message = { context: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
 		const message2 = { context: 'user-id', id: 'message-id-2', text: 'goodbye', timestamp: 12346 }
-		return log.recordCustomerMessage( chat, message )
-		.then( () => log.recordCustomerMessage( chat, message2 ) )
-		.then( () => log.findLog( chat.id ) )
-		.then( ( messages ) => {
-			const [ head ] = messages
-			equal( messages.length, 2 )
-			equal( head.id, 'message-id' )
-		} )
+		log.recordMessage( chat, message )
+		log.recordMessage( chat, message2 )
+		const messages = log.findLog( chat.id )
+		const [ head ] = messages
+		equal( messages.length, 2 )
+		equal( head.id, 'message-id' )
 	} )
 
 	it( 'should append operator message', () => {
 		const user = mockUser
 		const message = { id: 'operator-message-id', user, timestamp: 12345 }
-		return log.recordOperatorMessage( chat, user, message )
-		.then( () => log.findLog( chat.id ) )
-		.then( ( messages ) => {
-			let [ head ] = messages
-			equal( head.id, 'operator-message-id' )
-		} )
+		log.recordMessage( chat, message )
+		const [ head ] = log.findLog( chat.id )
+		equal( head.id, 'operator-message-id' )
 	} )
 
 	it( 'should append agent message', () => {
 		const message = { id: 'agent-message-id' }
-		return log.recordAgentMessage( chat, message )
-		.then( () => log.findLog( chat.id ) )
-		.then( ( messages ) => {
-			let [ head ] = messages
-			equal( head.id, 'agent-message-id' )
-		} )
+		log.recordMessage( chat, message )
+		let [ head ] = log.findLog( chat.id )
+		equal( head.id, 'agent-message-id' )
 	} )
 
 	it( 'should find log by chat id', () => {
-		return log.findLog( 1 ).then( ( messages ) => equal( messages.length, 0 ) )
+		equal( log.findLog( 1 ).length, 0 )
 	} )
 
-	it( 'should limit the size of the chat log cache', () => {
-		var record = ( i ) => () => {
-			return log.recordCustomerMessage( chat, { id: `message-${i}`, text: `message-${i}` } )
-		}
-		var actions = []
-		while ( actions.length < 20 ) {
-			actions.push( record( actions.length ) )
-		}
-		let [ head, ...rest ] = actions
-		return reduce( rest, ( p, action ) => p.then( action ), head() )
-		.then( () => log.findLog( chat.id ) )
-		.then( ( messages ) => {
-			const [first, ... remaining ] = messages
-			const [last] = remaining.reverse()
+	describe( 'with many messages', () => {
+		beforeEach( () => {
+			forEach(
+				i => log.recordMessage( chat, { id: `message-${i}`, text: `message-${i}` } ),
+				range( 0, 20 )
+			)
+		} )
+
+		it( 'should limit the size of the chat log cache', () => {
+			const messages = log.findLog( chat.id )
+			const [ first, ... remaining ] = messages
+			const [ last ] = remaining.reverse()
 			equal( messages.length, maxMessages )
 			equal( last.id, 'message-19' )
 			equal( first.id, 'message-10' )
+		} )
+
+		it( 'should remove log', () => {
+			log.evict( chat.id )
+			deepEqual( log.findLog( chat.id ), [] )
 		} )
 	} )
 } )
