@@ -1,9 +1,10 @@
 import jsondiff from 'simperium-jsondiff'
 import { v4 as uuid } from 'uuid'
+import debounce from 'lodash/debounce'
 import { OPERATOR_READY, REMOTE_ACTION_TYPE } from '../../action-types'
 import { isEmpty } from 'ramda'
 import { selectSocketIdentity } from '../../operator/selectors'
-import { assoc } from 'ramda'
+import { assoc, always, identity } from 'ramda'
 
 const debug = require( 'debug' )( 'happychat:socket-io:broadcast' )
 
@@ -19,12 +20,10 @@ const join = ( io, socket ) => new Promise( ( resolve, reject ) => {
 } )
 
 const broadcastVersion = ( io, version, nextVersion, patch ) => {
-	debug( 'patch', version )
 	io.in( 'broadcast' ).emit( 'broadcast.update', version, nextVersion, patch )
 }
 
-export default ( io, canRemoteDispatch = () => false, selector = ( state ) => state ) => ( { getState, dispatch } ) => {
-	debug( 'initialized broadcaster' )
+export default ( io, { canRemoteDispatch = always( false ), selector = identity, shouldBroadcastStateChange = always( true ) } ) => ( { getState, dispatch } ) => {
 	const { diff } = jsondiff()
 	let version = uuid()
 	let currentState = selector( getState() )
@@ -71,6 +70,20 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 		sendState( action.socket )
 	}
 
+	const broadcastChange = state => {
+		const nextState = selector( state )
+		const nextPatch = diff( currentState, nextState )
+
+		if ( ! isEmpty( nextPatch ) ) {
+			const nextVersion = uuid()
+			patch = nextPatch
+			broadcastVersion( io, version, nextVersion, patch )
+			version = nextVersion
+			currentState = nextState
+		}
+	}
+	const update = debounce( broadcastChange, 20, { maxTime: 200 } )
+
 	return next => action => {
 		switch ( action.type ) {
 			case REMOTE_ACTION_TYPE:
@@ -83,6 +96,7 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 						}
 						debug( 'dispatching remote action', action.action )
 						dispatch( action.action )
+						broadcastChange( getState() )
 						resolve( version )
 					} catch ( e ) {
 						reject( e.message )
@@ -94,21 +108,12 @@ export default ( io, canRemoteDispatch = () => false, selector = ( state ) => st
 				break;
 		}
 
-		const previousState = getState()
-		const result = next( action )
-		const nextState = currentState = selector( getState() )
-		const nextPatch = diff( previousState, nextState )
-
-		// TODO: throttle?
-		debug( 'patch', nextPatch )
-		if ( ! isEmpty( nextPatch ) ) {
-			const nextVersion = uuid()
-			patch = nextPatch
-			broadcastVersion( io, version, nextVersion, patch )
-			version = nextVersion
-			currentState = nextState
+		if ( ! shouldBroadcastStateChange( action ) ) {
+			return next( action )
 		}
 
+		const result = next( action )
+		update( getState() )
 		return result
 	}
 }

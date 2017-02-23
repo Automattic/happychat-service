@@ -9,6 +9,7 @@ import agentMiddleware from './middlewares/socket-io/agents'
 import controllerMiddleware from './middlewares/system/controller'
 import systemMiddleware from './middlewares/system'
 import canRemoteDispatch from './operator/can-remote-dispatch'
+import shouldBroadcastStateChange from './should-broadcast'
 import { DESERIALIZE, SERIALIZE } from './action-types'
 import { STATUS_ASSIGNED, statusView } from './chatlist/reducer'
 
@@ -47,7 +48,7 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 				customerDisconnectTimeout: timeout,
 				customerDisconnectMessageTimeout: timeout
 			}, customerAuth, messageMiddlewares ),
-			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch, evolve( { chatlist: onlyOpen } ) ),
-			...systemMiddleware,
+			broadcastMiddleware( io.of( '/operator' ), { canRemoteDispatch, shouldBroadcastStateChange, selector: evolve( { chatlist: onlyOpen } ) } ),
+			...systemMiddleware
 	)
 }

@@ -24,8 +24,8 @@ describe( 'Operator', () => {
 	let service;
 
 	const emitCustomerMessage = ( { customer, operator } ) => new Promise( ( resolve ) => {
-		customer.on( 'message', () => {
-			debug( 'customer received message?' )
+		customer.on( 'message', message => {
+			debug( 'customer received message', message.id )
 			resolve( { customer, operator } )
 		} )
 		customer.emit( 'message', { id: 'message', text: 'hello' } )
@@ -50,8 +50,18 @@ describe( 'Operator', () => {
 	} )
 
 	const requestState = client => new Promise( resolve => {
+		debug( 'requesting state' )
 		client.emit( 'broadcast.state', ( version, state ) => {
+			debug( 'received state' )
 			resolve( state )
+		} )
+	} )
+
+	const waitForUpdate = client => new Promise( ( resolve ) => {
+		debug( 'waiting for an update' )
+		client.once( 'broadcast.update', ( version, nextVersion, patch ) => {
+			debug( 'received state' )
+			resolve( patch )
 		} )
 	} )
 
@@ -64,9 +74,9 @@ describe( 'Operator', () => {
 	it( 'should join chat', () => service.startClients()
 		.then( emitCustomerMessage )
 		.then( operatorJoinChat )
-	.then( chat => {
-		ok( chat )
-	} )
+		.then( chat => {
+			ok( chat )
+		} )
 	)
 
 	describe( 'when in a chat', () => {
@@ -90,9 +100,10 @@ describe( 'Operator', () => {
 		it( 'should close chat', () => {
 			equal( getChatStatus( 'session-id', service.getState() ), STATUS_PENDING )
 			closeChat( operator, mockUser.session_id )
-			return requestState( operator ).then( () => {
-				equal( getChatStatus( 'session-id', service.getState() ), STATUS_CLOSED )
-			} )
+			return requestState( operator )
+				.then( state => {
+					equal( service.getState().chatlist['session-id'][0], STATUS_CLOSED )
+				} )
 		} )
 	} )
 } )
