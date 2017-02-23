@@ -6,7 +6,8 @@ import { removeChat } from './state/chatlist/actions'
 import { getClosedChatsOlderThan } from './state/chatlist/selectors'
 import middlewareInterface from './middleware-interface'
 import { createStore, compose } from 'redux'
-const debug = require( 'debug' )( 'happychat:main' )
+
+const log = require( 'debug' )( 'happychat:service' )
 
 export { reducer }
 
@@ -31,8 +32,7 @@ const FOUR_HOURS_IN_SECONDS = 60 * 60 * 4
 const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_HOURS_IN_SECONDS ) => () => {
 	map(
 		( chat ) => {
-			if ( chat ) {
-				debug( 'remove chat', chat.id )
+			if ( chat && chat.id ) {
 				dispatch( removeChat( chat.id ) )
 			}
 		},
@@ -41,7 +41,7 @@ const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_H
 }
 
 export const service = ( server, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, state, enhancers = [] ) => {
-	debug( 'configuring socket.io server' )
+	log( 'configuring socket.io server' )
 
 	const io = new IO( server )
 
@@ -57,7 +57,7 @@ export const service = ( server, { customerAuthenticator, agentAuthenticator, op
 	} )
 	.then( validator )
 	.catch( e => {
-		debug( 'failed to authorize user', e.message )
+		log( 'failed to authorize user', e.message )
 		socket.emit( 'unauthorized' )
 	} )
 

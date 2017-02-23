@@ -1,7 +1,7 @@
 import isEmpty from 'lodash/isEmpty'
 import assign from 'lodash/assign'
 
-const debug = require( 'debug' )( 'happychat:middleware' )
+const debug = require( 'debug' )( 'happychat-debug:middleware' )
 
 const runMiddleware = middlewares => ( { origin, destination, chat, user, message } ) => new Promise( ( resolveMiddleware ) => {
 	new Promise( middlewareComplete => {
