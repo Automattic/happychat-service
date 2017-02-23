@@ -13,15 +13,22 @@ import shouldBroadcastStateChange from './should-broadcast'
 import { DESERIALIZE, SERIALIZE } from './action-types'
 import { STATUS_ASSIGNED, statusView } from './chatlist/reducer'
 
-const debug = require( 'debug' )( 'happychat:store' )
+const getTime = () => ( new Date() ).getTime()
+
+const log = require( 'debug' )( 'happychat:store' )
+const debug = require( 'debug' )( 'happychat-debug:store' )
+
 const logger = () => next => action => {
 	debug( 'ACTION_START', action.type, ... keys( action ) )
+	const startTime = getTime()
 	try {
 		const result = next( action )
+		const endTime = getTime()
+		log( 'ACTION', action.type, endTime - startTime, 'ms' )
 		debug( 'ACTION_END', action.type )
 		return result
 	} catch ( e ) {
-		debug( 'ACTION_ERROR', action.type, e.message )
+		log( 'ACTION_ERROR', action.type, e.message )
 		debug( 'ACTION', action )
 		throw ( e )
 	}

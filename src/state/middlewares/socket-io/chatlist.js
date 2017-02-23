@@ -91,7 +91,8 @@ import { run } from '../../../middleware-interface'
 import timestamp from '../../timestamp'
 import { customerRoom, operatorRoom } from './operator'
 
-const debug = require( 'debug' )( 'happychat:middleware:chatlist' )
+const debug = require( 'debug' )( 'happychat-debug:middleware:chatlist' )
+const log = require( 'debug' )( 'happychat:middleware:chatlist' )
 
 export const makeEventMessage = ( text, session_id ) => ( {
 	type: 'event',
@@ -203,7 +204,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		customerAuth( socket )
 		.then(
 			user => join( { socket, user, io: customer_io, store }, middlewares ),
-			e => debug( 'customer auth failed', e.message )
+			e => log( 'customer auth failed', e.message )
 		)
 	} )
 

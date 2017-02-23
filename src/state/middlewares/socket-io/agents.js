@@ -3,7 +3,7 @@ import { getOperators } from '../../operator/selectors'
 import { AGENT_RECEIVE_MESSAGE } from '../../action-types'
 import { agentInboundMessage } from '../../chatlist/actions'
 
-const debug = require( 'debug' )( 'happychat:agent' )
+const debug = require( 'debug' )( 'happychat-debug:agent' )
 
 const onAuthorized = ( { socket, agent, store } ) => {
 	const { getState, dispatch } = store

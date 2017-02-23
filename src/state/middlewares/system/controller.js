@@ -21,7 +21,8 @@ import {
 	receiveMessage,
 } from '../../chatlist/actions'
 
-const debug = require( 'debug' )( 'happychat:controller' )
+const log = require( 'debug' )( 'happychat:controller' )
+const debug = require( 'debug' )( 'happychat-debug:controller' )
 
 const DEFAULT_MAX_MESSAGES = 100
 
@@ -64,19 +65,19 @@ const formatAgentMessage = ( author_type, author_id, session_id, { id, timestamp
 } )
 
 export default ( middlewares ) => store => {
-	const log = { operator: new ChatLog( { maxMessages: 20 } ), customer: new ChatLog( { maxMessages: 20 } ) }
+	const cache = { operator: new ChatLog( { maxMessages: 20 } ), customer: new ChatLog( { maxMessages: 20 } ) }
 
 	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
 
 	// toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 	const handleCustomerJoin = action => {
 		const { socket, chat } = action
-		socket.emit( 'log', log.customer.findLog( chat.id ) )
+		socket.emit( 'log', cache.customer.findLog( chat.id ) )
 	}
 
 	const handleOperatorJoin = action => {
 		const { chat, socket } = action
-		socket.emit( 'log', chat, log.operator.findLog( chat.id ) )
+		socket.emit( 'log', chat, cache.operator.findLog( chat.id ) )
 	}
 
 	const handleCustomerTyping = action => {
@@ -99,7 +100,7 @@ export default ( middlewares ) => store => {
 		const origin = 'customer'
 		runMiddleware( { origin, destination: 'customer', chat, message: customerMessage } )
 		.then( m => {
-			log.customer.recordMessage( chat, m )
+			cache.customer.recordMessage( chat, m )
 			store.dispatch( customerReceiveMessage( chat.id, m ) )
 			return m
 		}, e => debug( 'middleware failed ', e.message ) )
@@ -111,7 +112,7 @@ export default ( middlewares ) => store => {
 
 		runMiddleware( { origin, destination: 'operator', chat, message: customerMessage } )
 		.then( m => {
-			log.operator.recordMessage( chat, m )
+			cache.operator.recordMessage( chat, m )
 			store.dispatch( operatorReceiveMessage( chat.id, m ) )
 			return m
 		}, e => debug( 'middleware failed', e.message ) )
@@ -133,14 +134,14 @@ export default ( middlewares ) => store => {
 
 		runMiddleware( { origin, destination: 'operator', chat, message: operatorMessage, user: operator } )
 		.then( m => {
-			log.operator.recordMessage( chat, m )
+			cache.operator.recordMessage( chat, m )
 			store.dispatch( operatorReceiveMessage( chat.id, m ) )
 			return m
 		} )
 
 		runMiddleware( { origin, destination: 'customer', chat, message: operatorMessage, user: operator } )
 		.then( m => {
-			log.customer.recordMessage( chat, operator, m )
+			cache.customer.recordMessage( chat, operator, m )
 			store.dispatch( customerReceiveMessage( chat.id, m ) )
 			return m
 		} )
@@ -162,14 +163,14 @@ export default ( middlewares ) => store => {
 
 		runMiddleware( { origin, destination: 'operator', chat, message: agentMessage } )
 		.then( m => {
-			log.operator.recordMessage( chat, m )
+			cache.operator.recordMessage( chat, m )
 			store.dispatch( operatorReceiveMessage( chat.id, format( m ) ) )
 			return m
 		} )
 
 		runMiddleware( { origin, destination: 'customer', chat, message: agentMessage } )
 		.then( m => {
-			log.customer.recordMessage( chat, message )
+			cache.customer.recordMessage( chat, message )
 			store.dispatch(
 				customerReceiveMessage( chat.id, format( m ) )
 			)

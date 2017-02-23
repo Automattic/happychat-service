@@ -6,7 +6,8 @@ import { isEmpty } from 'ramda'
 import { selectSocketIdentity } from '../../operator/selectors'
 import { assoc, always, identity } from 'ramda'
 
-const debug = require( 'debug' )( 'happychat:socket-io:broadcast' )
+const debug = require( 'debug' )( 'happychat-debug:socket-io:broadcast' )
+const log = require( 'debug' )( 'happychat:socket-io:broadcast' )
 
 export const REMOTE_USER_KEY = 'REMOTE_USER'
 
@@ -41,7 +42,7 @@ export default ( io, { canRemoteDispatch = always( false ), selector = identity,
 				user
 			}
 			if ( ! canRemoteDispatch( action, getState ) ) {
-				debug( 'remote dispatch not allowed for action', remoteAction.type )
+				log( 'remote dispatch not allowed for action', remoteAction.type )
 				callback( 'Remote dispatch not allowed' )
 				return
 			}

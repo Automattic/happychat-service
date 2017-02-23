@@ -22,7 +22,7 @@ import middlewareInterface from './middleware-interface'
 import { configureLocales } from './state/locales/actions'
 import upgradeCapacities from './upgrade-capacities'
 
-const debug = require( 'debug' )( 'happychat:main' )
+const log = require( 'debug' )( 'happychat:service' )
 
 export { reducer }
 
@@ -47,8 +47,7 @@ const FOUR_HOURS_IN_SECONDS = 60 * 60 * 4
 const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_HOURS_IN_SECONDS ) => () => {
 	map(
 		( chat ) => {
-			if ( chat ) {
-				debug( 'remove chat', chat.id )
+			if ( chat && chat.id ) {
 				dispatch( removeChat( chat.id ) )
 			}
 		},
@@ -57,7 +56,7 @@ const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_H
 }
 
 export const service = ( io, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, initialState, enhancers = [] ) => {
-	debug( 'configuring socket.io server' )
+	log( 'configuring socket.io server' )
 
 	const middlewares = middlewareInterface()
 
@@ -71,7 +70,7 @@ export const service = ( io, { customerAuthenticator, agentAuthenticator, operat
 	} )
 	.then( validator )
 	.catch( e => {
-		debug( 'failed to authorize user', e.message )
+		log( 'failed to authorize user', e.message )
 		socket.emit( 'unauthorized' )
 	} )
 

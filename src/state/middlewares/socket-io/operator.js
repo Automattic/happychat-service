@@ -24,7 +24,8 @@ import {
 } from '../../operator/selectors';
 import { run } from '../../../middleware-interface'
 
-const debug = require( 'debug' )( 'happychat:middleware:operators' )
+const log = require( 'debug' )( 'happychat:middleware:operators' )
+const debug = require( 'debug' )( 'happychat-debug:middleware:operators' )
 
 const identityForUser = ( { id, displayName, avatarURL } ) => (
 	{ id, displayName, avatarURL }
@@ -130,7 +131,7 @@ export default ( io, auth, middlewares ) => ( store ) => {
 	io.on( 'connection', ( socket ) => {
 		auth( socket ).then(
 			user => join( { socket, store, user, io }, middlewares ),
-			e => debug( 'operator auth failed', e.message )
+			e => log( 'operator auth failed', e.message )
 		)
 	} )
 
