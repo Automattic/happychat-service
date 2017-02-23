@@ -54,6 +54,12 @@ describe( 'Operator', () => {
 		} )
 	} )
 
+	const waitForUpdate = client => new Promise( ( resolve ) => {
+		client.once( 'broadcast.update', ( version, nextVersion, patch ) => {
+			resolve( patch )
+		} )
+	} )
+
 	beforeEach( () => {
 		service = util( authenticators( mockUser, opUser, {} ) )
 		service.start()
@@ -86,11 +92,13 @@ describe( 'Operator', () => {
 			} )
 		)
 
-		it( 'should close chat', () => requestState( operator )
+		it( 'should close chat', () => waitForUpdate( operator )
+			.then( () => requestState( operator ) )
 			.then( state => {
 				ok( state.chatlist['session-id'] )
 				closeChat( operator, mockUser.session_id )
 			} )
+			.then( () => waitForUpdate( operator ) )
 			.then( () => requestState( operator ) )
 			.then( state => {
 				deepEqual( state.chatlist['session-id'][0], STATUS_CLOSED )
