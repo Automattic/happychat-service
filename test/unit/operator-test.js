@@ -66,7 +66,7 @@ describe( 'Operators', () => {
 		) )
 	} )
 
-	it.only( 'should send current state to operator', done => {
+	it( 'should send current state to operator', done => {
 		const connection = server.newClient( socketid )
 		connection.client.once( 'broadcast.update', ( lastVersion, nextVersion ) => {
 			process.nextTick( () => {
