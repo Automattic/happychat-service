@@ -1,6 +1,6 @@
 import jsondiff from 'simperium-jsondiff'
 import { v4 as uuid } from 'uuid'
-import debounce from 'lodash/debounce'
+import { debounce } from 'lodash'
 import { OPERATOR_READY, REMOTE_ACTION_TYPE } from '../../action-types'
 import { isEmpty } from 'ramda'
 import { selectSocketIdentity } from '../../operator/selectors'
@@ -22,6 +22,16 @@ const join = ( io, socket ) => new Promise( ( resolve, reject ) => {
 
 const broadcastVersion = ( io, version, nextVersion, patch ) => {
 	io.in( 'broadcast' ).emit( 'broadcast.update', version, nextVersion, patch )
+}
+
+const getTime = () => ( new Date() ).getTime()
+
+const measure = ( label, work ) => ( ... args ) => {
+	const startTime = getTime()
+	const result = work( ... args )
+	const endTime = getTime()
+	log( `task ${ label } completed in ${ endTime - startTime }ms` )
+	return result
 }
 
 export default ( io, { canRemoteDispatch = always( false ), selector = identity, shouldBroadcastStateChange = always( true ) } ) => ( { getState, dispatch } ) => {
@@ -71,9 +81,11 @@ export default ( io, { canRemoteDispatch = always( false ), selector = identity,
 		sendState( action.socket )
 	}
 
+	const measureDiff = measure( 'diff', diff )
+
 	const broadcastChange = state => {
 		const nextState = selector( state )
-		const nextPatch = diff( currentState, nextState )
+		const nextPatch = measureDiff( currentState, nextState )
 
 		if ( ! isEmpty( nextPatch ) ) {
 			const nextVersion = uuid()
