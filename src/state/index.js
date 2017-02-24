@@ -9,17 +9,30 @@ import agentMiddleware from './middlewares/socket-io/agents'
 import controllerMiddleware from './middlewares/socket-io/controller'
 import operatorLoadMiddleware from './middlewares/socket-io/operator-load'
 import canRemoteDispatch from './operator/canRemoteDispatch'
+import shouldBroadcastStateChange from './should-broadcast'
 import { DESERIALIZE, SERIALIZE } from './action-types'
 
-const debug = require( 'debug' )( 'happychat:store' )
+const getTime = () => ( new Date() ).getTime()
+
+const log = require( 'debug' )( 'happychat:store' )
+const debug = require( 'debug' )( 'happychat-debug:store' )
+
 const logger = () => next => action => {
 	debug( 'ACTION_START', action.type, ... keys( action ) )
+	const startTime = getTime()
+	const startMem = process.memoryUsage().heapUsed
 	try {
 		const result = next( action )
+		const endTime = getTime()
+		const endMem = process.memoryUsage().heapUsed
+		const heapUsedChange = endMem - startMem
+		const sign = heapUsedChange < 0 ? '-' : '+'
+		log( 'ACTION', action.type )
+		log( `STATS ${ action.type } ${ endTime - startTime }ms ${ endMem } (${ sign }${ heapUsedChange })` )
 		debug( 'ACTION_END', action.type )
 		return result
 	} catch ( e ) {
-		debug( 'ACTION_ERROR', action.type, e.message )
+		log( 'ACTION_ERROR', action.type, e.message )
 		debug( 'ACTION', action )
 		throw ( e )
 	}
@@ -41,25 +54,7 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 				customerDisconnectTimeout: timeout,
 				customerDisconnectMessageTimeout: timeout
 			}, customerAuth, messageMiddlewares ),
-			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
+			broadcastMiddleware( io.of( '/operator' ), { canRemoteDispatch, shouldBroadcastStateChange } ),
 			...operatorLoadMiddleware,
 	)
 }
-
-// export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], middlewares = [], timeout = undefined }, state, reducer ) => {
-// 	return createStore(
-// 		reducer,
-// 		state,
-// 		applyMiddleware(
-// 			logger,
-// 			...middlewares,
-// 			delayedDispatch,
-// 			controllerMiddleware( messageMiddlewares ),
-// 			operatorMiddleware( io.of( '/operator' ), operatorAuth ),
-// 			agentMiddleware( io.of( '/agent' ), agentAuth ),
-// 			chatlistMiddleware( { io, timeout, customerDisconnectTimeout: timeout, customerDisconnectMessageTimeout: timeout }, customerAuth ),
-// 			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
-// 			...operatorLoadMiddleware,
-// 		)
-// 	)
-// }

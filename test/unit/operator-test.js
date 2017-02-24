@@ -68,10 +68,14 @@ describe( 'Operators', () => {
 
 	it( 'should send current state to operator', done => {
 		const connection = server.newClient( socketid )
-		connection.client.on( 'broadcast.state', ( version, state ) => {
-			ok( version )
-			deepEqual( state, store.getState() )
-			done()
+		connection.client.once( 'broadcast.update', ( lastVersion, nextVersion ) => {
+			process.nextTick( () => {
+				connection.client.emit( 'broadcast.state', ( version, state ) => {
+					equal( version, nextVersion )
+					deepEqual( state, store.getState() )
+					done()
+				} )
+			} )
 		} )
 		return connectOperator( connection )
 	} )
