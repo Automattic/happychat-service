@@ -30,7 +30,7 @@ const measure = ( label, work ) => ( ... args ) => {
 	const startTime = getTime()
 	const result = work( ... args )
 	const endTime = getTime()
-	debug( `task ${ label } completed in ${ endTime - startTime }ms` )
+	log( `task ${ label } completed in ${ endTime - startTime }ms` )
 	return result
 }
 
