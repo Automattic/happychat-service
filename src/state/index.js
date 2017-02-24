@@ -9,6 +9,7 @@ import agentMiddleware from './middlewares/socket-io/agents'
 import controllerMiddleware from './middlewares/socket-io/controller'
 import operatorLoadMiddleware from './middlewares/socket-io/operator-load'
 import canRemoteDispatch from './operator/canRemoteDispatch'
+import shouldBroadcastStateChange from './should-broadcast'
 import { DESERIALIZE, SERIALIZE } from './action-types'
 
 const getTime = () => ( new Date() ).getTime()
@@ -53,7 +54,7 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 				customerDisconnectTimeout: timeout,
 				customerDisconnectMessageTimeout: timeout
 			}, customerAuth, messageMiddlewares ),
-			broadcastMiddleware( io.of( '/operator' ), canRemoteDispatch ),
+			broadcastMiddleware( io.of( '/operator' ), { canRemoteDispatch, shouldBroadcastStateChange } ),
 			...operatorLoadMiddleware,
 	)
 }
