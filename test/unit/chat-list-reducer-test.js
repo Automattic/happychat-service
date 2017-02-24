@@ -31,6 +31,9 @@ import {
 	operatorChatLeave,
 	operatorChatJoin,
 } from 'state/operator/actions'
+import {
+	serializeAction
+} from 'state'
 
 const debug = require( 'debug' )( 'happychat:test' )
 
@@ -193,6 +196,21 @@ describe( 'ChatList reducer', () => {
 			2: [ STATUS_ABANDONED, '2', { id: 'op-id' }, 2, {} ],
 			3: [ STATUS_ABANDONED, '3', { id: 'op-id' }, 3, {} ],
 			4: [ STATUS_PENDING, '4', { id: 'other' }, 4, {} ]
+		}	) )
+
+	it( 'should serialize only assigned chats', dispatchAction(
+			serializeAction(),
+			state => {
+				deepEqual( state, { chatlist: {
+					a: [ STATUS_ASSIGNED, 'a', { id: 'op-id' }, 1, {} ],
+					4: [ STATUS_ASSIGNED, '4', { id: 'other' }, 4, {} ]
+				} } )
+			},
+		{
+			a: [ STATUS_ASSIGNED, 'a', { id: 'op-id' }, 1, {} ],
+			2: [ STATUS_ABANDONED, '2', { id: 'op-id' }, 2, {} ],
+			3: [ STATUS_ABANDONED, '3', { id: 'op-id' }, 3, {} ],
+			4: [ STATUS_ASSIGNED, '4', { id: 'other' }, 4, {} ]
 		}	) )
 
 	it( 'should close chat when id is int', dispatchAction(

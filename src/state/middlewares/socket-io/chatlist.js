@@ -9,9 +9,9 @@ import {
 	tap,
 	when
 } from 'ramda'
-import { delayAction, cancelAction } from 'redux-delayed-dispatch'
 import { v4 as uuid } from 'uuid'
-
+import { delayAction, cancelAction } from 'redux-delayed-dispatch'
+import { throttle } from 'lodash'
 import {
 	ASSIGN_CHAT,
 	ASSIGN_NEXT_CHAT,
@@ -135,9 +135,9 @@ const init = ( { user, socket, io, store, chat }, middlewares ) => () => {
 		store.dispatch( customerInboundMessage( chat, message, user ) )
 	} )
 
-	socket.on( 'typing', ( text ) => {
+	socket.on( 'typing', throttle( ( text ) => {
 		store.dispatch( customerTyping( chat.id, user, text ) )
-	} )
+	}, 100, { leading: true } ) )
 
 	socket.on( 'disconnect', () => {
 		store.dispatch( customerSocketDisconnect( socket, chat, user ) )

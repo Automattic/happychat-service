@@ -15,6 +15,7 @@ import {
 	not,
 	equals,
 	both,
+	filter
 } from 'ramda'
 import asString from '../as-string'
 import {
@@ -142,10 +143,15 @@ const whereStatusIsNot = status => compose(
 	statusView
 )
 
+export const onlyOpen = filter( compose(
+	equals( STATUS_ASSIGNED ),
+	statusView,
+) )
+
 export default ( state = {}, action ) => {
 	switch ( action.type ) {
 		case SERIALIZE:
-			return {}
+			return onlyOpen( state )
 		case REMOVE_CHAT:
 			return dissoc( asString( action.id ), state )
 		case AUTOCLOSE_CHAT:
