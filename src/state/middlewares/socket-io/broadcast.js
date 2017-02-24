@@ -1,6 +1,6 @@
 import jsondiff from 'simperium-jsondiff'
 import { v4 as uuid } from 'uuid'
-import debounce from 'lodash/debounce'
+import { debounce } from 'lodash'
 import { OPERATOR_READY, REMOTE_ACTION_TYPE } from '../../action-types'
 import { isEmpty } from 'ramda'
 import { selectSocketIdentity } from '../../operator/selectors'
