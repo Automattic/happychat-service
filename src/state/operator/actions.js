@@ -28,14 +28,14 @@ export const operatorTyping = ( id, user, text ) => (
 	{ type: OPERATOR_TYPING, id, user, text }
 )
 
-export const updateIdentity = ( socket, user ) => (
-	{ socket, user, type: UPDATE_IDENTITY }
+export const updateIdentity = ( socket_id, user ) => (
+	{ socket_id, user, type: UPDATE_IDENTITY }
 )
 
 export const removeUser = user => ( { user, type: REMOVE_USER } )
 
-export const removeUserSocket = ( socket, user ) => (
-	{ user, socket, type: REMOVE_USER_SOCKET }
+export const removeUserSocket = ( socket_id, user ) => (
+	{ user, socket_id, type: REMOVE_USER_SOCKET }
 )
 
 export const setOperatorCapacity = allowRemote( SET_OPERATOR_CAPACITY, ( locale, capacity ) => ( {
@@ -74,8 +74,8 @@ export const operatorChatTransfer = ( chat_id, user, toUser ) => (
 	{ type: OPERATOR_CHAT_TRANSFER, chat_id, user, toUser }
 )
 
-export const operatorReady = ( user, socket, room ) => (
-	{ type: OPERATOR_READY, user, socket, room }
+export const operatorReady = ( user, socket_id, room ) => (
+	{ type: OPERATOR_READY, user, socket_id, room }
 );
 
 export const operatorChatTranscriptRequest = ( user, chat, timestamp ) => ( {

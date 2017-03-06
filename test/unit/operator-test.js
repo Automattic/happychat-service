@@ -144,7 +144,7 @@ describe( 'Operators', () => {
 	it( 'should dispatch operator ready after connecting', ( done ) => {
 		watchForType( OPERATOR_READY, action => {
 			equal( action.user.id, 'a-user' )
-			ok( action.socket )
+			ok( action.socket_id )
 			ok( action.room )
 			done()
 		} )

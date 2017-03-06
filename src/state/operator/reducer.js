@@ -31,15 +31,15 @@ import {
 
 // Reducers
 const user_sockets = ( state = {}, action ) => {
-	const { user, socket } = action
+	const { user, socket_id } = action
 	switch ( action.type ) {
 		case UPDATE_IDENTITY:
 			return assign( {}, state, set( {}, user.id, concat(
-				get( state, user.id, [] ), socket.id )
+				get( state, user.id, [] ), socket_id )
 			) )
 		case REMOVE_USER_SOCKET:
 			const sockets = get( state, user.id, [] )
-			return assign( {}, state, set( {}, user.id, reject( sockets, socket.id ) ) )
+			return assign( {}, state, set( {}, user.id, reject( sockets, socket_id ) ) )
 		case REMOVE_USER:
 			return omit( state, user.id )
 		case SERIALIZE:
@@ -102,10 +102,10 @@ const identities = ( state = {}, action ) => {
 }
 
 const sockets = ( state = {}, action ) => {
-	const { user, socket } = action
+	const { user, socket_id } = action
 	switch ( action.type ) {
 		case UPDATE_IDENTITY:
-			return assign( {}, state, set( {}, socket.id, user.id ) )
+			return assign( {}, state, set( {}, socket_id, user.id ) )
 		case SERIALIZE:
 			return {}
 		default:

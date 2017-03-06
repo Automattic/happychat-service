@@ -143,10 +143,10 @@ describe( 'Customer Service', () => {
 		socket.id = 'socket-id'
 		let disconnectSocketFired = false
 		watchForType( CUSTOMER_SOCKET_DISCONNECT, action => {
-			const { chat, socket: s, user } = action
+			const { chat, socket_id, user } = action
 			disconnectSocketFired = true
 			equal( user.id, mockUser.id )
-			equal( s.id, 'socket-id' )
+			equal( socket_id, 'socket-id' )
 			equal( chat.user_id, mockUser.id )
 		} )
 
@@ -159,7 +159,7 @@ describe( 'Customer Service', () => {
 		} )
 
 		watchForType( CUSTOMER_JOIN, action => {
-			const { user, socket: { id: socket_id } } = action
+			const { user, socket_id } = action
 			equal( user.id, mockUser.id )
 			equal( socket_id, 'socket-id' )
 			debug( 'disconnecting' )

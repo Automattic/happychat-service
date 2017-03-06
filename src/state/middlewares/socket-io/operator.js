@@ -1,4 +1,4 @@
-import { map } from 'ramda'
+import { map, filter, compose, equals, evolve, not } from 'ramda'
 import timestamp from '../../timestamp'
 import {
 	OPERATOR_RECEIVE_MESSAGE,
@@ -23,6 +23,10 @@ import {
 	selectUser,
 } from '../../operator/selectors';
 import { run } from '../../../middleware-interface'
+import canRemoteDispatch from '../../operator/can-remote-dispatch'
+import shouldBroadcastStateChange from '../../should-broadcast'
+import broadcastMiddleware from './broadcast'
+import { STATUS_CLOSED, statusView } from '../../chatlist/reducer'
 
 const log = require( 'debug' )( 'happychat:middleware:operators' )
 const debug = require( 'debug' )( 'happychat-debug:middleware:operators' )
@@ -30,6 +34,12 @@ const debug = require( 'debug' )( 'happychat-debug:middleware:operators' )
 const identityForUser = ( { id, displayName, avatarURL } ) => (
 	{ id, displayName, avatarURL }
 )
+
+const filterClosed = filter( compose(
+	not,
+	equals( STATUS_CLOSED ),
+	statusView,
+) )
 
 export const customerRoom = id => `customer/${ id }`;
 export const operatorRoom = id => `operator/${ id }`;
@@ -42,7 +52,7 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 	const selectIdentity = userId => selectUser( store.getState(), userId );
 
 	socket.on( 'disconnect', () => {
-		store.dispatch( removeUserSocket( socket, user ) );
+		store.dispatch( removeUserSocket( socket.id, user ) );
 		io.in( user_room ).clients( ( error, clients ) => {
 			if ( error ) {
 				debug( 'failed to query clients', error.message )
@@ -56,13 +66,13 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 	} )
 
 	socket.join( user_room, () => {
-		store.dispatch( updateIdentity( socket, user ) )
+		store.dispatch( updateIdentity( socket.id, user ) )
 		// If the operator is not a member of any groups they should be
 		// assigned to the default group
 		if ( ! isOperatorMemberOfAnyGroup( user.id, store.getState() ) ) {
 			store.dispatch( addGroupMember( DEFAULT_GROUP_ID, user.id ) )
 		}
-		store.dispatch( operatorReady( user, socket, user_room ) )
+		store.dispatch( operatorReady( user, socket.id, user_room ) )
 		socket.emit( 'init', user )
 	} )
 
@@ -128,9 +138,18 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 }
 
 export default ( io, auth, middlewares ) => ( store ) => {
+	const { onDispatch, initializeUserSocket } = broadcastMiddleware( io, {
+		canRemoteDispatch,
+		shouldBroadcastStateChange,
+		selector: evolve( { chatlist: filterClosed } )
+	} )( store )
+
 	io.on( 'connection', ( socket ) => {
 		auth( socket ).then(
-			user => join( { socket, store, user, io }, middlewares ),
+			user => {
+				join( { socket, store, user, io }, middlewares )
+				initializeUserSocket( user, socket )
+			},
 			e => log( 'operator auth failed', e.message )
 		)
 	} )
@@ -145,6 +164,6 @@ export default ( io, auth, middlewares ) => ( store ) => {
 				io.in( customerRoom( action.id ) ).emit( 'chat.typing', chat, action.user, action.text )
 				break;
 		}
-		return next( action );
+		return onDispatch( next )( action );
 	}
 }

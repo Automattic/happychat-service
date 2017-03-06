@@ -35,16 +35,16 @@ import {
 	INSERT_NEW_CHAT
 } from '../action-types'
 
-export const reassignChats = ( operator, socket ) => ( {
-	type: REASSIGN_CHATS, operator, socket
+export const reassignChats = ( operator, socket_id ) => ( {
+	type: REASSIGN_CHATS, operator, socket_id
 } )
 
 export const setOperatorChatsAbandoned = ( operator_id ) => ( {
 	type: SET_OPERATOR_CHATS_ABANDONED, operator_id
 } )
 
-export const recoverChats = ( operator, socket ) => ( {
-	type: RECOVER_CHATS, operator, socket
+export const recoverChats = ( operator, socket_id ) => ( {
+	type: RECOVER_CHATS, operator, socket_id
 } )
 
 export const insertNewChat = chat => ( {
@@ -129,16 +129,16 @@ export const customerReceiveMessage = ( id, message ) => ( {
 	type: CUSTOMER_RECEIVE_MESSAGE, id, message
 } )
 
-export const customerJoin = ( socket, chat, user ) => ( {
-	type: CUSTOMER_JOIN, socket, chat, user
+export const customerJoin = ( socket_id, chat, user ) => ( {
+	type: CUSTOMER_JOIN, socket_id, chat, user
 } )
 
-export const operatorJoinChat = ( socket, chat, user ) => ( {
-	type: OPERATOR_JOIN, socket, chat, user
+export const operatorJoinChat = ( socket_id, chat, user ) => ( {
+	type: OPERATOR_JOIN, socket_id, chat, user
 } )
 
-export const customerSocketDisconnect = ( socket, chat, user ) => ( {
-	type: CUSTOMER_SOCKET_DISCONNECT, socket, chat, user
+export const customerSocketDisconnect = ( socket_id, chat, user ) => ( {
+	type: CUSTOMER_SOCKET_DISCONNECT, socket_id, chat, user
 } )
 
 export const customerDisconnect = ( chat, user ) => ( {

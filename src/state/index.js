@@ -1,17 +1,13 @@
 import delayedDispatch from 'redux-delayed-dispatch';
-import { keys, evolve, filter, compose, equals, not } from 'ramda'
+import { keys } from 'ramda'
 import { applyMiddleware } from 'redux'
 
 import operatorMiddleware from './middlewares/socket-io/operator'
 import chatlistMiddleware from './middlewares/socket-io/chatlist'
-import broadcastMiddleware from './middlewares/socket-io/broadcast'
 import agentMiddleware from './middlewares/socket-io/agents'
 import controllerMiddleware from './middlewares/system/controller'
 import systemMiddleware from './middlewares/system'
-import canRemoteDispatch from './operator/can-remote-dispatch'
-import shouldBroadcastStateChange from './should-broadcast'
 import { DESERIALIZE, SERIALIZE } from './action-types'
-import { STATUS_CLOSED, statusView } from './chatlist/reducer'
 
 const getTime = () => ( new Date() ).getTime()
 
@@ -36,13 +32,6 @@ const logger = () => next => action => {
 		throw ( e )
 	}
 }
-
-const filterClosed = filter( compose(
-	not,
-	equals( STATUS_CLOSED ),
-	statusView,
-) )
-
 export const serializeAction = () => ( { type: SERIALIZE } )
 export const deserializeAction = () => ( { type: DESERIALIZE } )
 
@@ -50,7 +39,7 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 	return applyMiddleware(
 			logger,
 			delayedDispatch,
-			controllerMiddleware( messageMiddlewares ),
+			controllerMiddleware( messageMiddlewares, { customers: io.of( '/customer' ), operators: io.of( '/operator' ) } ),
 			operatorMiddleware( io.of( '/operator' ), operatorAuth, messageMiddlewares ),
 			agentMiddleware( io.of( '/agent' ), agentAuth ),
 			chatlistMiddleware( {
@@ -59,7 +48,6 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 				customerDisconnectTimeout: timeout,
 				customerDisconnectMessageTimeout: timeout
 			}, customerAuth, messageMiddlewares ),
-			broadcastMiddleware( io.of( '/operator' ), { canRemoteDispatch, shouldBroadcastStateChange, selector: evolve( { chatlist: filterClosed } ) } ),
 			...systemMiddleware
 	)
 }

@@ -141,7 +141,7 @@ const init = ( { user, socket, io, store, chat }, middlewares ) => () => {
 	}, 100, { leading: true } ) )
 
 	socket.on( 'disconnect', () => {
-		store.dispatch( customerSocketDisconnect( socket, chat, user ) )
+		store.dispatch( customerSocketDisconnect( socket.id, chat, user ) )
 
 		whenNoClients( io, customerRoom( chat.id ) )
 			.then( () => store.dispatch( customerDisconnect( chat, user ) ) )
@@ -173,7 +173,7 @@ const init = ( { user, socket, io, store, chat }, middlewares ) => () => {
 	} )
 
 	socket.emit( 'init', user )
-	store.dispatch( customerJoin( socket, chat, user ) )
+	store.dispatch( customerJoin( socket.id, chat, user ) )
 }
 
 const join = ( { io, user, socket, store }, middlewares ) => {
@@ -250,7 +250,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 				socket.join( customer_room_name, ( error ) => {
 					if ( error ) return reject( error )
 					resolve( socket )
-					store.dispatch( operatorJoinChat( socket, chat, operator ) )
+					store.dispatch( operatorJoinChat( socket.id, chat, operator ) )
 				} )
 			} ), clients ) ),
 			new Promise( ( resolve, reject ) => setTimeout( () => {
@@ -325,9 +325,9 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		) ) )
 	}
 
-	const handleOperatorReady = ( { user, socket } ) => {
-		store.dispatch( recoverChats( user, socket ) )
-		store.dispatch( reassignChats( user, socket ) )
+	const handleOperatorReady = ( { user, socket_id } ) => {
+		store.dispatch( recoverChats( user, socket_id ) )
+		store.dispatch( reassignChats( user, socket_id ) )
 	}
 
 	const handleOperatorDisconnect = action => {
