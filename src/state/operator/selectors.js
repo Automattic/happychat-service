@@ -29,7 +29,7 @@ import {
 	getLocaleMembership,
 	getSupportedLocales
 } from '../locales/selectors'
-import { getGroups } from '../groups/selectors'
+import { getGroups, makeLocaleGroupToken } from '../groups/selectors'
 
 export const STATUS_AVAILABLE = 'available';
 
@@ -127,7 +127,7 @@ export const getAvailableLocales = state => ifElse(
 	compose(
 		flatten,
 		map( locale => compose(
-				map( group => `${ locale }-${ group }` ),
+				map( group => makeLocaleGroupToken( locale, group ) ),
 				keys,
 				pickBy( group => haveAvailableCapacity( locale, [ group ], state ) ),
 				getGroups

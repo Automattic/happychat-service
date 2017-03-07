@@ -1,5 +1,5 @@
-import { ok } from 'assert'
-import { isOperatorMemberOfAnyGroup } from 'state/groups/selectors'
+import { ok, equal } from 'assert'
+import { isOperatorMemberOfAnyGroup, getDefaultLocaleGroup } from 'state/groups/selectors'
 
 describe( 'Group selectors', () => {
 	it( 'isOperatorMemberOfAnyGroup', () => {
@@ -14,5 +14,14 @@ describe( 'Group selectors', () => {
 				1: true
 			} }
 		} } ) )
+	} )
+
+	it( 'getDefaultLocaleGroup', () => {
+		equal( 'en-__default', getDefaultLocaleGroup( {
+			locales: { defaultLocale: 'en' },
+			groups: {
+				__default: { id: '__default' }
+			}
+		} ) )
 	} )
 } )
