@@ -27,9 +27,10 @@ import {
 } from '../chatlist/selectors'
 import {
 	getLocaleMembership,
-	getSupportedLocales
+	getSupportedLocales,
+	getDefaultLocale
 } from '../locales/selectors'
-import { getGroups } from '../groups/selectors'
+import { getGroups, makeLocaleGroupToken, getDefaultGroup } from '../groups/selectors'
 
 export const STATUS_AVAILABLE = 'available';
 
@@ -127,7 +128,7 @@ export const getAvailableLocales = state => ifElse(
 	compose(
 		flatten,
 		map( locale => compose(
-				map( group => `${ locale }-${ group }` ),
+				map( group => makeLocaleGroupToken( locale, group ) ),
 				keys,
 				pickBy( group => haveAvailableCapacity( locale, [ group ], state ) ),
 				getGroups
@@ -167,3 +168,9 @@ export const canAcceptChat = ( chatID, state ) => both(
 		state
 	)
 )( state )
+
+export const defaultLocaleIsAvailable = ( state ) => {
+	const locale = getDefaultLocale( state )
+	const group = getDefaultGroup( state )
+	return haveAvailableCapacity( locale, [ group ], state )
+}

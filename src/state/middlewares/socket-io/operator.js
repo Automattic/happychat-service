@@ -59,7 +59,7 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 		store.dispatch( updateIdentity( socket, user ) )
 		// If the operator is not a member of any groups they should be
 		// assigned to the default group
-		if ( ! isOperatorMemberOfAnyGroup( user ) ) {
+		if ( ! isOperatorMemberOfAnyGroup( user.id, store.getState() ) ) {
 			store.dispatch( addGroupMember( DEFAULT_GROUP_ID, user.id ) )
 		}
 		store.dispatch( operatorReady( user, socket, user_room ) )
