@@ -1,5 +1,5 @@
 import delayedDispatch from 'redux-delayed-dispatch';
-import { keys, evolve, filter, compose, equals } from 'ramda'
+import { keys, evolve, filter, compose, equals, not } from 'ramda'
 import { applyMiddleware } from 'redux'
 
 import operatorMiddleware from './middlewares/socket-io/operator'
@@ -11,7 +11,7 @@ import systemMiddleware from './middlewares/system'
 import canRemoteDispatch from './operator/can-remote-dispatch'
 import shouldBroadcastStateChange from './should-broadcast'
 import { DESERIALIZE, SERIALIZE } from './action-types'
-import { STATUS_ASSIGNED, statusView } from './chatlist/reducer'
+import { STATUS_CLOSED, statusView } from './chatlist/reducer'
 
 const getTime = () => ( new Date() ).getTime()
 
@@ -37,8 +37,9 @@ const logger = () => next => action => {
 	}
 }
 
-const onlyOpen = filter( compose(
-	equals( STATUS_ASSIGNED ),
+const filterClosed = filter( compose(
+	not,
+	equals( STATUS_CLOSED ),
 	statusView,
 ) )
 
@@ -58,7 +59,7 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 				customerDisconnectTimeout: timeout,
 				customerDisconnectMessageTimeout: timeout
 			}, customerAuth, messageMiddlewares ),
-			broadcastMiddleware( io.of( '/operator' ), { canRemoteDispatch, shouldBroadcastStateChange, selector: evolve( { chatlist: onlyOpen } ) } ),
+			broadcastMiddleware( io.of( '/operator' ), { canRemoteDispatch, shouldBroadcastStateChange, selector: evolve( { chatlist: filterClosed } ) } ),
 			...systemMiddleware
 	)
 }

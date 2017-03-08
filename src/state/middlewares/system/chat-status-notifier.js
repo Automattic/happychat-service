@@ -19,6 +19,8 @@ import {
 import { getChatStatus, getChatsForOperator } from '../../chatlist/selectors'
 import { notifyChatStatusChanged } from '../../chatlist/actions'
 
+const log = require( 'debug' )( 'happychat:chat-status-notifier' )
+
 const mapStatus = state => ids => reduce(
 	( statuses, id ) => assoc( id, getChatStatus( id, state ), statuses ),
 	{},
@@ -61,9 +63,11 @@ export default ( { getState, dispatch } ) => next => action => {
 	const result = next( action )
 	const current = mapStatus( getState() )( chat_ids )
 	mapObjIndexed(
-		( state, id ) => {
-			if ( state !== previous[id] ) {
-				dispatch( notifyChatStatusChanged( id, state, previous[id] ) )
+		( status, id ) => {
+			const previousStatus = previous[id]
+			if ( status !== previousStatus ) {
+				log( 'chat %s status changed to "%s" from "%s"', id, status, previousStatus )
+				dispatch( notifyChatStatusChanged( id, status, previousStatus ) )
 			}
 		},
 		current
