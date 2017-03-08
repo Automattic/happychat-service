@@ -1,6 +1,6 @@
 import { assoc, prop, defaultTo, always } from 'ramda'
 
-const debug = require( 'debug' )( 'happychat:remote-action' )
+const debug = require( 'debug' )( 'happychat-debug:remote-action' )
 const allowedTypes = {}
 
 export const allowRemote = ( type, action, sentinel = always( true ) ) => {

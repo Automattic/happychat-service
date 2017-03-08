@@ -26,11 +26,14 @@ const broadcastVersion = ( io, version, nextVersion, patch ) => {
 
 const getTime = () => ( new Date() ).getTime()
 
-const measure = ( label, work ) => ( ... args ) => {
+const measure = ( label, work, logWhenLongerThan = 100 ) => ( ... args ) => {
 	const startTime = getTime()
 	const result = work( ... args )
 	const endTime = getTime()
-	log( `task ${ label } completed in ${ endTime - startTime }ms` )
+	const ellapsed = endTime - startTime
+	if ( ellapsed > logWhenLongerThan ) {
+		log( `task ${ label } completed in ${ ellapsed }ms` )
+	}
 	return result
 }
 

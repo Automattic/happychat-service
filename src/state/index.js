@@ -21,15 +21,13 @@ const debug = require( 'debug' )( 'happychat-debug:store' )
 const logger = () => next => action => {
 	debug( 'ACTION_START', action.type, ... keys( action ) )
 	const startTime = getTime()
-	const startMem = process.memoryUsage().heapUsed
 	try {
 		const result = next( action )
 		const endTime = getTime()
-		const endMem = process.memoryUsage().heapUsed
-		const heapUsedChange = endMem - startMem
-		const sign = heapUsedChange < 0 ? '-' : '+'
-		log( 'ACTION', action.type )
-		log( `STATS ${ action.type } ${ endTime - startTime }ms ${ endMem } (${ sign }${ heapUsedChange })` )
+		const ellapsed = endTime - startTime
+		if ( ellapsed > 100 ) {
+			log( 'slow ACTION', action.type )
+		}
 		debug( 'ACTION_END', action.type )
 		return result
 	} catch ( e ) {
