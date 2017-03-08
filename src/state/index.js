@@ -1,5 +1,5 @@
 import delayedDispatch from 'redux-delayed-dispatch';
-import { keys, evolve, filter, compose, equals } from 'ramda'
+import { keys, evolve, filter, compose, equals, not } from 'ramda'
 import { applyMiddleware } from 'redux'
 
 import operatorMiddleware from './middlewares/socket-io/operator'
@@ -11,7 +11,7 @@ import systemMiddleware from './middlewares/system'
 import canRemoteDispatch from './operator/can-remote-dispatch'
 import shouldBroadcastStateChange from './should-broadcast'
 import { DESERIALIZE, SERIALIZE } from './action-types'
-import { STATUS_ASSIGNED, statusView } from './chatlist/reducer'
+import { STATUS_CLOSED, statusView } from './chatlist/reducer'
 
 const getTime = () => ( new Date() ).getTime()
 
@@ -21,15 +21,13 @@ const debug = require( 'debug' )( 'happychat-debug:store' )
 const logger = () => next => action => {
 	debug( 'ACTION_START', action.type, ... keys( action ) )
 	const startTime = getTime()
-	const startMem = process.memoryUsage().heapUsed
 	try {
 		const result = next( action )
 		const endTime = getTime()
-		const endMem = process.memoryUsage().heapUsed
-		const heapUsedChange = endMem - startMem
-		const sign = heapUsedChange < 0 ? '-' : '+'
-		log( 'ACTION', action.type )
-		log( `STATS ${ action.type } ${ endTime - startTime }ms ${ endMem } (${ sign }${ heapUsedChange })` )
+		const ellapsed = endTime - startTime
+		if ( ellapsed > 100 ) {
+			log( 'slow ACTION', action.type )
+		}
 		debug( 'ACTION_END', action.type )
 		return result
 	} catch ( e ) {
@@ -39,8 +37,9 @@ const logger = () => next => action => {
 	}
 }
 
-const onlyOpen = filter( compose(
-	equals( STATUS_ASSIGNED ),
+const filterClosed = filter( compose(
+	not,
+	equals( STATUS_CLOSED ),
 	statusView,
 ) )
 
@@ -60,7 +59,7 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 				customerDisconnectTimeout: timeout,
 				customerDisconnectMessageTimeout: timeout
 			}, customerAuth, messageMiddlewares ),
-			broadcastMiddleware( io.of( '/operator' ), { canRemoteDispatch, shouldBroadcastStateChange, selector: evolve( { chatlist: onlyOpen } ) } ),
+			broadcastMiddleware( io.of( '/operator' ), { canRemoteDispatch, shouldBroadcastStateChange, selector: evolve( { chatlist: filterClosed } ) } ),
 			...systemMiddleware
 	)
 }

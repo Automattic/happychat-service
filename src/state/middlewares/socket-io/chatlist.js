@@ -523,7 +523,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 
 		if ( ! haveAvailableCapacity( locale, groups, store.getState() ) ) {
 			// TODO: Set chat as missed and let other chats through
-			debug( 'no capacity to assign chat',
+			log( 'no capacity to assign chat',
 				chat.id, locale, groups )
 			return
 		}
@@ -533,7 +533,6 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 
 	const handleNotifiSystemStatusChange = () => {
 		// get all new chats and notify their status
-		debug( 'notify new chats of status' )
 		compose(
 			map( tap( chat => {
 				customer_io

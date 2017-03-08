@@ -13,7 +13,7 @@ import { selectIdentities } from './state/operator/selectors'
 import { setOperatorCapacity } from './state/operator/actions'
 import { REMOTE_USER_KEY } from './state/middlewares/socket-io/broadcast'
 
-const debug = require( 'debug' )( 'happychat:upgrade-capacities' )
+const debug = require( 'debug' )( 'happychat-debug:upgrade-capacities' )
 
 /**
  * When the system adds locale support, the existing capacities store in the

@@ -21,7 +21,6 @@ import {
 	receiveMessage,
 } from '../../chatlist/actions'
 
-const log = require( 'debug' )( 'happychat:controller' )
 const debug = require( 'debug' )( 'happychat-debug:controller' )
 
 const DEFAULT_MAX_MESSAGES = 100
@@ -180,8 +179,8 @@ export default ( middlewares ) => store => {
 
 	const evictChat = idPath => pipe(
 		when( pipe( not, isNil ), id => {
-			log.operator.evict( id )
-			log.customer.evict( id )
+			cache.operator.evict( id )
+			cache.customer.evict( id )
 		} ),
 		path( idPath )
 	)
