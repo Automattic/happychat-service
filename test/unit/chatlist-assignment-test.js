@@ -98,7 +98,8 @@ describe( 'Chatlist Assignment', () => {
 		} },
 		chatlist: {
 			chat_cz: [STATUS_PENDING, { id: 'chat_cz'}, null, 1, {}, 'cz'],
-			chat_en: [STATUS_PENDING, { id: 'chat_en'}, null, 2, {}, 'en']
+			chat_en: [STATUS_PENDING, { id: 'chat_en'}, null, 2, {}, 'en'],
+			chat_en2: [STATUS_PENDING, { id: 'chat_en2'}, null, 3, {}, 'en']
 		},
 		groups: {
 			[ DEFAULT_GROUP_ID ]: { members: { op1: true, op2: true } },

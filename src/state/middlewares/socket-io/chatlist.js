@@ -68,6 +68,7 @@ import {
 	getOpenChatsForOperator,
 	getChatStatus,
 	getChatLocale,
+	getAllAssignableChats,
 	getNextAssignableChat,
 	getOperatorAbandonedChats,
 	haveAssignableChat,
@@ -515,20 +516,18 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 			return
 		}
 
-		const chat = getNextAssignableChat( store.getState() )
-		const locale = getChatLocale( chat.id, store.getState() )
-		const groups = getChatGroups( chat.id, store.getState() )
+		const chats = getAllAssignableChats( store.getState() )
+		for ( const chat of chats ) {
+			const locale = getChatLocale( chat.id, store.getState() )
+			const groups = getChatGroups( chat.id, store.getState() )
+			debug( 'checking capacity to assign chat', locale, groups )
 
-		debug( 'checking capacity to assign chat', locale, groups )
-
-		if ( ! haveAvailableCapacity( locale, groups, store.getState() ) ) {
-			// TODO: Set chat as missed and let other chats through
-			log( 'no capacity to assign chat',
-				chat.id, locale, groups )
-			return
+			if ( haveAvailableCapacity( locale, groups, store.getState() ) ) {
+				// TODO: Set chat as missed and let other chats through
+				return store.dispatch( assignChat( chat ) )
+			}
+			log( 'no capacity to assign chat', chat.id, locale, groups )
 		}
-
-		store.dispatch( assignChat( chat ) )
 	}
 
 	const handleNotifiSystemStatusChange = () => {

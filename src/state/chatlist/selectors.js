@@ -223,11 +223,20 @@ export const getChatGroups = ( chat_id, state ) => compose(
 	selectChat( chat_id ),
 )( state )
 
+const findPending = filter( compose(
+	anyPass( map( equals, [ STATUS_PENDING ] ) ),
+	statusView
+) )
+
 const getAssignableChats = compose(
-	filter( compose(
-		anyPass( map( equals, [ STATUS_PENDING ] ) ),
-		statusView
-	) ),
+	findPending,
+	values,
+	selectChatlist
+)
+
+export const getAllAssignableChats = compose(
+	mapToChat,
+	findPending,
 	values,
 	selectChatlist
 )
