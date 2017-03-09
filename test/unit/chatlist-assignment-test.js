@@ -1,4 +1,4 @@
-import { equal } from 'assert'
+import { equal, deepEqual } from 'assert'
 
 import chatlistMiddleware from 'state/middlewares/socket-io/chatlist'
 import mockio from '../mock-io'
@@ -87,6 +87,24 @@ describe( 'Chatlist Assignment', () => {
 		}
 	}
 
+	const blockedState = {
+		locales: { defaultLocale: 'en', supported: [ 'en', 'cz' ], memberships: {
+			en: { op1: { capacity: 3, load: 0, active: true } },
+			cz: { op2: { capacity: 1, load: 1, active: true } }
+		} },
+		operators: { identities: {
+			op1: { id: 'op1', status: STATUS_AVAILABLE, online: true },
+			op2: { id: 'op2', status: STATUS_AVAILABLE, online: true }
+		} },
+		chatlist: {
+			chat_cz: [STATUS_PENDING, { id: 'chat_cz'}, null, 1, {}, 'cz'],
+			chat_en: [STATUS_PENDING, { id: 'chat_en'}, null, 2, {}, 'en']
+		},
+		groups: {
+			[ DEFAULT_GROUP_ID ]: { members: { op1: true, op2: true } },
+		}
+	}
+
 	it( 'should assign next chat', () => dispatchAction(
 		assignNextChat(),
 		ptbrState
@@ -123,5 +141,12 @@ describe( 'Chatlist Assignment', () => {
 		ptbrState
 	).then( action => {
 		equal( action.type, SET_CHAT_MISSED )
+	} ) )
+
+	it( 'should assign chat if earlier chat is unassigned', () => dispatchAction(
+		assignNextChat(),
+		blockedState
+	).then( action => {
+		deepEqual( action, assignChat( { id: 'chat_en'} ) )
 	} ) )
 } )
