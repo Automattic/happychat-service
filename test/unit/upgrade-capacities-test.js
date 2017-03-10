@@ -1,4 +1,4 @@
-import { equal, deepEqual } from 'assert'
+import { deepEqual } from 'assert'
 import { merge } from 'ramda'
 
 import upgradeCapacities from 'upgrade-capacities'

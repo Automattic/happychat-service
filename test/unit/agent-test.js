@@ -7,7 +7,7 @@ import { agentReceiveMessage } from 'state/chatlist/actions'
 const debug = require( 'debug' )( 'happychat:test:agent' )
 
 describe( 'Agent Service', () => {
-	let server, socket, client, io
+	let socket, client, io
 	const noop = () => {}
 
 	beforeEach( () => {

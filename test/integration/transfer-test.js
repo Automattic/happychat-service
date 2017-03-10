@@ -5,8 +5,6 @@ import concat from 'lodash/concat'
 import find from 'lodash/find'
 import { ok, deepEqual } from 'assert'
 
-const debug = require( 'debug' )( 'happychat:test:transfer' )
-
 describe( 'Operator Transfer', () => {
 	const operators = [
 		{ id: 'a', displayName: 'op-a', username: 'op-a', picture: '', status: 'available', capacity: 2, load: 0 },

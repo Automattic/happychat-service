@@ -1,5 +1,5 @@
 import { createStore, combineReducers } from 'redux'
-import { deepEqual, equal, ok } from 'assert'
+import { deepEqual, equal } from 'assert'
 
 import reducer, {
 	STATUS_PENDING,
@@ -16,7 +16,6 @@ import {
 	getAllChats,
 	getOperatorAbandonedChats,
 	getChatsWithStatus,
-	havePendingChat,
 } from 'state/chatlist/selectors'
 import {
 	// actions

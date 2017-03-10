@@ -1,5 +1,4 @@
 import { ok, equal, deepEqual } from 'assert'
-import { EventEmitter } from 'events'
 import { merge } from 'ramda'
 import { createStore, compose, applyMiddleware } from 'redux'
 import mockio from '../mock-io'
