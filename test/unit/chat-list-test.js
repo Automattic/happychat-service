@@ -120,7 +120,7 @@ describe( 'ChatList component', () => {
 		} )
 	)
 
-	it( 'should timeout if no operator provided', () =>
+	it.skip( 'should timeout if no operator provided', () =>
 		connectOperator( { id: 'ripley' } )
 		.then( ( { socket } ) => new Promise( resolve => {
 			// Makes socket.join timeout
