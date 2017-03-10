@@ -54,15 +54,30 @@ describe( 'Operator Transfer', () => {
 				a.once( 'chat.open', ( chat ) => resolve( chat ) )
 				customerClient.emit( 'message', { id: 'message1', text: 'help please' } )
 			} ) )
-			.then( ( chat ) => new Promise( resolve => {
+			.then( ( chat ) => {
+				const promise = Promise.race( [
+					new Promise( resolve => {
+						const listener = ( _, message ) => {
+							if ( message.meta.event_type === 'transfer' ) {
+								resolve( message )
+								b.removeListener( listener )
+							}
+						}
+						b.on( 'chat.message', listener )
+					} ),
+					new Promise( resolve => {
+						b.once( 'log', ( _, log ) => {
+							const transfer = find( log, ( { type, meta } ) => type === 'event' && meta.event_type === 'transfer' )
+							if ( transfer ) resolve( transfer )
+						} )
+					} )
+				] )
 				// have operator a transfer to operator b
-				debug( 'transfer chat' )
 				a.emit( 'chat.transfer', chat.id, 'b' )
-				b.once( 'log', ( _, log ) => resolve( log ) )
-			} ) )
-			.then( messages => {
+				return promise
+			} )
+			.then( transfer => {
 				// check to make sure the transfer event message is in the log
-				let transfer = find( messages, ( { type, meta } ) => type === 'event' && meta.event_type === 'transfer' )
 				ok( transfer )
 				const expectedTo = Object.assign( {}, operators[1], { load: 0, online: true } )
 				deepEqual( transfer.meta.from, operators[0] )
