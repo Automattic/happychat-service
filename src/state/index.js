@@ -2,9 +2,7 @@ import delayedDispatch from 'redux-delayed-dispatch';
 import { keys } from 'ramda'
 import { applyMiddleware } from 'redux'
 
-import operatorMiddleware from './middlewares/socket-io/operator'
-import chatlistMiddleware from './middlewares/socket-io/chatlist'
-import agentMiddleware from './middlewares/socket-io/agents'
+import socketioMiddleware from './middlewares/socket-io'
 import controllerMiddleware from './middlewares/system/controller'
 import systemMiddleware from './middlewares/system'
 import { DESERIALIZE, SERIALIZE } from './action-types'
@@ -40,16 +38,9 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 	return applyMiddleware(
 		logger,
 		... middlewares,
+		controllerMiddleware( messageMiddlewares ),
+		... socketioMiddleware( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares, timeout } ),
 		delayedDispatch,
-		controllerMiddleware( messageMiddlewares, { customers: io.of( '/customer' ), operators: io.of( '/operator' ) } ),
-		operatorMiddleware( io.of( '/operator' ), operatorAuth, messageMiddlewares ),
-		agentMiddleware( io.of( '/agent' ), agentAuth ),
-		chatlistMiddleware( {
-			io,
-			timeout,
-			customerDisconnectTimeout: timeout,
-			customerDisconnectMessageTimeout: timeout
-		}, customerAuth, messageMiddlewares ),
 		...systemMiddleware,
 	)
 }
