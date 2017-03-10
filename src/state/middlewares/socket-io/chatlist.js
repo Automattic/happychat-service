@@ -69,7 +69,6 @@ import {
 	getChatStatus,
 	getChatLocale,
 	getAllAssignableChats,
-	getNextAssignableChat,
 	getOperatorAbandonedChats,
 	haveAssignableChat,
 	isChatStatusNew,
