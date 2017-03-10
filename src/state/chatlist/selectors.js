@@ -28,6 +28,7 @@ import {
 	find,
 	identity,
 	toLower,
+	keys
 } from 'ramda'
 import {
 	statusView,
@@ -54,6 +55,9 @@ import {
 import {
 	DEFAULT_GROUP_ID
 } from '../groups/reducer'
+import {
+	getOperatorIdentity
+} from '../operator/selectors'
 
 export const selectChatlist = view( lensProp( 'chatlist' ) )
 const selectChat = id => compose(
@@ -107,7 +111,12 @@ export const getOpenChatsForOperator = ( operator_id, state ) => compose(
 	selectChatlist
 )( state )
 
-export const getChatMembers = compose( mapToMembers, values, selectChatlist )
+export const getChatMemberIdentities = ( chat_id, state ) => compose(
+	map( id => getOperatorIdentity( id, state ) ),
+	keys,
+	membersView,
+	selectChat( chat_id )
+)( state )
 
 const getLocale = ( locale, state ) => {
 	const systemLocale = getDefaultLocale( state )
