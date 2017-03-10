@@ -35,19 +35,21 @@ const logger = () => next => action => {
 export const serializeAction = () => ( { type: SERIALIZE } )
 export const deserializeAction = () => ( { type: DESERIALIZE } )
 
-export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], timeout = undefined } ) => {
+export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], timeout = undefined }, middlewares = [] ) => {
+	debug( 'with 3rd party middleware %d', middlewares.length )
 	return applyMiddleware(
-			logger,
-			delayedDispatch,
-			controllerMiddleware( messageMiddlewares, { customers: io.of( '/customer' ), operators: io.of( '/operator' ) } ),
-			operatorMiddleware( io.of( '/operator' ), operatorAuth, messageMiddlewares ),
-			agentMiddleware( io.of( '/agent' ), agentAuth ),
-			chatlistMiddleware( {
-				io,
-				timeout,
-				customerDisconnectTimeout: timeout,
-				customerDisconnectMessageTimeout: timeout
-			}, customerAuth, messageMiddlewares ),
-			...systemMiddleware
+		logger,
+		... middlewares,
+		delayedDispatch,
+		controllerMiddleware( messageMiddlewares, { customers: io.of( '/customer' ), operators: io.of( '/operator' ) } ),
+		operatorMiddleware( io.of( '/operator' ), operatorAuth, messageMiddlewares ),
+		agentMiddleware( io.of( '/agent' ), agentAuth ),
+		chatlistMiddleware( {
+			io,
+			timeout,
+			customerDisconnectTimeout: timeout,
+			customerDisconnectMessageTimeout: timeout
+		}, customerAuth, messageMiddlewares ),
+		...systemMiddleware,
 	)
 }

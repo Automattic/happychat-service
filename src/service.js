@@ -55,10 +55,10 @@ const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_H
 	)
 }
 
-export const service = ( io, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, initialState, enhancers = [] ) => {
+export const service = ( io, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, initialState, { enhancers = [], middlewares = []} ) => {
 	log( 'configuring socket.io server' )
 
-	const middlewares = middlewareInterface()
+	const messageMiddlewares = middlewareInterface()
 
 	const auth = ( authenticator, validator = user => user ) => socket => new Promise( ( resolve, reject ) => {
 		authenticator( socket, ( e, result ) => {
@@ -74,13 +74,13 @@ export const service = ( io, { customerAuthenticator, agentAuthenticator, operat
 		socket.emit( 'unauthorized' )
 	} )
 
-	const store = createStore( reducer, initialState, compose( enhancer( {
+	const store = createStore( reducer, initialState, compose( ... enhancers, enhancer( {
 		io,
 		operatorAuth: auth( operatorAuthenticator, validateKeys( REQUIRED_OPERATOR_KEYS ) ),
 		customerAuth: auth( customerAuthenticator, validateKeys( REQUIRED_CUSTOMER_KEYS ) ),
 		agentAuth: auth( agentAuthenticator ),
-		messageMiddlewares: middlewares.middlewares()
-	} ), ... enhancers ) )
+		messageMiddlewares: messageMiddlewares.middlewares()
+	}, middlewares ) ) )
 
 	const removeStaleChats = buildRemoveStaleChats( store )
 	setInterval( removeStaleChats, 1000 * 60 ) // every minute
@@ -90,7 +90,7 @@ export const service = ( io, { customerAuthenticator, agentAuthenticator, operat
 
 	return {
 		io,
-		controller: middlewares.external,
+		controller: messageMiddlewares.external,
 		store,
 		configureLocales: ( defaultLocale, supportedLocales ) => {
 			store.dispatch( configureLocales( defaultLocale, supportedLocales ) )
