@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "lodash": "^4.11.1",
-    "ramda": "^0.22.1",
+    "ramda": "^0.23.0",
     "redux": "^3.5.2",
     "redux-delayed-dispatch": "^1.0.0-2",
     "simperium-jsondiff": "^1.0.1-1",
