@@ -5,7 +5,7 @@ import {
 	OPERATOR_RECEIVE_TYPING,
 } from '../../action-types'
 import { operatorInboundMessage, closeChat } from '../../chatlist/actions'
-import { getChat } from '../../chatlist/selectors'
+import { getChat, getChatMemberIdentities } from '../../chatlist/selectors'
 import { DEFAULT_GROUP_ID, isOperatorMemberOfAnyGroup } from '../../groups/selectors'
 import { addGroupMember } from '../../groups/actions'
 import {
@@ -41,7 +41,6 @@ const filterClosed = filter( compose(
 	statusView,
 ) )
 
-export const customerRoom = id => `customer/${ id }`;
 export const operatorRoom = id => `operator/${ id }`;
 
 const join = ( { socket, store, user, io }, middlewares ) => {
@@ -154,14 +153,34 @@ export default ( io, auth, middlewares ) => ( store ) => {
 		)
 	} )
 
+	const handleOperatorReceiveMessage = action => {
+		// select all operator indentities and brodcast to their rooms
+		const members = getChatMemberIdentities( action.id, store.getState() )
+		const rooms = map( member => operatorRoom( member.id ), members )
+		debug( 'members', rooms )
+		for ( const room of rooms ) {
+			io.in( room )
+		}
+		io.emit( 'chat.message', { id: action.id }, action.message )
+	}
+
+	const handleOperatorReceiveTyping = action => {
+		const chat = { id: action.id }
+		const members = getChatMemberIdentities( action.id, store.getState() )
+		const rooms = map( member => operatorRoom( member.id ), members )
+		for ( const room of rooms ) {
+			io.in( room )
+		}
+		io.emit( 'chat.typing', chat, action.user, action.text )
+	}
+
 	return ( next ) => ( action ) => {
 		switch ( action.type ) {
 			case OPERATOR_RECEIVE_MESSAGE:
-				io.in( customerRoom( action.id ) ).emit( 'chat.message', { id: action.id }, action.message )
+				handleOperatorReceiveMessage( action )
 				break;
 			case OPERATOR_RECEIVE_TYPING:
-				const chat = { id: action.id }
-				io.in( customerRoom( action.id ) ).emit( 'chat.typing', chat, action.user, action.text )
+				handleOperatorReceiveTyping( action )
 				break;
 		}
 		return onDispatch( next )( action );
