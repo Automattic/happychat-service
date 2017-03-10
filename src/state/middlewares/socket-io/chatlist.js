@@ -173,7 +173,7 @@ const init = ( { user, socket, io, store, chat }, middlewares ) => () => {
 	} )
 
 	socket.emit( 'init', user )
-	store.dispatch( customerJoin( socket.id, chat, user ) )
+	store.dispatch( customerJoin( chat, user ) )
 }
 
 const join = ( { io, user, socket, store }, middlewares ) => {

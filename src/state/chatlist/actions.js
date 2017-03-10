@@ -133,8 +133,8 @@ export const customerJoin = ( socket_id, chat, user ) => ( {
 	type: CUSTOMER_JOIN, socket_id, chat, user
 } )
 
-export const operatorJoinChat = ( socket_id, chat, user ) => ( {
-	type: OPERATOR_JOIN, socket_id, chat, user
+export const operatorJoinChat = ( chat, user ) => ( {
+	type: OPERATOR_JOIN, chat, user
 } )
 
 export const customerSocketDisconnect = ( socket_id, chat, user ) => ( {

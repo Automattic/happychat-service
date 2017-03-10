@@ -20,6 +20,8 @@ import {
 	operatorReceiveMessage,
 	receiveMessage,
 } from '../../chatlist/actions'
+import { operatorRoom } from '../socket-io/operator'
+import { customerRoom } from '../socket-io/chatlist'
 
 const debug = require( 'debug' )( 'happychat-debug:controller' )
 
@@ -70,14 +72,16 @@ export default ( middlewares, { customers, operators } ) => store => {
 
 	// toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 	const handleCustomerJoin = action => {
-		const { socket_id, chat } = action
-		customers.in( socket_id ).emit( 'log', cache.customer.findLog( chat.id ) )
+		const { chat } = action
+		customers.in( customerRoom( chat.id ) ).emit( 'log', cache.customer.findLog( chat.id ) )
 	}
 
 	const handleOperatorJoin = action => {
-		const { chat, socket_id } = action
-		debug( 'sending logs to operator', socket_id )
-		operators.in( socket_id ).emit( 'log', chat, cache.operator.findLog( chat.id ) )
+		const { chat, user } = action
+		debug( 'sending logs to operator room', user.id )
+		operators
+		.in( operatorRoom( user.id ) )
+		.emit( 'log', chat, cache.operator.findLog( chat.id ) )
 	}
 
 	const handleCustomerTyping = action => {
