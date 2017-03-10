@@ -3,7 +3,7 @@ import { merge } from 'ramda'
 
 import groups from 'state/groups/reducer'
 import {
-	getChatMembers,
+	getChatMemberIdentities,
 	getOpenChatMembers,
 	getChatGroups
 } from 'state/chatlist/selectors'
@@ -15,6 +15,7 @@ describe( 'Chat List selectors', () => {
 	const state = {
 		locales: { defaultLocale: 'en' },
 		groups: groups( undefined, {} ),
+		operators: { identities: { 5: { id: '5', username: 'five' } } },
 		chatlist: {
 			1: [
 				'assigned',
@@ -39,8 +40,8 @@ describe( 'Chat List selectors', () => {
 		deepEqual( getOpenChatMembers( state ).en, [ {5: true} ] )
 	} )
 
-	it( 'should get all members of chats', () => {
-		deepEqual( getChatMembers( state ), [ {5: true}, {5: true} ] )
+	it( 'should get members of a chat', () => {
+		deepEqual( getChatMemberIdentities( 1, state ), [ {id: '5', username: 'five' } ] )
 	} )
 
 	it( 'should get default group when chat is not assigned to one', () => {
