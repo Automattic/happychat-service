@@ -3,13 +3,18 @@ import { v4 as uuid } from 'uuid'
 import { debounce } from 'lodash'
 import { REMOTE_ACTION_TYPE } from '../../action-types'
 import { isEmpty } from 'ramda'
-import { selectSocketIdentity } from '../../operator/selectors'
 import { assoc, always, identity } from 'ramda'
 
 const debug = require( 'debug' )( 'happychat-debug:socket-io:broadcast' )
 const log = require( 'debug' )( 'happychat:socket-io:broadcast' )
 
 export const REMOTE_USER_KEY = 'REMOTE_USER'
+const BROADCAST_REQUEST_STATE = 'BROADCAST_REQUEST_STATE'
+
+const requestState = ( socketId ) => ( {
+	type: BROADCAST_REQUEST_STATE,
+	socketId
+} )
 
 const join = ( io, socket ) => new Promise( ( resolve, reject ) => {
 	socket.join( 'broadcast', e => {
@@ -21,6 +26,7 @@ const join = ( io, socket ) => new Promise( ( resolve, reject ) => {
 } )
 
 const broadcastVersion = ( io, version, nextVersion, patch ) => {
+	debug( 'broadcasting version %s', version )
 	io.in( 'broadcast' ).emit( 'broadcast.update', version, nextVersion, patch )
 }
 
@@ -58,31 +64,39 @@ export default ( io, { canRemoteDispatch = always( false ), selector = identity,
 		}
 	}
 
-	const dispatchRemote = remote => new Promise( ( resolve, reject ) => {
-		try {
-			if ( remote.action.version && remote.action.version !== version ) {
-				// if action is dispatched with a version number, require it to
-				// be up to date with the server version
-				return reject( new Error( 'out of date' ) )
-			}
-			debug( 'dispatching remote action', remote.action )
-			dispatch( remote.action )
-			broadcastChange( getState() )
-			resolve( version )
-		} catch ( e ) {
-			reject( e.message )
-		}
-	} )
+	// const dispatchRemote = remote => new Promise( ( resolve, reject ) => {
+	// 	try {
+	// 		if ( remote.action.version && remote.action.version !== version ) {
+	// 			// if action is dispatched with a version number, require it to
+	// 			// be up to date with the server version
+	// 			return reject( new Error( 'out of date' ) )
+	// 		}
+	// 		debug( 'dispatching remote action', remote.action )
+	// 		dispatch( remote.action )
+	// 		// broadcastChange( getState() )
+	// 		resolve( version )
+	// 	} catch ( e ) {
+	// 		reject( e.message )
+	// 	}
+	// } )
 
-	const listen = socket => {
+	const sendState = socket => {
+		dispatch( requestState( socket.id ) )
+	}
+
+	const listen = ( socket, user ) => {
 		// socket needs to catch up to current state
-		const stateListener = callback => callback( version, currentState )
+		// todo this now needs to be dispatched so the prime reducer can send
+		// the actual state in the event that this is a worker
+		const stateListener = () => {
+			debug( 'socket is requesting current state', socket.id )
+			sendState( socket )
+		}
 		const dispatchListener = ( remoteAction, callback ) => {
-			const user = selectSocketIdentity( getState(), socket )
 			const action = {
 				type: REMOTE_ACTION_TYPE,
 				action: assoc( REMOTE_USER_KEY, user, remoteAction ),
-				socket,
+				socketId: socket.id,
 				user
 			}
 			if ( ! canRemoteDispatch( action, getState ) ) {
@@ -90,13 +104,8 @@ export default ( io, { canRemoteDispatch = always( false ), selector = identity,
 				callback( 'Remote dispatch not allowed' )
 				return
 			}
-			dispatchRemote( action ).then(
-				result => callback( null, result ),
-				e => {
-					debug( 'remote dispatch failed', e )
-					callback( e.message )
-				}
-			)
+			dispatch( action )
+			callback()
 		}
 		socket.on( 'broadcast.state', stateListener )
 		socket.on( 'broadcast.dispatch', dispatchListener )
@@ -106,12 +115,10 @@ export default ( io, { canRemoteDispatch = always( false ), selector = identity,
 		} )
 	}
 
-	const sendState = socket => socket.emit( 'broadcast.state', version, currentState )
-
 	const handleOperatorReady = action => {
 		join( io, action.socket )
 			.catch( e => debug( 'Failed to add user socket to broadcast', action.user.id, e.message ) )
-		listen( action.socket )
+		listen( action.socket, action.user )
 		sendState( action.socket )
 	}
 
@@ -120,6 +127,18 @@ export default ( io, { canRemoteDispatch = always( false ), selector = identity,
 	return {
 		initializeUserSocket: ( user, socket ) => handleOperatorReady( { user, socket } ),
 		onDispatch: next => action => {
+			switch ( action.type ) {
+				case REMOTE_ACTION_TYPE:
+					debug( 'apply remote action to %s', action.socketId )
+					// authentication happenned at the node, just dispatch the action
+					const remote = action.action
+					dispatch( remote )
+					return action;
+				case BROADCAST_REQUEST_STATE:
+					debug( 'broadcast state to socket %s', action.socketId )
+					io.to( action.socketId ).emit( 'broadcast.state', version, currentState )
+					return null;
+			}
 			if ( ! shouldBroadcastStateChange( action ) ) {
 				return next( action )
 			}
