@@ -1,9 +1,10 @@
 import { EventEmitter } from 'events'
 
+import { isEmpty, values, compose, flatten, map, prop } from 'ramda'
+
 import get from 'lodash/get'
 import set from 'lodash/set'
 import assign from 'lodash/assign'
-import keys from 'lodash/keys'
 import forEach from 'lodash/forEach'
 import reject from 'lodash/reject'
 
@@ -12,6 +13,8 @@ const noop = () => {}
 
 var COUNTER = 0
 
+const PRIVATE_EVENTS = [ 'connection', 'connect' ]
+
 class Server extends EventEmitter {
 	constructor( ns = '/' ) {
 		super()
@@ -19,34 +22,56 @@ class Server extends EventEmitter {
 		this.connected = {}
 		this.namespace = ns
 		this.to = this.in.bind( this )
-	}
-
-	// TODO: this api does not match how Socket.IO works
-	// Socket.IO sets a room flag that is cleared an .emit or .clients
-	in( room ) {
-		const sockets = get( this.rooms, room, [] )
-		debug( 'requesting room', room, sockets.length )
-		return {
-			clients: ( cb ) => {
-				// return socket ids of clients
-				cb( null, sockets.map( ( socket ) => socket.id ) )
-				return this
-			},
-			emit: ( ... args ) => {
-				sockets.forEach( ( socket ) => socket.emit( ... args ) )
-				return this
+		this.in_rooms = []
+		this.emit = ( ... args ) => {
+			if ( ~PRIVATE_EVENTS.indexOf( args[0] ) ) {
+				EventEmitter.prototype.emit.apply( this, args )
+			} else {
+				this.doEmit( ... args )
 			}
+			return this
 		}
 	}
 
+	socketsForRoomScope( ) {
+		let sockets = []
+		if ( isEmpty( this.in_rooms ) ) {
+			sockets = values( this.connected )
+		} else {
+			sockets = compose(
+				flatten,
+				map( room => get( this.rooms, room, [] ) )
+			)( this.in_rooms )
+		}
+		return sockets
+	}
+
+	doEmit( ... args ) {
+		const sockets = this.socketsForRoomScope()
+		for ( const socket of sockets ) {
+			socket.emit( ... args )
+		}
+		this.in_rooms = []
+	}
+
+	in( room ) {
+		if ( !~this.in_rooms.indexOf( room ) ) this.in_rooms.push( room )
+		return this
+	}
+
 	clients( cb ) {
-		cb( null, keys( get( this, 'connected', {} ) ) )
+		// TODO: this should filter to rooms
+		let sockets = this.socketsForRoomScope()
+		process.nextTick( () => cb( null, map( prop( 'id' ), sockets ) ) )
 	}
 
 	connect( socket ) {
 		debug( 'connecting', this.namespace, socket.id )
 		this.connected[socket.id] = socket
-		process.nextTick( () => this.emit( 'connection', socket ) )
+		socket.join( socket.id, () => {
+			this.emit( 'connection', socket )
+			socket.emit( 'connect' )
+		} )
 	}
 
 	newClient( id ) {
@@ -70,7 +95,6 @@ class Server extends EventEmitter {
 			const newSockets = {}
 			newSockets[room] = get( this.rooms, room, [] ).concat( socket )
 			this.rooms = assign( {}, this.rooms, newSockets )
-			debug( 'joined room', room )
 			complete ? process.nextTick( complete ) : null
 			return socket
 		}
