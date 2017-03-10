@@ -129,8 +129,8 @@ export const customerReceiveMessage = ( id, message ) => ( {
 	type: CUSTOMER_RECEIVE_MESSAGE, id, message
 } )
 
-export const customerJoin = ( socket_id, chat, user ) => ( {
-	type: CUSTOMER_JOIN, socket_id, chat, user
+export const customerJoin = ( chat, user ) => ( {
+	type: CUSTOMER_JOIN, chat, user
 } )
 
 export const operatorJoinChat = ( chat, user ) => ( {

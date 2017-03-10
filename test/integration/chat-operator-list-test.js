@@ -73,11 +73,12 @@ describe( 'Operators in chat', () => {
 
 	const waitForChatOperatorList = ( client ) => new Promise( ( resolve ) => {
 		setTimeout( () => {
-			client.emit( 'broadcast.state', ( version, state ) => {
+			client.once( 'broadcast.state', ( version, state ) => {
 				debug( 'received state', state.locales.memberships )
 				const [ , , , , members ] = state.chatlist.session
 				resolve( keys( members ) )
 			} )
+			client.emit( 'broadcast.state' )
 		}, 100 )
 	} )
 

@@ -51,18 +51,11 @@ describe( 'Operator', () => {
 
 	const requestState = client => new Promise( resolve => {
 		debug( 'requesting state' )
-		client.emit( 'broadcast.state', ( version, state ) => {
+		client.once( 'broadcast.state', ( version, state ) => {
 			debug( 'received state' )
 			resolve( state )
 		} )
-	} )
-
-	const waitForUpdate = client => new Promise( ( resolve ) => {
-		debug( 'waiting for an update' )
-		client.once( 'broadcast.update', ( version, nextVersion, patch ) => {
-			debug( 'received state' )
-			resolve( patch )
-		} )
+		client.emit( 'broadcast.state' )
 	} )
 
 	beforeEach( () => {
@@ -101,7 +94,7 @@ describe( 'Operator', () => {
 			equal( getChatStatus( 'session-id', service.getState() ), STATUS_PENDING )
 			closeChat( operator, mockUser.session_id )
 			return requestState( operator )
-				.then( state => {
+				.then( () => {
 					equal( service.getState().chatlist['session-id'][0], STATUS_CLOSED )
 				} )
 		} )

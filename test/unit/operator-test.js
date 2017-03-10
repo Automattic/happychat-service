@@ -73,11 +73,12 @@ describe( 'Operators', () => {
 		const connection = server.newClient( socketid )
 		connection.client.once( 'broadcast.update', ( lastVersion, nextVersion ) => {
 			process.nextTick( () => {
-				connection.client.emit( 'broadcast.state', ( version, state ) => {
+				connection.client.once( 'broadcast.state', ( version, state ) => {
 					equal( version, nextVersion )
 					deepEqual( state, store.getState() )
 					done()
 				} )
+				connection.client.emit( 'broadcast.state' )
 			} )
 		} )
 		return connectOperator( connection )
