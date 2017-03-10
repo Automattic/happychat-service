@@ -3,6 +3,7 @@ import timestamp from '../../timestamp'
 import {
 	OPERATOR_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_TYPING,
+	SEND_OPERATOR_CHAT_LOG
 } from '../../action-types'
 import { operatorInboundMessage, closeChat } from '../../chatlist/actions'
 import { getChat, getChatMemberIdentities } from '../../chatlist/selectors'
@@ -174,6 +175,12 @@ export default ( io, auth, middlewares ) => ( store ) => {
 		io.emit( 'chat.typing', chat, action.user, action.text )
 	}
 
+	const handleSendOperatorChatLog = action => {
+		io
+		.in( operatorRoom( action.operatorId ) )
+		.emit( 'log', { id: action.chatId }, action.log )
+	}
+
 	return ( next ) => ( action ) => {
 		switch ( action.type ) {
 			case OPERATOR_RECEIVE_MESSAGE:
@@ -181,6 +188,9 @@ export default ( io, auth, middlewares ) => ( store ) => {
 				break;
 			case OPERATOR_RECEIVE_TYPING:
 				handleOperatorReceiveTyping( action )
+				break;
+			case SEND_OPERATOR_CHAT_LOG:
+				handleSendOperatorChatLog( action )
 				break;
 		}
 		return onDispatch( next )( action );

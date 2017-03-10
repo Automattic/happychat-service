@@ -16,7 +16,8 @@ import {
 	SET_OPERATOR_STATUS,
 	SET_USER_OFFLINE,
 	JOIN_LOCALE,
-	LEAVE_LOCALE
+	LEAVE_LOCALE,
+	SEND_OPERATOR_CHAT_LOG
 } from '../action-types'
 import { allowRemote } from './can-remote-dispatch'
 
@@ -89,3 +90,7 @@ export const joinLocale = allowRemote( JOIN_LOCALE, ( locale ) => ( {
 export const leaveLocale = allowRemote( LEAVE_LOCALE, ( locale ) => ( {
 	locale
 } ) )
+
+export const sendOperatorChatLog = ( chatId, operatorId, log ) => ( {
+	type: SEND_OPERATOR_CHAT_LOG, chatId, operatorId, log
+} )

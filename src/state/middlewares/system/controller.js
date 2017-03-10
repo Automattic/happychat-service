@@ -12,16 +12,15 @@ import {
 	REMOVE_CHAT,
 	CLOSE_CHAT
 } from '../../action-types'
-import { operatorReceiveTyping } from '../../operator/actions'
+import { operatorReceiveTyping, sendOperatorChatLog } from '../../operator/actions'
 import {
 	agentReceiveMessage,
 	customerReceiveMessage,
 	customerReceiveTyping,
 	operatorReceiveMessage,
 	receiveMessage,
+	sendCustomerChatLog
 } from '../../chatlist/actions'
-import { operatorRoom } from '../socket-io/operator'
-import { customerRoom } from '../socket-io/chatlist'
 
 const debug = require( 'debug' )( 'happychat-debug:controller' )
 
@@ -65,7 +64,7 @@ const formatAgentMessage = ( author_type, author_id, session_id, { id, timestamp
 	source
 } )
 
-export default ( middlewares, { customers, operators } ) => store => {
+export default ( middlewares ) => store => {
 	const cache = { operator: new ChatLog( { maxMessages: 20 } ), customer: new ChatLog( { maxMessages: 20 } ) }
 
 	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
@@ -73,15 +72,17 @@ export default ( middlewares, { customers, operators } ) => store => {
 	// toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 	const handleCustomerJoin = action => {
 		const { chat } = action
-		customers.in( customerRoom( chat.id ) ).emit( 'log', cache.customer.findLog( chat.id ) )
+		process.nextTick( () => {
+			store.dispatch( sendCustomerChatLog( chat.id, cache.customer.findLog( chat.id ) ) )
+		} )
 	}
 
 	const handleOperatorJoin = action => {
 		const { chat, user } = action
 		debug( 'sending logs to operator room', user.id )
-		operators
-		.in( operatorRoom( user.id ) )
-		.emit( 'log', chat, cache.operator.findLog( chat.id ) )
+		process.nextTick( () => {
+			store.dispatch( sendOperatorChatLog( chat.id, user.id, cache.operator.findLog( chat.id ) ) )
+		} )
 	}
 
 	const handleCustomerTyping = action => {

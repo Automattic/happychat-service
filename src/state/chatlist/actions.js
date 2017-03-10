@@ -32,7 +32,8 @@ import {
 	RECEIVE_CHAT_MESSAGE,
 	CUSTOMER_CHAT_TRANSCRIPT_REQUEST,
 	REMOVE_CHAT,
-	INSERT_NEW_CHAT
+	INSERT_NEW_CHAT,
+	SEND_CUSTOMER_CHAT_LOG
 } from '../action-types'
 
 export const reassignChats = ( operator, socket_id ) => ( {
@@ -167,4 +168,8 @@ export const customerChatTranscriptRequest = ( chat, timestamp ) => ( {
 
 export const removeChat = id => ( {
 	type: REMOVE_CHAT, id
+} )
+
+export const sendCustomerChatLog = ( id, log ) => ( {
+	type: SEND_CUSTOMER_CHAT_LOG, id, log
 } )
