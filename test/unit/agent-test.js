@@ -17,15 +17,17 @@ describe( 'Agent Service', () => {
 	describe( 'when authenticated', () => {
 		let lastDispatch, state, middleware
 		beforeEach( ( next ) => {
-			server = io.of( '/agent' )
-			middleware = agentMiddleware( server, () => Promise.resolve( 'agent' ) )( {
+			middleware = agentMiddleware( io, () => Promise.resolve( 'agent' ) )( {
 				dispatch: ( action ) => {
 					lastDispatch = action
 				},
 				getState: () => state
 			} )
-			client.on( 'init', () => next() )
-			server.emit( 'connection', socket )
+
+			client.once( 'connect', () => {
+				client.once( 'init', () => next() )
+			} )
+			client.connect()
 		} )
 
 		it( 'should emit message from customer', ( done ) => {
@@ -38,7 +40,7 @@ describe( 'Agent Service', () => {
 				author_type: 'customer',
 				type: 'message-type'
 			}
-			server.on( 'message', ( { id, timestamp, text, session_id, author_id, author_type, type } ) => {
+			client.on( 'message', ( { id, timestamp, text, session_id, author_id, author_type, type } ) => {
 				equal( id, 'fake-message-id' )
 				ok( timestamp )
 				equal( text, 'hello' )
