@@ -147,7 +147,7 @@ describe( 'ChatList reducer', () => {
 	) )
 
 	it( 'should add operator as member when joined', dispatchAction(
-		operatorJoinChat( new Object, { id: 'chat_id'}, { id: 'operator' } ),
+		operatorJoinChat( { id: 'chat_id'}, { id: 'operator' } ),
 		state => {
 			deepEqual( state.chatlist.chat_id[4], { operator: true } )
 		},

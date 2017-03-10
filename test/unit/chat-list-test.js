@@ -145,7 +145,7 @@ describe( 'ChatList component', () => {
 			done()
 		} )
 
-		store.dispatch( customerJoin( socket, { id: 'session-id' }, { id: 'user-id' } ) )
+		store.dispatch( customerJoin( { id: 'session-id' }, { id: 'user-id' } ) )
 	} )
 
 	describe( 'with active chat', () => {
@@ -365,7 +365,6 @@ describe( 'ChatList component', () => {
 				// immediately
 				setTimeout( () => {
 					store.dispatch( customerJoin(
-						new EventEmitter(),
 						chat,
 						{ id: user.id, socket_id: 'socket-id', session_id: 'session-id' }
 					) )

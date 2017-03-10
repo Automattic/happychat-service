@@ -159,9 +159,8 @@ describe( 'Customer Service', () => {
 		} )
 
 		watchForType( CUSTOMER_JOIN, action => {
-			const { user, socket_id } = action
+			const { user } = action
 			equal( user.id, mockUser.id )
-			equal( socket_id, 'socket-id' )
 			debug( 'disconnecting' )
 			server.disconnect( { client, socket } )
 		} )

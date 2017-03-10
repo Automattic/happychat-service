@@ -1,5 +1,4 @@
 import { equal, deepEqual } from 'assert'
-import { EventEmitter } from 'events'
 import { createStore, compose, applyMiddleware } from 'redux'
 import enhancer from 'state'
 import { reducer } from 'service'
@@ -52,14 +51,13 @@ describe( 'Controller', () => {
 	describe( 'with user', () => {
 		it( 'notifies agent when user joins', ( done ) => {
 			watchForType( CUSTOMER_JOIN, action => {
-				const { chat: { id, displayName }, user: { id: user_id, socketId } } = action
+				const { chat: { id, displayName }, user: { id: user_id } } = action
 				equal( id, 'user-id' )
-				equal( socketId, 'user-id' )
 				equal( user_id, 'user-id' )
 				equal( displayName, 'Furiosa' )
 				done()
 			} )
-			store.dispatch( customerJoin( new EventEmitter(), mockUser, socketIdentifier ) )
+			store.dispatch( customerJoin( mockUser, socketIdentifier ) )
 		} )
 
 		it( 'notifies agent when user disconnects', ( done ) => {
