@@ -64,22 +64,6 @@ export default ( io, { canRemoteDispatch = always( false ), selector = identity,
 		}
 	}
 
-	// const dispatchRemote = remote => new Promise( ( resolve, reject ) => {
-	// 	try {
-	// 		if ( remote.action.version && remote.action.version !== version ) {
-	// 			// if action is dispatched with a version number, require it to
-	// 			// be up to date with the server version
-	// 			return reject( new Error( 'out of date' ) )
-	// 		}
-	// 		debug( 'dispatching remote action', remote.action )
-	// 		dispatch( remote.action )
-	// 		// broadcastChange( getState() )
-	// 		resolve( version )
-	// 	} catch ( e ) {
-	// 		reject( e.message )
-	// 	}
-	// } )
-
 	const sendState = socket => {
 		dispatch( requestState( socket.id ) )
 	}
