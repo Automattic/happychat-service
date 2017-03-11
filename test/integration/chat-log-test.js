@@ -100,7 +100,7 @@ describe( 'Chat logs', () => {
 		.then( acceptAllAssignments )
 		.then( listenForLog )
 		.then( ( [ , messages ] ) => {
-			deepEqual( map( messages, ( { text } ) => text ), mockMessages )
+			deepEqual( map( messages.slice( 0, 3 ), ( { text } ) => text ), mockMessages )
 		} )
 	} )
 } )
