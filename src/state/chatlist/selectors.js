@@ -43,7 +43,8 @@ import {
 	STATUS_NEW,
 	STATUS_PENDING,
 	STATUS_ASSIGNING,
-	STATUS_CLOSED
+	STATUS_CLOSED,
+	STATUS_ASSIGNED
 } from './reducer'
 import {
 	getDefaultLocale,
@@ -193,6 +194,10 @@ export const isChatStatusNew = ( chat_id, state ) => equals(
 
 export const isChatStatusClosed = ( chat_id, state ) => equals(
 	STATUS_CLOSED, getChatStatus( chat_id, state )
+)
+
+export const isChatStatusAssigned = ( chat_id, state ) => equals(
+	STATUS_ASSIGNED, getChatStatus( chat_id, state )
 )
 
 const haveChatWithStatus = ( status, state ) => ! isEmpty(
