@@ -7,7 +7,7 @@ A collection of middlewares that work with redux to support socket-io clients.
 Handles Socket-IO client connections to the `/operator` namespace and provides
 the interface to allow operator to send and receive chat messages.
 
-## Broadcast
+### Broadcast
 
 Broadcasts reducer state to operator connections and accepts whitelisted actions
 to be dispatched to from the socket-io clients. This is the main interface that

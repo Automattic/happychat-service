@@ -8,9 +8,7 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 		agentMiddleware( io.of( '/agent' ), agentAuth ),
 		chatlistMiddleware( {
 			io,
-			timeout,
-			customerDisconnectTimeout: timeout,
-			customerDisconnectMessageTimeout: timeout
+			timeout
 		}, customerAuth, messageMiddlewares )
 	]
 }

@@ -6,9 +6,7 @@ import {
 	SEND_OPERATOR_CHAT_LOG
 } from '../../action-types'
 import { operatorInboundMessage, closeChat } from '../../chatlist/actions'
-import { getChat, getChatMemberIdentities } from '../../chatlist/selectors'
-import { DEFAULT_GROUP_ID, isOperatorMemberOfAnyGroup } from '../../groups/selectors'
-import { addGroupMember } from '../../groups/actions'
+import { getChatMemberIdentities } from '../../chatlist/selectors'
 import {
 	operatorChatLeave,
 	removeUserSocket,
@@ -20,9 +18,6 @@ import {
 	operatorChatTransfer,
 	operatorChatTranscriptRequest
 } from '../../operator/actions'
-import {
-	selectUser,
-} from '../../operator/selectors';
 import { run } from '../../../middleware-interface'
 import canRemoteDispatch from '../../operator/can-remote-dispatch'
 import shouldBroadcastStateChange from '../../should-broadcast'
@@ -44,15 +39,13 @@ const filterClosed = filter( compose(
 
 export const operatorRoom = id => `operator/${ id }`;
 
-const join = ( { socket, store, user, io }, middlewares ) => {
+const join = ( { socket, dispatch, user, io }, middlewares ) => {
 	const user_room = operatorRoom( user.id )
 
 	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
 
-	const selectIdentity = userId => selectUser( store.getState(), userId );
-
 	socket.on( 'disconnect', () => {
-		store.dispatch( removeUserSocket( socket.id, user ) );
+		dispatch( removeUserSocket( socket.id, user ) );
 		io.in( user_room ).clients( ( error, clients ) => {
 			if ( error ) {
 				debug( 'failed to query clients', error.message )
@@ -61,18 +54,13 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 			if ( clients.length > 0 ) {
 				return;
 			}
-			store.dispatch( setUserOffline( user ) )
+			dispatch( setUserOffline( user ) )
 		} )
 	} )
 
 	socket.join( user_room, () => {
-		store.dispatch( updateIdentity( socket.id, user ) )
-		// If the operator is not a member of any groups they should be
-		// assigned to the default group
-		if ( ! isOperatorMemberOfAnyGroup( user.id, store.getState() ) ) {
-			store.dispatch( addGroupMember( DEFAULT_GROUP_ID, user.id ) )
-		}
-		store.dispatch( operatorReady( user, socket.id, user_room ) )
+		dispatch( updateIdentity( socket.id, user ) )
+		dispatch( operatorReady( user, socket.id, user_room ) )
 		socket.emit( 'init', user )
 	} )
 
@@ -81,38 +69,36 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 		const userIdentity = identityForUser( user )
 		const message = { id: id, session_id: chat_id, text, timestamp: timestamp(), user: userIdentity, meta }
 		// all customer connections for this user receive the message
-		store.dispatch( operatorInboundMessage( chat_id, user, message ) )
+		dispatch( operatorInboundMessage( chat_id, user, message ) )
 	} )
 
 	socket.on( 'chat.typing', ( chat_id, text ) => {
 		const identity = identityForUser( user )
-		store.dispatch( operatorTyping( chat_id, identity, text ) );
+		dispatch( operatorTyping( chat_id, identity, text ) );
 	} )
 
 	socket.on( 'chat.join', ( chat_id ) => {
-		store.dispatch( operatorChatJoin( chat_id, user ) )
+		dispatch( operatorChatJoin( chat_id, user ) )
 	} )
 
 	socket.on( 'chat.leave', ( chat_id ) => {
-		store.dispatch( operatorChatLeave( chat_id, user ) )
+		dispatch( operatorChatLeave( chat_id, user ) )
 	} )
 
 	socket.on( 'chat.close', ( chat_id ) => {
-		store.dispatch( closeChat( chat_id, user ) );
+		dispatch( closeChat( chat_id, user ) );
 	} )
 
 	socket.on( 'chat.transfer', ( chat_id, user_id ) => {
-		const toUser = selectIdentity( user_id )
-		store.dispatch( operatorChatTransfer( chat_id, user, toUser ) );
+		dispatch( operatorChatTransfer( chat_id, user, user_id ) );
 	} )
 
 	socket.on( 'chat.transcript', ( chat_id, message_timestamp, callback ) => {
 		debug( 'operator is requesting chat backlog', chat_id, 'before', message_timestamp )
-		const chat = getChat( chat_id, store.getState() )
 
 		new Promise( ( resolve, reject ) => {
-			store.dispatch(
-				operatorChatTranscriptRequest( user, chat, message_timestamp )
+			dispatch(
+				operatorChatTranscriptRequest( user, chat_id, message_timestamp )
 			).then( resolve, reject )
 		} )
 		.then( result => new Promise( ( resolve, reject ) => {
@@ -147,7 +133,7 @@ export default ( io, auth, middlewares ) => ( store ) => {
 	io.on( 'connection', ( socket ) => {
 		auth( socket ).then(
 			user => {
-				join( { socket, store, user, io }, middlewares )
+				join( { socket, dispatch: store.dispatch, user, io }, middlewares )
 				initializeUserSocket( user, socket )
 			},
 			e => log( 'operator auth failed', e.message )
