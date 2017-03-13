@@ -85,7 +85,7 @@ describe( 'Agent Service', () => {
 			}
 
 			client.emit( 'system.info' )
-
+			ok( lastDispatch.type )
 			deepEqual( lastDispatch, { type: AGENT_SYSTEM_INFO, socketId: socket.id } )
 		} )
 	} )
