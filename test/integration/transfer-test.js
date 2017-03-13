@@ -56,7 +56,7 @@ describe( 'Operator Transfer', () => {
 				const promise = Promise.race( [
 					new Promise( resolve => {
 						const listener = ( _, message ) => {
-							if ( message.meta.event_type === 'transfer' ) {
+							if ( message.meta && message.meta.event_type === 'transfer' ) {
 								resolve( message )
 								b.removeListener( listener )
 							}
