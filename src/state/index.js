@@ -15,6 +15,6 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 		... middlewares,
 		... socketioMiddleware( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares, timeout } ),
 		delayedDispatch,
-		...systemMiddleware( messageMiddlewares ),
+		...systemMiddleware( messageMiddlewares, timeout ),
 	)
 }
