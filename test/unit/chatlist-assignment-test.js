@@ -1,7 +1,6 @@
 import { equal, deepEqual } from 'assert'
 
-import chatlistMiddleware from 'state/middlewares/socket-io/chatlist'
-import mockio from '../mock-io'
+import chatlistMiddleware from 'state/middlewares/system/chat-assignment'
 
 import {
 	assignChat,
@@ -25,15 +24,8 @@ import {
 const noop = () => {}
 
 describe( 'Chatlist Assignment', () => {
-	const mock = () => ( {
-		io: mockio().server,
-		timeout: 1,
-		customerDisconnectTimeout: 1,
-		customerDisconnectMessageTimeout: 1
-	} )
-
 	const dispatchAction = ( action, state = {}, next = noop ) => new Promise( resolve => {
-		chatlistMiddleware( mock() )( {
+		chatlistMiddleware( {
 			getState: () => state,
 			dispatch: resolve
 		} )( next )( action )

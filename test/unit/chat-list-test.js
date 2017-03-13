@@ -208,7 +208,6 @@ describe( 'ChatList component', () => {
 			const newOperator = { id: 'new-operator' }
 			watchingMiddleware.watchForTypeOnce( SET_CHAT_MISSED, action => {
 				equal( action.chat_id, chat.id )
-				equal( action.error.message, 'operator not available' )
 				done()
 			} )
 			client.emit( 'chat.transfer', chat.id, newOperator.id )
@@ -221,7 +220,7 @@ describe( 'ChatList component', () => {
 				watchingMiddleware.watchForType( OPERATOR_CHAT_TRANSFER, action => {
 					equal( action.chat_id, chat.id )
 					equal( action.user.id, operator_id )
-					equal( action.toUser.id, newOperator.id )
+					equal( action.toUserId, newOperator.id )
 					resolve()
 				} )
 				client.emit( 'chat.transfer', chat.id, newOperator.id )

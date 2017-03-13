@@ -259,11 +259,12 @@ describe( 'Controller', () => {
 			// authenticate an agent client
 			const { client } = io.of( '/agent' ).newClient()
 			client.on( 'init', () => {
-				client.emit( 'system.info', data => {
+				client.once( 'system.info', data => {
 					deepEqual( data.chats, [] )
 					deepEqual( data.operators, [ { id: 'operator', online: true } ] )
 					done()
 				} )
+				client.emit( 'system.info' )
 			} ).connect()
 		} )
 	} )

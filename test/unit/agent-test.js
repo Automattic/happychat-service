@@ -1,7 +1,7 @@
 import { ok, equal, deepEqual } from 'assert'
 import mockIO from '../mock-io'
 import agentMiddleware from 'state/middlewares/socket-io/agents'
-import { AGENT_INBOUND_MESSAGE } from 'state/action-types'
+import { AGENT_INBOUND_MESSAGE, AGENT_SYSTEM_INFO } from 'state/action-types'
 import { agentReceiveMessage } from 'state/chatlist/actions'
 
 const debug = require( 'debug' )( 'happychat:test:agent' )
@@ -78,16 +78,15 @@ describe( 'Agent Service', () => {
 			ok( timestamp )
 		} )
 
-		it( 'should handle system.info event', ( done ) => {
+		it( 'should handle system.info event', () => {
 			state = {
 				operators: { identities: { a: 'a' } },
 				chatlist: { id: [ 'status', 'a-chat' ] }
 			}
 
-			client.emit( 'system.info', ( data ) => {
-				deepEqual( data, { chats: [ 'a-chat' ], operators: [ 'a' ] } )
-				done()
-			} )
+			client.emit( 'system.info' )
+
+			deepEqual( lastDispatch, { type: AGENT_SYSTEM_INFO, socketId: socket.id } )
 		} )
 	} )
 
