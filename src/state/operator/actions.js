@@ -71,16 +71,16 @@ export const operatorChatJoin = ( chat_id, user ) => (
 	{ type: OPERATOR_CHAT_JOIN, chat_id, user }
 )
 
-export const operatorChatTransfer = ( chat_id, user, toUser ) => (
-	{ type: OPERATOR_CHAT_TRANSFER, chat_id, user, toUser }
+export const operatorChatTransfer = ( chat_id, user, toUserId ) => (
+	{ type: OPERATOR_CHAT_TRANSFER, chat_id, user, toUserId }
 )
 
 export const operatorReady = ( user, socket_id, room ) => (
 	{ type: OPERATOR_READY, user, socket_id, room }
 );
 
-export const operatorChatTranscriptRequest = ( user, chat, timestamp ) => ( {
-	type: OPERATOR_CHAT_TRANSCRIPT_REQUEST, user, chat, timestamp
+export const operatorChatTranscriptRequest = ( user, chat_id, timestamp ) => ( {
+	type: OPERATOR_CHAT_TRANSCRIPT_REQUEST, user, chat_id, timestamp
 } )
 
 export const joinLocale = allowRemote( JOIN_LOCALE, ( locale ) => ( {
