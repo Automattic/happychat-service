@@ -23,7 +23,7 @@ import {
 
 const noop = () => {}
 
-describe( 'Chatlist Assignment', () => {
+describe( 'state/middlewares/system/chat-assignment', () => {
 	const dispatchAction = ( action, state = {}, next = noop ) => new Promise( resolve => {
 		chatlistMiddleware( {
 			getState: () => state,
