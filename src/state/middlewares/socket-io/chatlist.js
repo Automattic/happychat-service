@@ -525,7 +525,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 			if ( haveAvailableCapacity( locale, groups, store.getState() ) ) {
 				return store.dispatch( assignChat( chat ) )
 			}
-			log( 'no capacity to assign chat', chat.id, locale, groups )
+			debug( 'no capacity to assign chat', chat.id, locale )
 		}
 	}
 
