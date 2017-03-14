@@ -115,7 +115,7 @@ const join = ( { socket, dispatch, user, io }, middlewares ) => {
 
 		new Promise( ( resolve, reject ) => {
 			dispatch(
-				operatorChatTranscriptRequest( user.id, chat_id, message_timestamp )
+				operatorChatTranscriptRequest( socket.id, chat_id, message_timestamp )
 			).then( resolve, reject )
 		} )
 		.then( result => new Promise( ( resolve, reject ) => {
