@@ -7,7 +7,7 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 		operatorMiddleware( io.of( '/operator' ), operatorAuth, messageMiddlewares ),
 		agentMiddleware( io.of( '/agent' ), agentAuth ),
 		chatlistMiddleware( {
-			io,
+			io: io.of( '/customer' ),
 			timeout
 		}, customerAuth, messageMiddlewares )
 	]

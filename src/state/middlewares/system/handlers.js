@@ -1,7 +1,12 @@
-import { tap, cond, T, identity, propEq, pipe, when } from 'ramda'
+import { tap, cond, propEq, pipe, when, prop, contains } from 'ramda'
 
 export const handleActionType = ( type, handler ) => [
 	propEq( 'type', type ),
+	tap( handler )
+]
+
+export const handleActionTypes = ( types, handler ) => [
+	pipe( prop( 'type' ), type => contains( type, types ) ),
 	tap( handler )
 ]
 

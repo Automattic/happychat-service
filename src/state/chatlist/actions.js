@@ -162,8 +162,8 @@ export const updateChat = ( chat ) => ( {
 	type: UPDATE_CHAT, chat
 } )
 
-export const customerChatTranscriptRequest = ( chat, timestamp ) => ( {
-	type: CUSTOMER_CHAT_TRANSCRIPT_REQUEST, chat, timestamp
+export const customerChatTranscriptRequest = ( chat_id, timestamp ) => ( {
+	type: CUSTOMER_CHAT_TRANSCRIPT_REQUEST, chat_id, timestamp
 } )
 
 export const removeChat = id => ( {

@@ -218,8 +218,9 @@ describe( 'Operators', () => {
 		it( 'should request transcript for chat', () => new Promise( resolve => {
 			const [ connection ] = connections;
 			watchForType( OPERATOR_CHAT_TRANSCRIPT_REQUEST, action => {
-				deepEqual( action.user, op )
+				equal( action.operator_id, op.id )
 				equal( action.timestamp, 'timestamp' )
+				equal( action.chat_id, 'chat-id' )
 				resolve()
 			} )
 			connection.client.emit( 'chat.transcript', 'chat-id', 'timestamp', () => {} )

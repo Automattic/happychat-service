@@ -1,7 +1,23 @@
 import { isEmpty, forEach, when } from 'ramda'
 
-import { ASSIGN_NEXT_CHAT, ASSIGN_CHAT, NOTIFY_SYSTEM_STATUS_CHANGE, CUSTOMER_INBOUND_MESSAGE } from '../../action-types'
-import { assignChat, setChatMissed, setChatOperator, insertPendingChat } from '../../chatlist/actions'
+import {
+	ASSIGN_NEXT_CHAT,
+	ASSIGN_CHAT,
+	NOTIFY_SYSTEM_STATUS_CHANGE,
+	CUSTOMER_INBOUND_MESSAGE,
+	OPERATOR_READY,
+	REMOVE_USER,
+	SET_USER_OFFLINE
+} from '../../action-types'
+import {
+	assignChat,
+	setChatMissed,
+	setChatOperator,
+	insertPendingChat,
+	reassignChats,
+	recoverChats,
+	setOperatorChatsAbandoned
+} from '../../chatlist/actions'
 import {
 	getAllAssignableChats,
 	haveAssignableChat,
@@ -20,7 +36,7 @@ import {
 	canAcceptChat,
 	isOperatorAcceptingChats
 } from '../../operator/selectors'
-import { handleActionType, handlers, beforeNextAction } from './handlers'
+import { handleActionType, handleActionTypes, handlers, beforeNextAction } from './handlers'
 
 const debug = require( 'debug' )( 'happychat-debug:chat-assignment' )
 const log = require( 'debug' )( 'happychat:chat-assignment' )
@@ -103,10 +119,21 @@ const handleCustomerInboundMessage = store => ( { chat } ) => {
 	debug( 'chat exists time to make sure someone is home' )
 }
 
+const handleOperatorReady = store => ( { user, socket_id } ) => {
+	store.dispatch( recoverChats( user, socket_id ) )
+	store.dispatch( reassignChats( user, socket_id ) )
+}
+
+const handleOperatorDisconnect = store => action => {
+	store.dispatch( setOperatorChatsAbandoned( action.user.id ) )
+}
+
 export default store => beforeNextAction( handlers(
 	handleActionType( ASSIGN_NEXT_CHAT, handleAssignNextChat( store ) ),
 	handleActionType( ASSIGN_CHAT, handleAssignChat( store ) ),
 	handleActionType( NOTIFY_SYSTEM_STATUS_CHANGE, handleSystemStatusChange( store ) ),
-	handleActionType( CUSTOMER_INBOUND_MESSAGE, handleCustomerInboundMessage( store ) )
+	handleActionType( CUSTOMER_INBOUND_MESSAGE, handleCustomerInboundMessage( store ) ),
+	handleActionType( OPERATOR_READY, handleOperatorReady( store ) ),
+	handleActionTypes( [ REMOVE_USER, SET_USER_OFFLINE ], handleOperatorDisconnect( store ) )
 ) )
 

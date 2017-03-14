@@ -13,6 +13,9 @@ export default ( messageMiddlewares, timeout = undefined ) => ( [
 	eventMessages,
 	operatorDefaultGroup,
 	transferChat,
-	systemStatusNotifier, chatStatusNotifier, loadUpdater, chatAssignment,
+	systemStatusNotifier,
+	chatStatusNotifier,
+	loadUpdater,
+	chatAssignment,
 	controllerMiddleware( messageMiddlewares )
 ] )

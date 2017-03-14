@@ -79,8 +79,8 @@ export const operatorReady = ( user, socket_id, room ) => (
 	{ type: OPERATOR_READY, user, socket_id, room }
 );
 
-export const operatorChatTranscriptRequest = ( user, chat_id, timestamp ) => ( {
-	type: OPERATOR_CHAT_TRANSCRIPT_REQUEST, user, chat_id, timestamp
+export const operatorChatTranscriptRequest = ( operator_id, chat_id, timestamp ) => ( {
+	type: OPERATOR_CHAT_TRANSCRIPT_REQUEST, operator_id, chat_id, timestamp
 } )
 
 export const joinLocale = allowRemote( JOIN_LOCALE, ( locale ) => ( {
