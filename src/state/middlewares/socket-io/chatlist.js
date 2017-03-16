@@ -130,8 +130,8 @@ const withTimeout = ( promise, ms = 1000 ) => Promise.race( [
 const init = ( { user, socket, io, store, chat }, middlewares ) => () => {
 	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
 
-	socket.on( 'message', ( { text, id, meta } ) => {
-		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
+	socket.on( 'message', ( { text, id, type, meta } ) => {
+		const message = { session_id: chat.id, id: id, text, type, timestamp: timestamp(), user: identityForUser( user ), meta }
 		// all customer connections for this user receive the message
 		store.dispatch( customerInboundMessage( chat, message, user ) )
 	} )
