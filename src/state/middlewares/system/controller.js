@@ -233,4 +233,3 @@ export default ( middlewares ) => store => {
 		return next( action )
 	}
 }
-
