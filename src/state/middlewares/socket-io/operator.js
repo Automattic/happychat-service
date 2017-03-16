@@ -10,7 +10,9 @@ import {
 	SET_CHAT_OPERATOR,
 	OPERATOR_CHAT_JOIN,
 	CLOSE_CHAT,
-	AUTOCLOSE_CHAT
+	AUTOCLOSE_CHAT,
+	OPERATOR_CHAT_TRANSCRIPT_RESPONSE,
+	OPERATOR_CHAT_TRANSCRIPT_FAILURE
 } from '../../action-types'
 import {
 	operatorInboundMessage,
@@ -33,7 +35,8 @@ import {
 	operatorChatJoin,
 	operatorReady,
 	operatorChatTransfer,
-	operatorChatTranscriptRequest
+	operatorChatTranscriptRequest,
+	operatorChatTranscriptFailure
 } from '../../operator/actions'
 import { run } from '../../../middleware-interface'
 import canRemoteDispatch from '../../operator/can-remote-dispatch'
@@ -56,10 +59,8 @@ const filterClosed = filter( compose(
 
 export const operatorRoom = id => `operator/${ id }`;
 
-const join = ( { socket, dispatch, user, io }, middlewares ) => {
+const join = ( { socket, dispatch, user, io } ) => {
 	const user_room = operatorRoom( user.id )
-
-	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
 
 	socket.on( 'disconnect', () => {
 		dispatch( removeUserSocket( socket.id, user ) );
@@ -110,33 +111,9 @@ const join = ( { socket, dispatch, user, io }, middlewares ) => {
 		dispatch( operatorChatTransfer( chat_id, user, user_id ) );
 	} )
 
-	socket.on( 'chat.transcript', ( chat_id, message_timestamp, callback ) => {
+	socket.on( 'chat.transcript', ( chat_id, message_timestamp ) => {
 		debug( 'operator is requesting chat backlog', chat_id, 'before', message_timestamp )
-
-		new Promise( ( resolve, reject ) => {
-			dispatch(
-				operatorChatTranscriptRequest( socket.id, chat_id, message_timestamp )
-			).then( resolve, reject )
-		} )
-		.then( result => new Promise( ( resolve, reject ) => {
-			debug( 'chat.transcript', chat_id, result.timestamp, result.messages.length )
-			// debug time to run each message through middleware
-			Promise.all( map( message => runMiddleware( {
-				origin: message.source,
-				destination: 'operator',
-				user: message.user,
-				message,
-				chat: { id: chat_id }
-			} ), result.messages ) )
-			.then(
-				messages => resolve( { timestamp: result.timestamp, messages } ),
-				reject
-			)
-		} ) )
-		.then(
-			result => callback( null, result ),
-			e => callback( e.message, null )
-		)
+		dispatch( operatorChatTranscriptRequest( socket.id, chat_id, message_timestamp ) )
 	} )
 }
 
@@ -150,7 +127,7 @@ export default ( io, auth, middlewares ) => ( store ) => {
 	io.on( 'connection', ( socket ) => {
 		auth( socket ).then(
 			user => {
-				join( { socket, dispatch: store.dispatch, user, io }, middlewares )
+				join( { socket, dispatch: store.dispatch, user, io } )
 				initializeUserSocket( user, socket )
 			},
 			e => log( 'operator auth failed', e.message )
@@ -276,6 +253,30 @@ export default ( io, auth, middlewares ) => ( store ) => {
 		toOperatorsInChat( chat.id ).emit( 'chat.close', chat, operator )
 	}
 
+	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
+
+	const handleChatTranscriptFailure = action => {
+		const chat = getChat( action.chat_id, store.getState() )
+		io.to( action.socketId ).emit( 'chat.transcript-failure', chat, action.errorMessage )
+	}
+
+	const handleChatTranscriptResponse = action => {
+		debug( 'chat.transcript', action.chat_id, action.timestamp, action.messages.length )
+		// debug time to run each message through middleware
+		const chat = getChat( action.chat_id, store.getState() )
+		Promise.all( map( message => runMiddleware( {
+			origin: message.source,
+			destination: 'operator',
+			user: message.user,
+			message,
+			chat
+		} ), action.messages ) )
+		.then(
+			messages => io.to( action.socketId ).emit( 'chat.transcript', chat, { messages, timestamp: action.timestamp } ),
+			error => handleChatTranscriptFailure( operatorChatTranscriptFailure( action.socketId, action.chat_id, error.message ) )
+		)
+	}
+
 	return ( next ) => ( action ) => {
 		switch ( action.type ) {
 			case OPERATOR_RECEIVE_MESSAGE:
@@ -307,6 +308,12 @@ export default ( io, auth, middlewares ) => ( store ) => {
 				break
 			case AUTOCLOSE_CHAT:
 				handleAutocloseChat( action )
+				break
+			case OPERATOR_CHAT_TRANSCRIPT_RESPONSE:
+				handleChatTranscriptResponse( action )
+				break
+			case OPERATOR_CHAT_TRANSCRIPT_FAILURE:
+				handleChatTranscriptFailure( action )
 				break
 		}
 		return onDispatch( next )( action );

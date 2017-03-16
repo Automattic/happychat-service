@@ -11,6 +11,7 @@ import {
 	OPERATOR_CHAT_JOIN,
 	OPERATOR_CHAT_TRANSCRIPT_REQUEST,
 	OPERATOR_CHAT_TRANSCRIPT_RESPONSE,
+	OPERATOR_CHAT_TRANSCRIPT_FAILURE,
 	OPERATOR_CHAT_TRANSFER,
 	OPERATOR_READY,
 	SET_OPERATOR_CAPACITY,
@@ -82,6 +83,10 @@ export const operatorReady = ( user, socket_id, room ) => (
 
 export const operatorChatTranscriptRequest = ( socketId, chat_id, timestamp ) => ( {
 	type: OPERATOR_CHAT_TRANSCRIPT_REQUEST, socketId, chat_id, timestamp
+} )
+
+export const operatorChatTranscriptFailure = ( socketId, chat_id, errorMessage ) => ( {
+	type: OPERATOR_CHAT_TRANSCRIPT_FAILURE, socketId, chat_id, errorMessage
 } )
 
 export const operatorChatTranscriptResponse = ( socketId, chat_id, timestamp, messages ) => ( {
