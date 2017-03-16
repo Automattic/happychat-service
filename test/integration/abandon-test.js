@@ -4,10 +4,6 @@ import { STATUS_AVAILABLE } from 'state/operator/selectors'
 
 const debug = require( 'debug' )( 'happychat:test:integration' )
 
-process.on( 'unhandledRejection', ( e ) => {
-	debug( 'unhandled rejection', e )
-} )
-
 describe( 'Abandoned service', () => {
 	let mockUser = {
 		id: 'mock-user-id',
