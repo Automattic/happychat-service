@@ -36,7 +36,7 @@ const runMiddleware = middlewares => ( { origin, destination, chat, user, messag
 	} )
 	.then( result => {
 		if ( ! result ) {
-			throw new Error( `middleware prevented message(id:${ message.id }) from being sent from ${ origin } to ${ destination } in chat ${ chat.id }` )
+			debug( `middleware prevented message(id:${ message.id }) from being sent from ${ origin } to ${ destination } in chat ${ chat.id }` )
 		}
 		resolveMiddleware( result )
 	} )

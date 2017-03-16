@@ -67,7 +67,12 @@ const formatAgentMessage = ( author_type, author_id, session_id, { id, timestamp
 export default ( middlewares ) => store => {
 	const cache = { operator: new ChatLog( { maxMessages: 20 } ), customer: new ChatLog( { maxMessages: 20 } ) }
 
-	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
+	const runMiddleware = ( ... args ) => run( middlewares )( ... args ).then(
+		message => {
+			if ( !! message ) return message;
+			return Promise.reject( message )
+		}
+	)
 
 	// toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 	const handleCustomerJoin = action => {
