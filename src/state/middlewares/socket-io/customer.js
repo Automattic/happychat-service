@@ -13,7 +13,9 @@ import {
 	SET_CHAT_MISSED,
 	NOTIFY_SYSTEM_STATUS_CHANGE,
 	NOTIFY_CHAT_STATUS_CHANGED,
-	SEND_CUSTOMER_CHAT_LOG
+	SEND_CUSTOMER_CHAT_LOG,
+	CUSTOMER_CHAT_TRANSCRIPT_FAILURE,
+	CUSTOMER_SEND_CHAT_TRANSCRIPT_RESPONSE
 } from '../../action-types'
 import {
 	assignNextChat,
@@ -31,7 +33,6 @@ import {
 import {
 	canAcceptChat
 } from '../../operator/selectors'
-import { run } from '../../../middleware-interface'
 import timestamp from '../../timestamp'
 
 export const customerRoom = id => `customer/${ id }`;
@@ -55,9 +56,7 @@ const whenNoClients = ( io, room ) => new Promise( ( resolve, reject ) => {
 	} )
 } )
 
-const init = ( { user, socket, io, dispatch, chat }, middlewares ) => () => {
-	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
-
+const init = ( { user, socket, io, dispatch, chat } ) => () => {
 	socket.on( 'message', ( { text, id, meta } ) => {
 		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
 		// all customer connections for this user receive the message
@@ -75,29 +74,8 @@ const init = ( { user, socket, io, dispatch, chat }, middlewares ) => () => {
 			.then( () => dispatch( customerDisconnect( chat, user ) ) )
 	} )
 
-	socket.on( 'transcript', ( transcript_timestamp, callback ) => {
-		new Promise( ( resolve, reject ) => {
-			dispatch(
-				customerChatTranscriptRequest( chat.id, transcript_timestamp )
-			).then( resolve, reject )
-		} )
-		.then( result => new Promise( ( resolve, reject ) => {
-			Promise.all( map( message => runMiddleware( {
-				origin: message.source,
-				destination: 'customer',
-				user: message.user,
-				message,
-				chat
-			} ), result.messages ) )
-			.then(
-				messages => resolve( { timestamp: result.timestamp, messages } ),
-				reject
-			)
-		} ) )
-		.then(
-			result => callback( null, result ),
-			e => callback( e.message, null )
-		)
+	socket.on( 'transcript', ( transcript_timestamp ) => {
+		dispatch( customerChatTranscriptRequest( socket.id, chat.id, transcript_timestamp ) )
 	} )
 
 	socket.emit( 'init', user )
@@ -158,6 +136,20 @@ export default ( { io, timeout = 1000 }, customerAuth, middlewares = [] ) => sto
 		io.to( customerRoom( action.id ) ).emit( 'log', action.log )
 	}
 
+	const hadleChatTranscriptResponse = action => {
+		io.to( action.socketId ).emit(
+			'transcript',
+			{ timestamp: action.timestamp, messages: action.messages }
+		)
+	}
+
+	const handleChatTranscriptFailure = action => {
+		io.to( action.socketId ).emit(
+			'transcript.failure',
+			action.errorMessage
+		)
+	}
+
 	return next => action => {
 		switch ( action.type ) {
 			case NOTIFY_SYSTEM_STATUS_CHANGE:
@@ -179,6 +171,12 @@ export default ( { io, timeout = 1000 }, customerAuth, middlewares = [] ) => sto
 			case SEND_CUSTOMER_CHAT_LOG:
 				handleSendCustomerChatLog( action )
 				break;
+			case CUSTOMER_SEND_CHAT_TRANSCRIPT_RESPONSE:
+				hadleChatTranscriptResponse( action )
+				break
+			case CUSTOMER_CHAT_TRANSCRIPT_FAILURE:
+				handleChatTranscriptFailure( action )
+				break
 		}
 		const result = next( action )
 		switch ( action.type ) {

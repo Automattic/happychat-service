@@ -32,6 +32,8 @@ import {
 	RECEIVE_CHAT_MESSAGE,
 	CUSTOMER_CHAT_TRANSCRIPT_REQUEST,
 	CUSTOMER_CHAT_TRANSCRIPT_RESPONSE,
+	CUSTOMER_CHAT_TRANSCRIPT_FAILURE,
+	CUSTOMER_SEND_CHAT_TRANSCRIPT_RESPONSE,
 	REMOVE_CHAT,
 	INSERT_NEW_CHAT,
 	SEND_CUSTOMER_CHAT_LOG
@@ -171,6 +173,14 @@ export const customerChatTranscriptResponse = ( socketId, chat_id, timestamp, me
 	type: CUSTOMER_CHAT_TRANSCRIPT_RESPONSE, socketId, chat_id, timestamp, messages
 } )
 
+export const customerChatTranscriptFailure = ( socketId, chat_id, errorMessage ) => ( {
+	type: CUSTOMER_CHAT_TRANSCRIPT_FAILURE, socketId, chat_id, errorMessage
+} )
+
+export const sendCustomerChatTranscriptResponse = ( socketId, chat_id, timestamp, messages ) => ( {
+	type: CUSTOMER_SEND_CHAT_TRANSCRIPT_RESPONSE, socketId, chat_id, timestamp, messages
+} )
+
 export const removeChat = id => ( {
 	type: REMOVE_CHAT, id
 } )
@@ -178,3 +188,4 @@ export const removeChat = id => ( {
 export const sendCustomerChatLog = ( id, log ) => ( {
 	type: SEND_CUSTOMER_CHAT_LOG, id, log
 } )
+

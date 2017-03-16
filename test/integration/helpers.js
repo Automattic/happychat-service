@@ -54,11 +54,11 @@ export const startClients = ( port ) => new Promise( ( resolve, reject ) => {
 	.catch( reject )
 } )
 
-const main = ( authenticators, enhancers = [], port = 65115 ) => {
+export default ( authenticators, enhancers = [], middlewares = [], preloadedState = undefined, port = 65115 ) => {
 	const server = createServer()
 	const io = new IOServer( server )
 	const result = {
-		service: service( io, authenticators, undefined, { enhancers } ),
+		service: service( io, authenticators, preloadedState, { enhancers, middlewares } ),
 		start: () => startServer( server, port ),
 		stop: () => stopServer( server ),
 		startClients: () => startClients( port ),
@@ -70,8 +70,6 @@ const main = ( authenticators, enhancers = [], port = 65115 ) => {
 	result.service.configureLocales( 'en-US', [ 'es' ] )
 	return { ... result, ... result.service.store }
 }
-
-export { main as default }
 
 export const authenticators = ( customer, operator, agent ) => {
 	let customerAuthenticator = ( socket, callback ) => {

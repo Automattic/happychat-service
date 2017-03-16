@@ -12,6 +12,7 @@ import {
 	OPERATOR_CHAT_TRANSCRIPT_REQUEST,
 	OPERATOR_CHAT_TRANSCRIPT_RESPONSE,
 	OPERATOR_CHAT_TRANSCRIPT_FAILURE,
+	OPERATOR_SEND_CHAT_TRANSCRIPT_RESPONSE,
 	OPERATOR_CHAT_TRANSFER,
 	OPERATOR_READY,
 	SET_OPERATOR_CAPACITY,
@@ -91,6 +92,11 @@ export const operatorChatTranscriptFailure = ( socketId, chat_id, errorMessage )
 
 export const operatorChatTranscriptResponse = ( socketId, chat_id, timestamp, messages ) => ( {
 	type: OPERATOR_CHAT_TRANSCRIPT_RESPONSE,
+	socketId, chat_id, timestamp, messages
+} )
+
+export const sendOperatorChatTranscriptResponse = ( socketId, chat_id, timestamp, messages ) => ( {
+	type: OPERATOR_SEND_CHAT_TRANSCRIPT_RESPONSE,
 	socketId, chat_id, timestamp, messages
 } )
 

@@ -11,7 +11,7 @@ import {
 	OPERATOR_CHAT_JOIN,
 	CLOSE_CHAT,
 	AUTOCLOSE_CHAT,
-	OPERATOR_CHAT_TRANSCRIPT_RESPONSE,
+	OPERATOR_SEND_CHAT_TRANSCRIPT_RESPONSE,
 	OPERATOR_CHAT_TRANSCRIPT_FAILURE
 } from '../../action-types'
 import {
@@ -35,10 +35,8 @@ import {
 	operatorChatJoin,
 	operatorReady,
 	operatorChatTransfer,
-	operatorChatTranscriptRequest,
-	operatorChatTranscriptFailure
+	operatorChatTranscriptRequest
 } from '../../operator/actions'
-import { run } from '../../../middleware-interface'
 import canRemoteDispatch from '../../operator/can-remote-dispatch'
 import shouldBroadcastStateChange from '../../should-broadcast'
 import broadcastMiddleware from './broadcast'
@@ -117,7 +115,7 @@ const join = ( { socket, dispatch, user, io } ) => {
 	} )
 }
 
-export default ( io, auth, middlewares ) => ( store ) => {
+export default ( io, auth ) => ( store ) => {
 	const { onDispatch, initializeUserSocket } = broadcastMiddleware( io, {
 		canRemoteDispatch,
 		shouldBroadcastStateChange,
@@ -253,28 +251,13 @@ export default ( io, auth, middlewares ) => ( store ) => {
 		toOperatorsInChat( chat.id ).emit( 'chat.close', chat, operator )
 	}
 
-	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
-
 	const handleChatTranscriptFailure = action => {
-		const chat = getChat( action.chat_id, store.getState() )
-		io.to( action.socketId ).emit( 'chat.transcript-failure', chat, action.errorMessage )
+		io.to( action.socketId ).emit( 'chat.transcript.failure', { id: action.chat_id }, action.errorMessage )
 	}
 
 	const handleChatTranscriptResponse = action => {
-		debug( 'chat.transcript', action.chat_id, action.timestamp, action.messages.length )
 		// debug time to run each message through middleware
-		const chat = getChat( action.chat_id, store.getState() )
-		Promise.all( map( message => runMiddleware( {
-			origin: message.source,
-			destination: 'operator',
-			user: message.user,
-			message,
-			chat
-		} ), action.messages ) )
-		.then(
-			messages => io.to( action.socketId ).emit( 'chat.transcript', chat, { messages, timestamp: action.timestamp } ),
-			error => handleChatTranscriptFailure( operatorChatTranscriptFailure( action.socketId, action.chat_id, error.message ) )
-		)
+		io.to( action.socketId ).emit( 'chat.transcript', { id: action.chat_id }, { messages: action.messages, timestamp: action.timestamp } )
 	}
 
 	return ( next ) => ( action ) => {
@@ -309,7 +292,7 @@ export default ( io, auth, middlewares ) => ( store ) => {
 			case AUTOCLOSE_CHAT:
 				handleAutocloseChat( action )
 				break
-			case OPERATOR_CHAT_TRANSCRIPT_RESPONSE:
+			case OPERATOR_SEND_CHAT_TRANSCRIPT_RESPONSE:
 				handleChatTranscriptResponse( action )
 				break
 			case OPERATOR_CHAT_TRANSCRIPT_FAILURE:
