@@ -35,6 +35,7 @@ import {
 	REMOVE_USER,
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_CHAT_JOIN,
+	OPERATOR_CHAT_TRANSFER,
 	UPDATE_CHAT,
 	REMOVE_CHAT,
 	SERIALIZE
@@ -117,6 +118,7 @@ const chat = ( state = [ null, null, null, null, {}, null, null ], action ) => {
 			return updateStatus( STATUS_ASSIGNING, state )
 		case SET_CHAT_MISSED:
 			return updateStatus( STATUS_MISSED, state )
+		case OPERATOR_CHAT_TRANSFER:
 		case OPERATOR_CHAT_LEAVE:
 		case SET_USER_OFFLINE:
 		case REMOVE_USER:
@@ -158,6 +160,7 @@ export default ( state = {}, action ) => {
 			return assoc( action.id, chat( view( lensProp( action.id ), state ), action ), state )
 		case SET_CHAT_MISSED:
 		case SET_CHAT_OPERATOR:
+		case OPERATOR_CHAT_TRANSFER:
 		case OPERATOR_CHAT_JOIN:
 		case OPERATOR_CHAT_LEAVE:
 		case SET_CHAT_CUSTOMER_DISCONNECT:
