@@ -1,8 +1,19 @@
+# Generic
 node_modules/
-lib/
-*.tgz
-.vscode
 coverage/
-typings/
 *.log
+*.tgz
+
+# Project
+lib/
+typings/
 .tm_properties
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode
+
+
