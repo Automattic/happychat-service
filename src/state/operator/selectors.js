@@ -15,7 +15,6 @@ import {
 	reduce,
 	merge,
 	map,
-	both,
 	pickBy,
 	keys,
 	flatten,
@@ -116,7 +115,7 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 			percentAvailable: percentAvailable( user ),
 			totalAvailable: totalAvailable( user )
 		} ) ),
-		filter( ( { status, online, load, capacity, active, id } ) => {
+		filter( ( { ignoreCapacity, status, online, load, capacity, active, id } ) => {
 			const isAvailable = status === STATUS_AVAILABLE || status === STATUS_RESERVE;
 			if ( ! online || ! isAvailable ) {
 				return false
@@ -127,6 +126,11 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 			if ( ! isMemberOfGroup( id, group ) ) {
 				return false
 			}
+
+			if ( ignoreCapacity ) {
+				return true;
+			}
+
 			return capacity - defaultTo( 0, load ) > 0
 		} )
 	)( operators ), groups ),
@@ -155,6 +159,21 @@ export const selectTotalCapacity = ( locale, groups, state ) =>
 		{ load: 0, capacity: 0 },
 		getAvailableOperators( locale, groups, state )
 	);
+
+export const hasOperatorIgnoringCapacity = ( locale, groups, state ) => {
+	const identities = get( state, 'operators.identities' );
+
+	for( const operatorId in identities ) {
+		const { ignoreCapacity } = identities[ operatorId ];
+
+		if ( ignoreCapacity ) {
+			const { active } = getLocaleMembership( locale, operatorId, state );
+			return active && isMemberOfGroups( operatorId, groups );
+		}
+	}
+
+	return false;
+}
 
 export const getAvailableCapacity = ( locale, groups, state ) => {
 	const { load, capacity } = selectTotalCapacity( locale, groups, state )
@@ -225,14 +244,17 @@ export const isOperatorOnline = getOperatorOnline
 export const isOperatorAcceptingChats = ( id, state ) =>
 	isOperatorOnline( id, state ) && isOperatorStatusAvailableOrInReserve( id, state );
 
-export const canAcceptChat = ( chatID, state ) => both(
-	getSystemAcceptsCustomers,
-	() => haveAvailableCapacity(
-		getChatLocale( chatID, state ),
-		getChatGroups( chatID, state ),
-		state
-	)
-)( state )
+export const canAcceptChat = ( chatID, state ) => {
+	if ( ! getSystemAcceptsCustomers( state  ) ) {
+		return false;
+	}
+
+	const chatLocale = getChatLocale( chatID, state );
+	const chatGroups = getChatGroups( chatID, state );
+
+	return hasOperatorIgnoringCapacity( chatLocale, chatGroups, state ) ||
+		haveAvailableCapacity( chatLocale, chatGroups, state );
+}
 
 export const defaultLocaleIsAvailable = ( state ) => {
 	const locale = getDefaultLocale( state )
