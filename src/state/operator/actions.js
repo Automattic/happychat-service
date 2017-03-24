@@ -12,6 +12,7 @@ import {
 	OPERATOR_CHAT_TRANSCRIPT_REQUEST,
 	OPERATOR_CHAT_TRANSFER,
 	OPERATOR_READY,
+	SET_OPERATOR_IGNORE_CAPACITY,
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
 	SET_USER_OFFLINE,
@@ -45,6 +46,10 @@ export const setOperatorCapacity = allowRemote( SET_OPERATOR_CAPACITY, ( locale,
 
 export const setOperatorStatus = allowRemote( SET_OPERATOR_STATUS, ( status ) => ( {
 	status, type: SET_OPERATOR_STATUS
+} ) )
+
+export const setOperatorIgnoreCapacity = allowRemote( SET_OPERATOR_IGNORE_CAPACITY, ( ignoreCapacity ) => ( {
+	ignoreCapacity
 } ) )
 
 export const setUserLoads = ( loads ) => ( {
