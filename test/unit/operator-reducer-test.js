@@ -26,7 +26,7 @@ describe( 'Operator reducer', () => {
 	it( 'should update user', () => {
 		const store = createStore( reducer )
 		store.dispatch( { type: 'UPDATE_IDENTITY', user: { id: 1, name: 'hi' }, socket: {} } )
-		deepEqual( store.getState().identities, { 1: { id: 1, name: 'hi', online: true } } )
+		deepEqual( store.getState().identities, { 1: { id: 1, ignoreCapacity: false, name: 'hi', online: true } } )
 	} )
 
 	it( 'should remove sockets on serialize', () => {
