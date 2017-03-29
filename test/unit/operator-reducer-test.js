@@ -3,6 +3,7 @@ import {
 	setOperatorCapacity,
 	setOperatorStatus,
 	setUserOffline,
+	setOperatorIgnoreCapacity,
 } from 'state/operator/actions'
 import reducer from 'state/operator/reducer';
 import { createStore } from 'redux';
@@ -28,6 +29,12 @@ describe( 'Operator reducer', () => {
 		store.dispatch( { type: 'UPDATE_IDENTITY', user: { id: 1, name: 'hi' }, socket: {} } )
 		deepEqual( store.getState().identities, { 1: { id: 1, ignoreCapacity: false, name: 'hi', online: true } } )
 	} )
+
+	it( 'should ignore capacity', () => {
+		const store = createStore( reducer, { identities: { 'user-a': { ignoreCapacity: false, online: false } } } );
+		store.dispatch( assoc( REMOTE_USER_KEY, { id: 'user-a' }, setOperatorIgnoreCapacity( true ) ) );
+		deepEqual( store.getState().identities, { 'user-a': { ignoreCapacity: true, online: false } } );
+	} );
 
 	it( 'should remove sockets on serialize', () => {
 		const store = createStore( reducer, {
