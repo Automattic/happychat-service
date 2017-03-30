@@ -1,0 +1,9 @@
+{
+    "rulesNotToDowngrade": ["no-unused-vars"],
+    "remote": "origin/staging",
+    "processors": {
+	    "default": "lines-modified",
+	    "staging": "parsing-errors",
+	    "master": "parsing-errors"
+    }
+}
