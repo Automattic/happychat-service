@@ -19,6 +19,7 @@ import {
 	keys,
 	flatten,
 	mergeAll,
+	toPairs
 } from 'ramda'
 import asString from '../as-string'
 import {
@@ -121,6 +122,19 @@ export const getAvailableCapacity = ( locale, groups, state ) => {
 export const haveAvailableCapacity = ( locale, groups, state ) => getAvailableCapacity( locale, groups, state ) > 0
 
 export const getSystemAcceptsCustomers = ( { operators: { system: { acceptsCustomers } } } ) => acceptsCustomers
+
+export const getLocaleCapacities = state => compose(
+	flatten,
+	map( locale => compose(
+		map( ( [ group, memberships ] ) => {
+			const { load, capacity } = selectTotalCapacity( locale, [ memberships ], state )
+			return { load, capacity, group, locale }
+		} ),
+		toPairs,
+		getGroups
+	)( state ) ),
+	getSupportedLocales
+)( state )
 
 export const getAvailableLocales = state => ifElse(
 	compose( not, getSystemAcceptsCustomers ),
