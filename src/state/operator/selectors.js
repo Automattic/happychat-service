@@ -123,12 +123,19 @@ export const haveAvailableCapacity = ( locale, groups, state ) => getAvailableCa
 
 export const getSystemAcceptsCustomers = ( { operators: { system: { acceptsCustomers } } } ) => acceptsCustomers
 
+export const getOperatorOnline = ( id, state ) => path(
+	[ 'operators', 'identities', asString( id ), 'online' ],
+	state
+)
+
 export const getLocaleCapacities = state => compose(
 	flatten,
 	map( locale => compose(
 		map( ( [ group, memberships ] ) => {
 			const { load, capacity } = selectTotalCapacity( locale, [ memberships ], state )
-			return { load, capacity, group, locale }
+			return { load, capacity, group, locale, operators: reduce( ( total, userId ) => {
+				return getOperatorOnline( userId, state ) ? total + 1 : total
+			}, 0, keys( memberships.members ) ) }
 		} ),
 		toPairs,
 		getGroups
@@ -153,11 +160,6 @@ export const getAvailableLocales = state => ifElse(
 
 export const getOperatorIdentity = ( id, state ) => path(
 	[ 'operators', 'identities', asString( id ) ],
-	state
-)
-
-export const getOperatorOnline = ( id, state ) => path(
-	[ 'operators', 'identities', asString( id ), 'online' ],
 	state
 )
 
