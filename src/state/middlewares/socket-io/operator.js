@@ -17,7 +17,8 @@ import {
 	operatorChatJoin,
 	operatorReady,
 	operatorChatTransfer,
-	operatorChatTranscriptRequest
+	operatorChatTranscriptRequest,
+	customerBlock,
 } from '../../operator/actions'
 import {
 	selectUser,
@@ -86,6 +87,10 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 	socket.on( 'chat.leave', ( chat_id ) => {
 		store.dispatch( operatorChatLeave( chat_id, user ) )
 	} )
+
+	socket.on( 'chat.block', ( chat_id, operator_id, user_id ) => {
+		store.dispatch( customerBlock( chat_id, operator_id, user_id ) );
+	} );
 
 	socket.on( 'chat.close', ( chat_id ) => {
 		store.dispatch( closeChat( chat_id, user ) );

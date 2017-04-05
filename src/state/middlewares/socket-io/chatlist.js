@@ -23,6 +23,7 @@ import {
 	CUSTOMER_DISCONNECT,
 	CUSTOMER_LEFT,
 	CUSTOMER_JOIN,
+	CUSTOMER_BLOCK,
 	INSERT_PENDING_CHAT,
 	REASSIGN_CHATS,
 	RECOVER_CHATS,
@@ -80,6 +81,7 @@ import {
 	getAllMissedChats
 } from '../../chatlist/selectors'
 import {
+	STATUS_BLOCKED,
 	STATUS_CUSTOMER_DISCONNECT,
 } from '../../chatlist/reducer'
 import {
@@ -353,6 +355,18 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		.catch( e => debug( 'failed to remove operator from chat', e.message ) )
 	}, chat_id => debug( 'chat.leave without existing chat', chat_id ) )( action.chat_id, action.user )
 
+	const handleCustomerBlock = action => whenChatExists( ( chat  ) => {
+		const operator = getChatOperator( chat.id, store.getState() );
+		store.dispatch( operatorInboundMessage( chat.id, operator, merge(
+			makeEventMessage( 'customer blocked', chat.id ),
+			{ meta: { event_type: 'blocked', by: operator } }
+		) ) );
+
+		// notify status to customer
+		customer_io.to( customerRoom( chat.id ) ).emit( 'status', STATUS_BLOCKED );
+
+	}, chat_id => debug( 'chat.block without existing chat', chat_id ) )( action.chat_id )
+
 	const handleCustomerInboundMessage = ( { chat } ) => {
 		const state = store.getState()
 		const operator = getChatOperator( chat.id, state )
@@ -567,6 +581,9 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 				return next( action );
 			case OPERATOR_CHAT_JOIN:
 				handleOperatorChatJoin( action )
+				return next( action );
+			case CUSTOMER_BLOCK:
+				handleCustomerBlock( action );
 				return next( action );
 			case OPERATOR_CHAT_LEAVE:
 				handleOperatorChatLeave( action )

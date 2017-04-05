@@ -47,6 +47,7 @@ export const STATUS_MISSED = 'missed'
 export const STATUS_ASSIGNED = 'assigned'
 export const STATUS_ASSIGNING = 'assigning'
 export const STATUS_ABANDONED = 'abandoned'
+export const STATUS_BLOCKED = 'blocked';
 export const STATUS_CUSTOMER_DISCONNECT = 'customer-disconnect'
 export const STATUS_CLOSED = 'closed'
 
