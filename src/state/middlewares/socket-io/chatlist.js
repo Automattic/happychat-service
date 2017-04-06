@@ -355,7 +355,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		.catch( e => debug( 'failed to remove operator from chat', e.message ) )
 	}, chat_id => debug( 'chat.leave without existing chat', chat_id ) )( action.chat_id, action.user )
 
-	const handleCustomerBlock = action => whenChatExists( ( chat  ) => {
+	const handleCustomerBlock = action => whenChatExists( ( chat ) => {
 		const operator = getChatOperator( chat.id, store.getState() );
 		store.dispatch( operatorInboundMessage( chat.id, operator, merge(
 			makeEventMessage( 'customer blocked', chat.id ),
