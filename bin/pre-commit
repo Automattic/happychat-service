@@ -9,7 +9,6 @@ pass=true
 
 printf "\nValidating .jsx and .js:\n"
 
-./bin/run-lint $(git diff --cached --name-only src/ test/ | grep ".jsx*$") -- --diff=index
 ./node_modules/.bin/eslint-eslines $(git diff --cached --name-only src/ test/ | grep ".jsx*$") -- --diff=index
 linter_exit_code=$?
 if [ ! 0 = "$linter_exit_code" ]
