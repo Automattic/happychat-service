@@ -30,6 +30,7 @@
     "babel-register": "^6.18.0",
     "eslines": "^0.0.12",
     "eslint": "^3.13.0",
+    "eslint-eslines": "0.0.1",
     "eslint-config-wpcalypso": "^0.6.0",
     "eslint-loader": "^1.2.0",
     "eslint-plugin-wpcalypso": "^3.0.2",

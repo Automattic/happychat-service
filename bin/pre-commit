@@ -9,12 +9,13 @@ pass=true
 
 printf "\nValidating .jsx and .js:\n"
 
-./bin/run-lint $(git diff --cached --name-only lib/ src/ test/ | grep ".jsx*$") -- --diff=index
+./bin/run-lint $(git diff --cached --name-only src/ test/ | grep ".jsx*$") -- --diff=index
+./node_modules/.bin/eslint-eslines $(git diff --cached --name-only src/ test/ | grep ".jsx*$") -- --diff=index
 linter_exit_code=$?
 if [ ! 0 = "$linter_exit_code" ]
 then
 	printf "\n"
-	printf "\033[41mCOMMIT ABORTED:\033[0m the linter reported some problems. If you are aware of them and it is OK, repeat the commit command with --no-verify to avoid this check. You may also want to execute the linter after the errors have been solved: ./bin/run-lint \$(git diff --cached --name-only lib/ src/ test/) -- --diff=index"
+	printf "\033[41mCOMMIT ABORTED:\033[0m the linter reported some problems. If you are aware of them and it is OK, repeat the commit command with --no-verify to avoid this check. You may also want to execute the linter after the errors have been solved: ./node_modules/.bin/eslint-eslines $(git diff --cached --name-only src/ test/ | grep ".jsx*$") -- --diff=index"
 	printf "\n"
 fi
 
