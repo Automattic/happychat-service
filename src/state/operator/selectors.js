@@ -52,8 +52,8 @@ const totalAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load
  *                  1 if operator b should come first
  */
 const compareOperatorPriority = ( a, b ) => {
-	// Sort operators by their status above all. Operators in
-	// reserve should always come last.
+	// When comparing two operators, always prioritise the one whose
+	// status is available over the one who is in reserve
 	if ( a.status === STATUS_RESERVE && b.status === STATUS_AVAILABLE ) {
 		return 1;
 	}
@@ -61,7 +61,21 @@ const compareOperatorPriority = ( a, b ) => {
 		return -1;
 	}
 
-	// Sort operators by their remaining capacity
+	// When comparing two operators in reserve, prioritise the one
+	// already chatting to avoid disturbing the other.
+	if ( a.status === STATUS_RESERVE && b.status === STATUS_RESERVE ) {
+		const aLoad = a.load || 0;
+		const bLoad = b.load || 0;
+		if ( aLoad > 0 && bLoad === 0 ) {
+			return -1;
+		}
+
+		if ( bLoad > 0 && aLoad === 0 ) {
+			return 1;
+		}
+	}
+
+	// Compare operators by their current chat load
 	if ( a.percentAvailable === b.percentAvailable ) {
 		if ( a.totalAvailable === b.totalAvailable ) {
 			return 0;

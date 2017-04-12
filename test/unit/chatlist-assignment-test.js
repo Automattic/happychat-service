@@ -13,7 +13,8 @@ import {
 	SET_CHAT_MISSED
 } from 'state/action-types'
 import {
-	STATUS_PENDING
+	STATUS_PENDING,
+	STATUS_ASSIGNED
 }	from 'state/chatlist/reducer'
 import {
 	STATUS_AVAILABLE,
@@ -152,14 +153,14 @@ describe( 'Chatlist Assignment', () => {
 		deepEqual( action, assignChat( { id: 'chat_en'} ) )
 	} ) )
 
-	const reserveState = ( { activeOpsHaveCapacity } ) => ( {
+	const reserveState = ( { activeOpsHaveCapacity, assignedOperator } ) => ( {
 		locales: { defaultLocale: 'en', supported: [ 'en', 'fr' ], memberships: {
 			en: {},
 			fr: {
-				active1: { capacity: ( activeOpsHaveCapacity ? 1 : 0 ), active: true },
-				active2: { capacity: ( activeOpsHaveCapacity ? 2 : 0 ), active: true },
-				reserve1: { capacity: 4, active: true },
-				reserve2: { capacity: 5, active: true },
+				active1: { capacity: ( activeOpsHaveCapacity ? 2 : 0 ), active: true },
+				active2: { capacity: ( activeOpsHaveCapacity ? 3 : 0 ), active: true },
+				reserve1: { capacity: 5, active: true },
+				reserve2: { capacity: 4, load: assignedOperator ? 1 : 0, active: true },
 			}
 		} },
 		chatlist: {
@@ -187,6 +188,14 @@ describe( 'Chatlist Assignment', () => {
 	it( 'should assign reserve operator when active operators are busy', () => dispatchAction(
 		assignChat( { id: 'chat' } ),
 		reserveState( { activeOpsHaveCapacity: false } )
+	).then( action => {
+		equal( action.type, SET_CHAT_OPERATOR )
+		equal( action.operator.id, 'reserve1' )
+	} ) );
+
+	it( 'should assign to a reserve operator that is already chatting', () => dispatchAction(
+		assignChat( { id: 'chat' } ),
+		reserveState( { activeOpsHaveCapacity: false, assignedOperator: true } )
 	).then( action => {
 		equal( action.type, SET_CHAT_OPERATOR )
 		equal( action.operator.id, 'reserve2' )
