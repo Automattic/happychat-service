@@ -67,7 +67,8 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 			totalAvailable: totalAvailable( user )
 		} ) ),
 		filter( ( { status, online, load, capacity, active, id } ) => {
-			if ( !online || status !== STATUS_AVAILABLE ) {
+			const isAvailable = status === STATUS_AVAILABLE || status === STATUS_RESERVE;
+			if ( !online || !isAvailable ) {
 				return false
 			}
 			if ( active !== true ) {
