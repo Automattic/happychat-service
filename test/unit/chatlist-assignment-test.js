@@ -181,7 +181,7 @@ describe( 'Chatlist Assignment', () => {
 		reserveState( { activeOpsHaveCapacity: true } )
 	).then( action => {
 		equal( action.type, SET_CHAT_OPERATOR )
-		equal( action.operator.id, 'active1' )
+		equal( action.operator.id, 'active2' )
 	} ) );
 
 	it( 'should assign reserve operator when active operators are busy', () => dispatchAction(

@@ -37,7 +37,31 @@ import { STATUS_AVAILABLE, STATUS_RESERVE } from './constants';
 
 const percentAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) ) / capacity
 const totalAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) )
-const compare = ( a, b ) => {
+
+/**
+/* Compare function for sorting operator priority. 
+ *
+ * The first operator in the resulting list should be the next one
+ * to be assigned to a chat. This is used for balancing chat load
+ * evenly across operators.
+ *
+ * @param {Operator} a First operator to compare
+ * @param {Operator} b Second operator to compare
+ * @return {Number} -1 if operator a should come first
+ *                  0 if both operators are equal priority
+ *                  1 if operator b should come first
+ */
+const compareOperatorPriority = ( a, b ) => {
+	// Sort operators by their status above all. Operators in
+	// reserve should always come last.
+	if ( a.status === STATUS_RESERVE && b.status === STATUS_AVAILABLE ) {
+		return 1;
+	}
+	if ( a.status === STATUS_AVAILABLE && b.status === STATUS_RESERVE ) {
+		return -1;
+	}
+
+	// Sort operators by their remaining capacity
 	if ( a.percentAvailable === b.percentAvailable ) {
 		if ( a.totalAvailable === b.totalAvailable ) {
 			return 0;
@@ -58,10 +82,15 @@ const isMemberOfGroups = ( userID, groups ) => compose(
 	mergeAll
 )( groups )
 
+/**
+ * Returns a list of available operators for the given locale and groups,
+ * sorted by priority where the first operator in the list should be
+ * assigned the next chat.
+ */
 export const getAvailableOperators = ( locale, groups, state ) => compose(
 	flatten,
 	operators => map( group => compose(
-		sort( compare ),
+		sort( compareOperatorPriority ),
 		map( user => merge( user, {
 			percentAvailable: percentAvailable( user ),
 			totalAvailable: totalAvailable( user )
