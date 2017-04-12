@@ -8,7 +8,7 @@ import {
 } from 'state/operator/actions'
 import {
 	STATUS_AVAILABLE
-} from 'state/operator/selectors'
+} from 'state/operator/constants'
 import { addGroup } from 'state/groups/actions'
 
 import IOServer from 'socket.io'

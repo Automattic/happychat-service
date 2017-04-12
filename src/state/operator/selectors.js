@@ -33,7 +33,7 @@ import {
 } from '../locales/selectors'
 import { getGroups, makeLocaleGroupToken, getDefaultGroup } from '../groups/selectors'
 
-export const STATUS_AVAILABLE = 'available';
+import { STATUS_AVAILABLE, STATUS_RESERVE } from './constants';
 
 const percentAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) ) / capacity
 const totalAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) )
