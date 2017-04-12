@@ -1,6 +1,6 @@
 #!/bin/sh
 
-files=$(git diff --cached --name-only --diff-filter=ACM | grep ".jsx*$")
+files=$(git diff --cached --name-only src/ test/ | grep ".jsx*$")
 if [ "$files" = "" ]; then
     exit 0
 fi
@@ -9,7 +9,7 @@ pass=true
 
 printf "\nValidating .jsx and .js:\n"
 
-./node_modules/.bin/eslint-eslines $(git diff --cached --name-only src/ test/ | grep ".jsx*$") -- --diff=index
+./node_modules/.bin/eslint-eslines $files -- --diff=index
 linter_exit_code=$?
 if [ ! 0 = "$linter_exit_code" ]
 then
