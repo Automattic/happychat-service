@@ -38,6 +38,12 @@ import { STATUS_AVAILABLE, STATUS_RESERVE } from './constants';
 const percentAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) ) / capacity
 const totalAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) )
 
+// This is the maximum number of chats a reserve operator can have before
+// another reserve operator is brought in to handle further chats. When
+// all reserve operators reach this limit, new chats will be balanced
+// between reserve operators.
+const RESERVE_MAX_CHATS = 2;
+
 /**
 /* Compare function for sorting operator priority. 
  *
@@ -66,11 +72,11 @@ const compareOperatorPriority = ( a, b ) => {
 	if ( a.status === STATUS_RESERVE && b.status === STATUS_RESERVE ) {
 		const aLoad = a.load || 0;
 		const bLoad = b.load || 0;
-		if ( aLoad > 0 && bLoad === 0 ) {
+		if ( aLoad > 0 && aLoad < RESERVE_MAX_CHATS && bLoad === 0 ) {
 			return -1;
 		}
 
-		if ( bLoad > 0 && aLoad === 0 ) {
+		if ( bLoad > 0 && bLoad < RESERVE_MAX_CHATS && aLoad === 0 ) {
 			return 1;
 		}
 	}

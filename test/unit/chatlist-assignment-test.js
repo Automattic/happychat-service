@@ -153,14 +153,14 @@ describe( 'Chatlist Assignment', () => {
 		deepEqual( action, assignChat( { id: 'chat_en'} ) )
 	} ) )
 
-	const reserveState = ( { activeOpsHaveCapacity, assignedOperator } ) => ( {
+	const reserveState = ( { activeLoad = 0, reserve1Load = 0, reserve2Load = 0 } ) => ( {
 		locales: { defaultLocale: 'en', supported: [ 'en', 'fr' ], memberships: {
 			en: {},
 			fr: {
-				active1: { capacity: ( activeOpsHaveCapacity ? 2 : 0 ), active: true },
-				active2: { capacity: ( activeOpsHaveCapacity ? 3 : 0 ), active: true },
-				reserve1: { capacity: 5, active: true },
-				reserve2: { capacity: 4, load: assignedOperator ? 1 : 0, active: true },
+				active1: { capacity: 2, load: activeLoad, active: true },
+				active2: { capacity: 2, load: activeLoad, active: true },
+				reserve1: { capacity: 5, load: reserve1Load, active: true },
+				reserve2: { capacity: 4, load: reserve2Load, active: true },
 			}
 		} },
 		chatlist: {
@@ -179,15 +179,15 @@ describe( 'Chatlist Assignment', () => {
 
 	it( 'should assign active operator before reserve operator', () => dispatchAction(
 		assignChat( { id: 'chat' } ),
-		reserveState( { activeOpsHaveCapacity: true } )
+		reserveState( { activeLoad: 0 } )
 	).then( action => {
 		equal( action.type, SET_CHAT_OPERATOR )
-		equal( action.operator.id, 'active2' )
+		equal( action.operator.id, 'active1' )
 	} ) );
 
 	it( 'should assign reserve operator when active operators are busy', () => dispatchAction(
 		assignChat( { id: 'chat' } ),
-		reserveState( { activeOpsHaveCapacity: false } )
+		reserveState( { activeLoad: 2 } )
 	).then( action => {
 		equal( action.type, SET_CHAT_OPERATOR )
 		equal( action.operator.id, 'reserve1' )
@@ -195,9 +195,25 @@ describe( 'Chatlist Assignment', () => {
 
 	it( 'should assign to a reserve operator that is already chatting', () => dispatchAction(
 		assignChat( { id: 'chat' } ),
-		reserveState( { activeOpsHaveCapacity: false, assignedOperator: true } )
+		reserveState( { activeLoad: 2, reserve1Load: 0, reserve2Load: 1 } )
 	).then( action => {
 		equal( action.type, SET_CHAT_OPERATOR )
 		equal( action.operator.id, 'reserve2' )
+	} ) );
+
+	it( 'should assign to a different reserve operator when the first has reached two chats', () => dispatchAction(
+		assignChat( { id: 'chat' } ),
+		reserveState( { activeLoad: 2, reserve1Load: 0, reserve2Load: 2 } )
+	).then( action => {
+		equal( action.type, SET_CHAT_OPERATOR )
+		equal( action.operator.id, 'reserve1' )
+	} ) );
+
+	it( 'should assign evenly when all reserve operators have reached two chats', () => dispatchAction(
+		assignChat( { id: 'chat' } ),
+		reserveState( { activeLoad: 2, reserve1Load: 2, reserve2Load: 2 } )
+	).then( action => {
+		equal( action.type, SET_CHAT_OPERATOR )
+		equal( action.operator.id, 'reserve1' )
 	} ) );
 } )
