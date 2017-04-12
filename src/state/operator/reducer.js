@@ -61,7 +61,7 @@ const identity = ( state = { online: false }, action ) => {
 		case SET_OPERATOR_STATUS:
 			return merge( state, { status: action.status, online: true } )
 		case SET_USER_OFFLINE:
-			return merge( state, { status: OPERATOR_STATUS_UNAVAILABLE, online: false } );
+			return merge( state, { status: 'unavailable', online: false } );
 	}
 	return state
 }
