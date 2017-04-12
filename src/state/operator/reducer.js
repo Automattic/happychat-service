@@ -28,7 +28,6 @@ import {
 	SERIALIZE,
 	DESERIALIZE
 } from '../action-types'
-import { OPERATOR_STATUS_UNAVAILABLE } from './constants';
 
 // Reducers
 const user_sockets = ( state = {}, action ) => {
