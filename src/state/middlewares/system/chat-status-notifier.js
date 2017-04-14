@@ -13,6 +13,8 @@ import {
 	SET_CHAT_CUSTOMER_DISCONNECT,
 	INSERT_PENDING_CHAT,
 	ASSIGN_CHAT,
+	AUTOCLOSE_CHAT,
+	CLOSE_CHAT,
 	SET_CHATS_RECOVERED,
 	SET_OPERATOR_CHATS_ABANDONED
 } from '../../action-types'
@@ -52,6 +54,12 @@ export default ( { getState, dispatch } ) => next => action => {
 				prop( 'id' ),
 				getChatsForOperator( action.operator_id, getState() )
 			)
+			break;
+		case AUTOCLOSE_CHAT:
+			chat_ids = [ action.id ];
+			break;
+		case CLOSE_CHAT:
+			chat_ids = [action.chat_id]
 			break;
 	}
 
