@@ -132,13 +132,16 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 	} )
 }
 
-export default ( io, auth, middlewares ) => ( store ) => {
+export default ( io, operatorAuth, middlewares ) => ( store ) => {
 	io.on( 'connection', ( socket ) => {
-		auth( socket ).then(
+		operatorAuth( socket ).then(
 			user => join( { socket, store, user, io }, middlewares ),
-			e => log( 'operator auth failed', e.message )
+			e => {
+				socket.emit( 'unauthorized' );
+				log( 'operator auth failed: ', e.message )
+			}
 		)
-	} )
+	} );
 
 	return ( next ) => ( action ) => {
 		switch ( action.type ) {

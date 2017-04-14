@@ -204,10 +204,12 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 	const operator_io = io.of( '/operator' )
 	const customer_io = io.of( '/customer' )
 	.on( 'connection', socket => {
-		customerAuth( socket )
-		.then(
+		customerAuth( socket ).then(
 			user => join( { socket, user, io: customer_io, store }, middlewares ),
-			e => log( 'customer auth failed', e.message )
+			e => {
+				socket.emit( 'unauthorized' );
+				log( 'customer auth failed: ', e.message );
+			}
 		)
 	} )
 
