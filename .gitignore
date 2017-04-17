@@ -3,6 +3,7 @@ node_modules/
 coverage/
 *.log
 *.tgz
+.eslintcache
 
 # Project
 lib/
