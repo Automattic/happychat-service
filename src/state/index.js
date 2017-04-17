@@ -13,8 +13,8 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 	return applyMiddleware(
 		logger,
 		... middlewares,
-		... socketioMiddleware( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares, timeout } ),
 		delayedDispatch,
+		... socketioMiddleware( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares, timeout } ),
 		...systemMiddleware( messageMiddlewares, timeout ),
 	)
 }
