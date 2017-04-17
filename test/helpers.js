@@ -1,4 +1,4 @@
-import { REMOTE_USER_KEY } from 'state/middlewares/socket-io/broadcast'
+import { REMOTE_USER_KEY } from 'broadcast'
 import { merge, objOf } from 'ramda'
 
 const debug = require( 'debug' )( 'happychat:test' )

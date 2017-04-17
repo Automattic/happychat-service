@@ -3,9 +3,11 @@ import { merge } from 'ramda'
 import { createStore, compose, applyMiddleware } from 'redux'
 import mockio from '../mock-io'
 import enhancer from 'state'
+import broadcast from 'broadcast'
 import { reducer } from 'service'
 import { setClientCapacity } from '../integration/helpers'
 import WatchingMiddleware from '../mock-middleware'
+
 import {
 	AUTOCLOSE_CHAT,
 	ASSIGN_CHAT,
@@ -54,6 +56,7 @@ describe( 'ChatList component', () => {
 			} ),
 			applyMiddleware( watchingMiddleware.middleware() )
 		) )
+		broadcast( store, io.of( '/operator' ) )
 	}
 
 	beforeEach( () => {

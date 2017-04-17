@@ -87,7 +87,7 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 
 export const selectIdentities = path( [ 'operators', 'identities' ] )
 export const getOperators = compose( values, selectIdentities )
-export const selectSocketIdentity = ( { operators: { sockets, identities } }, socket ) => get(
+export const getSocketOperator = ( socket, { operators: { sockets, identities } } ) => get(
 	identities,
 	get( sockets, socket.id )
 )

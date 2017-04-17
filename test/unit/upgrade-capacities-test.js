@@ -3,7 +3,7 @@ import { merge } from 'ramda'
 
 import upgradeCapacities from 'upgrade-capacities'
 import { setOperatorCapacity } from 'state/operator/actions'
-import { REMOTE_USER_KEY } from 'state/middlewares/socket-io/broadcast'
+import { REMOTE_USER_KEY } from 'broadcast'
 
 describe( 'Upgrade capacities to locales', () => {
 	it( 'should update default locale capacities', () => {

@@ -18,7 +18,7 @@ import {
 import { combineReducers } from 'redux'
 
 import asString from '../as-string'
-import { REMOTE_USER_KEY } from '../middlewares/socket-io/broadcast'
+import { REMOTE_USER_KEY } from '../../broadcast'
 import {
 	SET_OPERATOR_CAPACITY,
 	JOIN_LOCALE,

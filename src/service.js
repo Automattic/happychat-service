@@ -21,6 +21,7 @@ import { getClosedChatsOlderThan } from './state/chatlist/selectors'
 import middlewareInterface from './middleware-interface'
 import { configureLocales } from './state/locales/actions'
 import upgradeCapacities from './upgrade-capacities'
+import broadcast from './broadcast'
 
 const log = require( 'debug' )( 'happychat:service' )
 
@@ -81,6 +82,8 @@ export const service = ( io, { customerAuthenticator, agentAuthenticator, operat
 		agentAuth: auth( agentAuthenticator ),
 		messageMiddlewares: messageMiddlewares.middlewares()
 	}, middlewares ) ) )
+
+	broadcast( store, io.of( '/operator' ) )
 
 	const removeStaleChats = buildRemoveStaleChats( store )
 	setInterval( removeStaleChats, 1000 * 60 ) // every minute

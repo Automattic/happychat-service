@@ -2,7 +2,7 @@ import { deepEqual, equal } from 'assert'
 import { setOperatorCapacity, setOperatorStatus } from 'state/operator/actions'
 import reducer from 'state/operator/reducer';
 import { createStore } from 'redux';
-import { REMOTE_USER_KEY } from 'state/middlewares/socket-io/broadcast'
+import { REMOTE_USER_KEY } from 'broadcast'
 import { assoc } from 'ramda'
 import { serializeAction } from 'state'
 

@@ -6,6 +6,7 @@ import map from 'lodash/map'
 import reduce from 'lodash/reduce'
 import enhancer from 'state'
 import { reducer } from 'service'
+import broadcast from 'broadcast'
 import WatchingMiddleware from '../mock-middleware'
 import {
 	SET_USER_OFFLINE,
@@ -67,6 +68,7 @@ describe( 'Operators', () => {
 			} ),
 			applyMiddleware( watchingMiddleware.middleware() )
 		) )
+		broadcast( store, io.of( '/operator' ) )
 	} )
 
 	it( 'should send current state to operator', done => {

@@ -1,4 +1,4 @@
-import { map, filter, compose, equals, evolve, not, ifElse, lensPath, view } from 'ramda'
+import { map, ifElse, lensPath, view } from 'ramda'
 import timestamp from '../../timestamp'
 import {
 	OPERATOR_CHAT_LEAVE,
@@ -37,10 +37,6 @@ import {
 	operatorChatTransfer,
 	operatorChatTranscriptRequest
 } from '../../operator/actions'
-import canRemoteDispatch from '../../operator/can-remote-dispatch'
-import shouldBroadcastStateChange from '../../should-broadcast'
-import broadcastMiddleware from './broadcast'
-import { STATUS_CLOSED, statusView } from '../../chatlist/reducer'
 
 const log = require( 'debug' )( 'happychat:middleware:operators' )
 const debug = require( 'debug' )( 'happychat-debug:middleware:operators' )
@@ -48,12 +44,6 @@ const debug = require( 'debug' )( 'happychat-debug:middleware:operators' )
 const identityForUser = ( { id, displayName, avatarURL } ) => (
 	{ id, displayName, avatarURL }
 )
-
-const filterClosed = filter( compose(
-	not,
-	equals( STATUS_CLOSED ),
-	statusView,
-) )
 
 export const operatorRoom = id => `operator/${ id }`;
 
@@ -75,9 +65,11 @@ const join = ( { socket, dispatch, user, io } ) => {
 	} )
 
 	socket.join( user_room, () => {
-		dispatch( updateIdentity( socket.id, user ) )
-		dispatch( operatorReady( user, socket.id, user_room ) )
-		socket.emit( 'init', user )
+		socket.join( 'authorized', () => {
+			dispatch( updateIdentity( socket.id, user ) )
+			dispatch( operatorReady( user, socket.id, user_room ) )
+			socket.emit( 'init', user )
+		} )
 	} )
 
 	socket.on( 'message', ( chat_id, { id, text } ) => {
@@ -116,18 +108,9 @@ const join = ( { socket, dispatch, user, io } ) => {
 }
 
 export default ( io, auth ) => ( store ) => {
-	const { onDispatch, initializeUserSocket } = broadcastMiddleware( io, {
-		canRemoteDispatch,
-		shouldBroadcastStateChange,
-		selector: evolve( { chatlist: filterClosed } )
-	} )( store )
-
 	io.on( 'connection', ( socket ) => {
 		auth( socket ).then(
-			user => {
-				join( { socket, dispatch: store.dispatch, user, io } )
-				initializeUserSocket( user, socket )
-			},
+			user => join( { socket, dispatch: store.dispatch, user, io } ),
 			e => log( 'operator auth failed', e.message )
 		)
 	} )
@@ -299,6 +282,6 @@ export default ( io, auth ) => ( store ) => {
 				handleChatTranscriptFailure( action )
 				break
 		}
-		return onDispatch( next )( action );
+		return next( action )
 	}
 }

@@ -22,7 +22,7 @@ import {
 	UPDATE_OPERATOR_MEMBERSHIP,
 	DESERIALIZE
 } from '../action-types'
-import { REMOTE_USER_KEY } from '../middlewares/socket-io/broadcast'
+import { REMOTE_USER_KEY } from '../../broadcast'
 
 export const DEFAULT_GROUP_ID = '__default'
 export const DEFAULT_GROUP_NAME = 'Default'

@@ -1,6 +1,7 @@
 import { equal, deepEqual } from 'assert'
 
 import chatlistMiddleware from 'state/middlewares/system/chat-assignment'
+import { getAvailableLocales, getLocaleCapacities } from 'state/operator/selectors'
 
 import {
 	assignChat,
@@ -67,7 +68,7 @@ describe( 'state/middlewares/system/chat-assignment', () => {
 			group: [ STATUS_PENDING, { id: 'group'}, null, 3, {}, null, [ 'a-group' ] ],
 			special: [ STATUS_PENDING, { id: 'special' }, null, 4, {}, null, [ 'exclusive' ] ]
 		},
-		operators: { identities: {
+		operators: { system: { acceptsCustomers: true }, identities: {
 			en1: { id: 'en1', status: STATUS_AVAILABLE, online: true },
 			pt1: { id: 'pt1', status: STATUS_AVAILABLE, online: true },
 			op: { id: 'op', status: STATUS_AVAILABLE, online: true }
@@ -97,6 +98,23 @@ describe( 'state/middlewares/system/chat-assignment', () => {
 			[ DEFAULT_GROUP_ID ]: { members: { op1: true, op2: true } },
 		}
 	}
+
+	it( 'should get available locale groups', () => {
+		const available = getAvailableLocales( ptbrState )
+		deepEqual( available, [ 'fr-__default', 'fr-a-group', 'pt-BR-__default' ] )
+	} )
+
+	it( 'should get locale group capacities', () => {
+		const all = getLocaleCapacities( ptbrState )
+		deepEqual( all, [
+			{ load: 0, capacity: 3, operators: 2, locale: 'fr', group: '__default' },
+			{ load: 0, capacity: 1, operators: 1, locale: 'fr', group: 'a-group' },
+			{ load: 0, capacity: 0, operators: 0, locale: 'fr', group: 'exclusive' },
+			{ load: 0, capacity: 1, operators: 2, locale: 'pt-BR', group: '__default' },
+			{ load: 0, capacity: 0, operators: 1, locale: 'pt-BR', group: 'a-group' },
+			{ load: 0, capacity: 0, operators: 0, locale: 'pt-BR', group: 'exclusive' }
+		] )
+	} )
 
 	it( 'should assign next chat', () => dispatchAction(
 		assignNextChat(),

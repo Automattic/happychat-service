@@ -11,7 +11,7 @@ import {
 import { getDefaultLocale } from './state/locales/selectors'
 import { selectIdentities } from './state/operator/selectors'
 import { setOperatorCapacity } from './state/operator/actions'
-import { REMOTE_USER_KEY } from './state/middlewares/socket-io/broadcast'
+import { REMOTE_USER_KEY } from './broadcast'
 
 const debug = require( 'debug' )( 'happychat-debug:upgrade-capacities' )
 

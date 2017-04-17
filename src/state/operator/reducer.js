@@ -4,7 +4,7 @@ import get from 'lodash/get'
 import concat from 'lodash/concat'
 import reject from 'lodash/reject'
 import omit from 'lodash/omit'
-import { REMOTE_USER_KEY } from '../middlewares/socket-io/broadcast'
+import { REMOTE_USER_KEY } from '../../broadcast'
 import { combineReducers } from 'redux'
 import {
 	merge,
