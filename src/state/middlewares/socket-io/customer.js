@@ -42,23 +42,19 @@ const log = require( 'debug' )( 'happychat:middleware:chatlist' )
 // limit the information for the user
 const identityForUser = ( { id, name, username, picture } ) => ( { id, name, username, picture } )
 
-const whenNoClients = ( io, room ) => new Promise( ( resolve, reject ) => {
+const haveOtherConnections = ( io, room ) => new Promise( ( resolve, reject ) => {
 	io.in( room ).clients( ( error, clients ) => {
 		if ( error ) {
 			return reject( error )
 		}
 
-		if ( clients.length > 0 ) {
-			return reject( new Error( 'Have other connected clients' ) )
-		}
-
-		resolve()
+		resolve( clients.length > 0 )
 	} )
 } )
 
 const init = ( { user, socket, io, dispatch, chat } ) => () => {
-	socket.on( 'message', ( { text, id, type, meta } ) => {
-		const message = { session_id: chat.id, id: id, text, type, timestamp: timestamp(), user: identityForUser( user ), meta }
+	socket.on( 'message', ( { text, id, meta } ) => {
+		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
 		// all customer connections for this user receive the message
 		dispatch( customerInboundMessage( chat, message, user ) )
 	} )
@@ -70,8 +66,12 @@ const init = ( { user, socket, io, dispatch, chat } ) => () => {
 	socket.on( 'disconnect', () => {
 		dispatch( customerSocketDisconnect( socket.id, chat, user ) )
 
-		whenNoClients( io, customerRoom( chat.id ) )
-			.then( () => dispatch( customerDisconnect( chat, user ) ) )
+		haveOtherConnections( io, customerRoom( chat.id ) )
+			.then( stillConnected => {
+				if ( ! stillConnected ) {
+					dispatch( customerDisconnect( chat, user ) )
+				}
+			} )
 	} )
 
 	socket.on( 'transcript', ( transcript_timestamp ) => {
