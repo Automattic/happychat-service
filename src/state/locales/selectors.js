@@ -1,4 +1,4 @@
-import { path, compose, defaultTo } from 'ramda'
+import { path, compose, defaultTo, map, when, merge } from 'ramda'
 
 const normalizeLocale = locale => locale
 
@@ -9,6 +9,7 @@ export const getSupportedLocales = compose(
 )
 
 export const getLocaleMembership = ( locale, user_id, state ) => compose(
-	defaultTo( { capacity: 0, load: 0, active: false } ),
+	map( when( isNaN, 0 ) ),
+	merge( { capacity: 0, load: 0, active: false } ),
 	path( [ 'locales', 'memberships', normalizeLocale( locale ), user_id ] )
 )( state )
