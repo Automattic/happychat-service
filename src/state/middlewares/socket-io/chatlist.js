@@ -81,7 +81,6 @@ import {
 	getAllMissedChats
 } from '../../chatlist/selectors'
 import {
-	STATUS_BLOCKED,
 	STATUS_CUSTOMER_DISCONNECT,
 } from '../../chatlist/reducer'
 import {
@@ -365,7 +364,6 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		) ) );
 
 		// notify status to customer
-		customer_io.to( customerRoom( chat.id ) ).emit( 'status', STATUS_BLOCKED );
 		customer_io.to( customerRoom( chat.id ) ).emit( 'accept', false );
 
 	}, chat_id => debug( 'chat.block without existing chat', chat_id ) )( action.chat_id )
