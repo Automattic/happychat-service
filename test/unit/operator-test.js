@@ -18,15 +18,15 @@ import {
 	INSERT_PENDING_CHAT,
 	OPERATOR_READY,
 	SET_OPERATOR_STATUS,
-	SET_OPERATOR_CAPACITY
-} from 'state/action-types'
+	SET_OPERATOR_CAPACITY,
+	CUSTOMER_BLOCK
+} from 'state/action-types';
 import {
 	setAcceptsCustomers,
-	operatorChatJoin,
-	operatorChatClose,
+	operatorChatJoin
 } from 'state/operator/actions'
 import { selectTotalCapacity } from 'state/operator/selectors'
-import { insertPendingChat } from 'state/chatlist/actions'
+import { insertPendingChat, closeChat } from 'state/chatlist/actions'
 import { getGroups } from 'state/groups/selectors'
 
 const debug = require( 'debug' )( 'happychat:operator-test' )
@@ -195,27 +195,45 @@ describe( 'Operators', () => {
 			} )
 		} )
 
-		it( 'should emit chat.close to all clients in a chat', () => {
-			return () => new Promise( resolve => {
-				watchForType( INSERT_PENDING_CHAT, action => {
-					resolve( action.chat )
-				}, true )
-				store.dispatch( insertPendingChat( { id: 'chat-id' } ) )
-			} )
-			.then( ( chat ) => connectAllClientsToChat( chat, op ) )
-			.then( clients => {
-				const all = Promise.all( map( clients, ( { client: opClient } ) => new Promise( resolve => {
-					opClient.once( 'chat.close', ( chat, opUser ) => {
-						resolve( { chat, operator: opUser, client: opClient } )
-					} )
-				} ) ) )
-				store.dispatch( operatorChatClose( { id: 'chat-id' }, op ) )
-				return all
-			} )
-			.then( ( messages ) => {
-				equal( messages.length, 2 )
-			} )
-		} )
+		describe( 'with assigned chat', () => {
+			beforeEach( () => {
+				return new Promise( resolve => {
+					watchForType( INSERT_PENDING_CHAT, action => {
+						resolve( action.chat );
+					}, true );
+					store.dispatch( insertPendingChat( { id: 'chat-id' } ) );
+				} )
+				.then( chat => connectAllClientsToChat( chat, op ) );
+			} );
+
+			it( 'should emit chat.close to all clients in a chat', () => {
+				return Promise.resolve( connections )
+				.then( clients => {
+					const all = Promise.all( map( clients, ( { client: opClient } ) => new Promise( resolve => {
+						opClient.once( 'chat.close', ( chat, opUser ) => {
+							resolve( { chat, operator: opUser, client: opClient } );
+						} );
+					} ) ) );
+					store.dispatch( closeChat( 'chat-id', op ) );
+					return all;
+				} )
+				.then( ( messages ) => {
+					equal( messages.length, 2 );
+					for ( const message of messages ) {
+						deepEqual( message.chat.id, 'chat-id' );
+						deepEqual( message.operator, op );
+					}
+				} );
+			} );
+
+			it( 'should dispatch customerBlock when operator emits chat.block', done => {
+				watchForType( CUSTOMER_BLOCK, action => {
+					equal( action.chat_id, 'chat' );
+					done();
+				} );
+				connections[ 0 ].client.emit( 'chat.block', 'chat' );
+			} );
+		} );
 
 		it( 'should request transcript for chat', () => new Promise( resolve => {
 			const [ connection ] = connections;
