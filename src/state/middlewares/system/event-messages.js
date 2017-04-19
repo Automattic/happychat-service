@@ -1,6 +1,6 @@
 import { merge } from 'ramda'
 import { beforeNextAction, handlers, handleActionType } from './handlers'
-import { CUSTOMER_LEFT, CLOSE_CHAT, SET_CHAT_OPERATOR, OPERATOR_CHAT_JOIN, OPERATOR_CHAT_LEAVE, AUTOCLOSE_CHAT } from '../../action-types'
+import { CUSTOMER_LEFT, CLOSE_CHAT, SET_CHAT_OPERATOR, OPERATOR_CHAT_JOIN, OPERATOR_CHAT_LEAVE, AUTOCLOSE_CHAT, CUSTOMER_BLOCK } from '../../action-types'
 import { operatorInboundMessage } from '../../chatlist/actions'
 import { getChatOperator } from '../../chatlist/selectors'
 import makeEventMessage from './event-message'
@@ -47,5 +47,13 @@ export default store => beforeNextAction( handlers(
 			makeEventMessage( 'chat closed after customer left', chat_id ),
 			{ meta: { event_type: 'close' } }
 		) ) )
+	} ),
+	handleActionType( CUSTOMER_BLOCK, action => {
+		const { chat_id } = action;
+		const operator = getChatOperator( chat_id, store.getState() );
+		store.dispatch( operatorInboundMessage( chat_id, operator, merge(
+			makeEventMessage( 'customer blocked', chat_id ),
+			{ meta: { event_type: 'blocked', by: operator } }
+		) ) );
 	} )
 ) )

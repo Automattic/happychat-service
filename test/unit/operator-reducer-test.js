@@ -1,5 +1,9 @@
 import { deepEqual, equal } from 'assert'
-import { setOperatorCapacity, setOperatorStatus } from 'state/operator/actions'
+import {
+	setOperatorCapacity,
+	setOperatorStatus,
+	setUserOffline,
+} from 'state/operator/actions'
 import reducer from 'state/operator/reducer';
 import { createStore } from 'redux';
 import { REMOTE_USER_KEY } from 'broadcast'
@@ -34,4 +38,18 @@ describe( 'Operator reducer', () => {
 		deepEqual( store.getState().sockets, {} );
 		deepEqual( store.getState().user_sockets, {} );
 	} )
+
+	it( 'should set operator offline and unavailable', () => {
+		const store = createStore( reducer, {
+			identities: {
+				'user-a': {
+					status: 'any',
+					online: true,
+				}
+			}
+		} );
+		store.dispatch( setUserOffline( { id: 'user-a' } ) );
+		equal( store.getState().identities[ 'user-a' ].status, 'unavailable' );
+		equal( store.getState().identities[ 'user-a' ].online, false );
+	} );
 } )

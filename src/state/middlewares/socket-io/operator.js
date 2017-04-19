@@ -35,7 +35,8 @@ import {
 	operatorChatJoin,
 	operatorReady,
 	operatorChatTransfer,
-	operatorChatTranscriptRequest
+	operatorChatTranscriptRequest,
+	customerBlock,
 } from '../../operator/actions';
 
 const log = require( 'debug' )( 'happychat:middleware:operators' );
@@ -75,7 +76,14 @@ const join = ( { socket, dispatch, user, io } ) => {
 	socket.on( 'message', ( chat_id, { id, text } ) => {
 		const meta = {};
 		const userIdentity = identityForUser( user );
-		const message = { id: id, session_id: chat_id, text, timestamp: timestamp(), user: userIdentity, meta };
+		const message = {
+			id: id,
+			session_id: chat_id,
+			text,
+			timestamp: timestamp(),
+			user: userIdentity,
+			meta
+		};
 		// all customer connections for this user receive the message
 		dispatch( operatorInboundMessage( chat_id, user, message ) );
 	} );
@@ -93,6 +101,10 @@ const join = ( { socket, dispatch, user, io } ) => {
 		dispatch( operatorChatLeave( chat_id, user ) );
 	} );
 
+	socket.on( 'chat.block', ( chat_id, operator_id, user_id ) => {
+		dispatch( customerBlock( chat_id, operator_id, user_id ) );
+	} );
+
 	socket.on( 'chat.close', ( chat_id ) => {
 		dispatch( closeChat( chat_id, user ) );
 	} );
@@ -107,11 +119,14 @@ const join = ( { socket, dispatch, user, io } ) => {
 	} );
 };
 
-export default ( io, auth ) => ( store ) => {
+export default ( io, operatorAuth ) => ( store ) => {
 	io.on( 'connection', ( socket ) => {
-		auth( socket ).then(
+		operatorAuth( socket ).then(
 			user => join( { socket, dispatch: store.dispatch, user, io } ),
-			e => log( 'operator auth failed', e.message )
+			e => {
+				socket.emit( 'unauthorized' );
+				log( 'operator auth failed: ', e.message );
+			}
 		);
 	} );
 

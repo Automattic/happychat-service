@@ -15,7 +15,8 @@ import {
 	NOTIFY_CHAT_STATUS_CHANGED,
 	SEND_CUSTOMER_CHAT_LOG,
 	CUSTOMER_CHAT_TRANSCRIPT_FAILURE,
-	CUSTOMER_SEND_CHAT_TRANSCRIPT_RESPONSE
+	CUSTOMER_SEND_CHAT_TRANSCRIPT_RESPONSE,
+	CUSTOMER_BLOCK
 } from '../../action-types';
 import {
 	assignNextChat,
@@ -97,10 +98,12 @@ const join = ( { io, user, socket, dispatch }, middlewares ) => {
 
 export default ( { io, timeout = 1000 }, customerAuth, middlewares = [] ) => store => {
 	io.on( 'connection', socket => {
-		customerAuth( socket )
-		.then(
+		customerAuth( socket ).then(
 			user => join( { socket, user, io, dispatch: store.dispatch }, middlewares ),
-			e => log( 'customer auth failed', e.message )
+			e => {
+				socket.emit( 'unauthorized' );
+				log( 'customer auth failed', e.message );
+			}
 		);
 	} );
 
@@ -150,6 +153,11 @@ export default ( { io, timeout = 1000 }, customerAuth, middlewares = [] ) => sto
 		);
 	};
 
+	const handleCustomerBlock = action => {
+		// notify status to customer
+		io.to( customerRoom( action.chat_id ) ).emit( 'accept', false );
+	};
+
 	return next => action => {
 		switch ( action.type ) {
 			case NOTIFY_SYSTEM_STATUS_CHANGE:
@@ -168,6 +176,9 @@ export default ( { io, timeout = 1000 }, customerAuth, middlewares = [] ) => sto
 			case CUSTOMER_JOIN:
 				handleCustomerJoin( action );
 				return next( action );
+			case CUSTOMER_BLOCK:
+				handleCustomerBlock( action );
+				break;
 			case SEND_CUSTOMER_CHAT_LOG:
 				handleSendCustomerChatLog( action );
 				break;

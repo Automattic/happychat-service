@@ -69,11 +69,7 @@ export const service = ( io, { customerAuthenticator, agentAuthenticator, operat
 			resolve( result )
 		} )
 	} )
-	.then( validator )
-	.catch( e => {
-		log( 'failed to authorize user', e.message )
-		socket.emit( 'unauthorized' )
-	} )
+	.then( validator );
 
 	const store = createStore( reducer, initialState, compose( ... enhancers, enhancer( {
 		io,
