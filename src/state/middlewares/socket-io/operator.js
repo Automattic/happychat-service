@@ -17,7 +17,8 @@ import {
 	operatorChatJoin,
 	operatorReady,
 	operatorChatTransfer,
-	operatorChatTranscriptRequest
+	operatorChatTranscriptRequest,
+	customerBlock,
 } from '../../operator/actions'
 import {
 	selectUser,
@@ -87,6 +88,10 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 		store.dispatch( operatorChatLeave( chat_id, user ) )
 	} )
 
+	socket.on( 'chat.block', ( chat_id, operator_id, user_id ) => {
+		store.dispatch( customerBlock( chat_id, operator_id, user_id ) );
+	} );
+
 	socket.on( 'chat.close', ( chat_id ) => {
 		store.dispatch( closeChat( chat_id, user ) );
 	} )
@@ -127,13 +132,16 @@ const join = ( { socket, store, user, io }, middlewares ) => {
 	} )
 }
 
-export default ( io, auth, middlewares ) => ( store ) => {
+export default ( io, operatorAuth, middlewares ) => ( store ) => {
 	io.on( 'connection', ( socket ) => {
-		auth( socket ).then(
+		operatorAuth( socket ).then(
 			user => join( { socket, store, user, io }, middlewares ),
-			e => log( 'operator auth failed', e.message )
+			e => {
+				socket.emit( 'unauthorized' );
+				log( 'operator auth failed: ', e.message )
+			}
 		)
-	} )
+	} );
 
 	return ( next ) => ( action ) => {
 		switch ( action.type ) {

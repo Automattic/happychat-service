@@ -15,6 +15,7 @@ import {
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
 	SET_USER_OFFLINE,
+	CUSTOMER_BLOCK,
 	JOIN_LOCALE,
 	LEAVE_LOCALE
 } from '../action-types'
@@ -65,6 +66,10 @@ export const setAcceptsCustomers = allowRemote( SET_SYSTEM_ACCEPTS_CUSTOMERS, ( 
 export const operatorChatLeave = ( chat_id, user ) => (
 	{ type: OPERATOR_CHAT_LEAVE, chat_id, user }
 )
+
+export const customerBlock = ( chat_id, operator_id, user_id ) => (
+	{ type: CUSTOMER_BLOCK, chat_id, operator_id, user_id }
+);
 
 export const operatorChatJoin = ( chat_id, user ) => (
 	{ type: OPERATOR_CHAT_JOIN, chat_id, user }
