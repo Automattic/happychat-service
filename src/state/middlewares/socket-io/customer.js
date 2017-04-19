@@ -3,8 +3,8 @@ import {
 	isEmpty,
 	compose,
 	tap,
-} from 'ramda'
-import { throttle } from 'lodash'
+} from 'ramda';
+import { throttle } from 'lodash';
 import {
 	CUSTOMER_RECEIVE_TYPING,
 	CUSTOMER_RECEIVE_MESSAGE,
@@ -16,7 +16,7 @@ import {
 	SEND_CUSTOMER_CHAT_LOG,
 	CUSTOMER_CHAT_TRANSCRIPT_FAILURE,
 	CUSTOMER_SEND_CHAT_TRANSCRIPT_RESPONSE
-} from '../../action-types'
+} from '../../action-types';
 import {
 	assignNextChat,
 	customerInboundMessage,
@@ -25,62 +25,62 @@ import {
 	customerSocketDisconnect,
 	customerDisconnect,
 	customerChatTranscriptRequest,
-} from '../../chatlist/actions'
+} from '../../chatlist/actions';
 import {
 	getChatStatus,
 	getAllNewChats,
-} from '../../chatlist/selectors'
+} from '../../chatlist/selectors';
 import {
 	canAcceptChat
-} from '../../operator/selectors'
-import timestamp from '../../timestamp'
+} from '../../operator/selectors';
+import timestamp from '../../timestamp';
 
 export const customerRoom = id => `customer/${ id }`;
 
-const log = require( 'debug' )( 'happychat:middleware:chatlist' )
+const log = require( 'debug' )( 'happychat:middleware:chatlist' );
 
 // limit the information for the user
-const identityForUser = ( { id, name, username, picture } ) => ( { id, name, username, picture } )
+const identityForUser = ( { id, name, username, picture } ) => ( { id, name, username, picture } );
 
 const haveOtherConnections = ( io, room ) => new Promise( ( resolve, reject ) => {
 	io.in( room ).clients( ( error, clients ) => {
 		if ( error ) {
-			return reject( error )
+			return reject( error );
 		}
 
-		resolve( clients.length > 0 )
-	} )
-} )
+		resolve( clients.length > 0 );
+	} );
+} );
 
 const init = ( { user, socket, io, dispatch, chat } ) => () => {
 	socket.on( 'message', ( { text, id, meta } ) => {
-		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta }
+		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta };
 		// all customer connections for this user receive the message
-		dispatch( customerInboundMessage( chat, message, user ) )
-	} )
+		dispatch( customerInboundMessage( chat, message, user ) );
+	} );
 
 	socket.on( 'typing', throttle( ( text ) => {
-		dispatch( customerTyping( chat.id, user, text ) )
-	}, 100, { leading: true } ) )
+		dispatch( customerTyping( chat.id, user, text ) );
+	}, 100, { leading: true } ) );
 
 	socket.on( 'disconnect', () => {
-		dispatch( customerSocketDisconnect( socket.id, chat, user ) )
+		dispatch( customerSocketDisconnect( socket.id, chat, user ) );
 
 		haveOtherConnections( io, customerRoom( chat.id ) )
 			.then( stillConnected => {
 				if ( ! stillConnected ) {
-					dispatch( customerDisconnect( chat, user ) )
+					dispatch( customerDisconnect( chat, user ) );
 				}
-			} )
-	} )
+			} );
+	} );
 
 	socket.on( 'transcript', ( transcript_timestamp ) => {
-		dispatch( customerChatTranscriptRequest( socket.id, chat.id, transcript_timestamp ) )
-	} )
+		dispatch( customerChatTranscriptRequest( socket.id, chat.id, transcript_timestamp ) );
+	} );
 
-	socket.emit( 'init', user )
-	dispatch( customerJoin( chat, user ) )
-}
+	socket.emit( 'init', user );
+	dispatch( customerJoin( chat, user ) );
+};
 
 const join = ( { io, user, socket, dispatch }, middlewares ) => {
 	const chat = {
@@ -91,9 +91,9 @@ const join = ( { io, user, socket, dispatch }, middlewares ) => {
 		picture: user.picture,
 		locale: user.locale,
 		groups: user.groups
-	}
-	socket.join( customerRoom( chat.id ), init( { user, socket, io, dispatch, chat }, middlewares ) )
-}
+	};
+	socket.join( customerRoom( chat.id ), init( { user, socket, io, dispatch, chat }, middlewares ) );
+};
 
 export default ( { io, timeout = 1000 }, customerAuth, middlewares = [] ) => store => {
 	io.on( 'connection', socket => {
@@ -101,24 +101,24 @@ export default ( { io, timeout = 1000 }, customerAuth, middlewares = [] ) => sto
 		.then(
 			user => join( { socket, user, io, dispatch: store.dispatch }, middlewares ),
 			e => log( 'customer auth failed', e.message )
-		)
-	} )
+		);
+	} );
 
 	const handleCustomerReceiveMessage = action => {
-		const { id, message } = action
-		io.to( customerRoom( id ) ).emit( 'message', message )
-	}
+		const { id, message } = action;
+		io.to( customerRoom( id ) ).emit( 'message', message );
+	};
 
 	const handleCustomerReceiveTyping = action => {
-		const { id, text } = action
-		io.to( customerRoom( id ) ).emit( 'typing', text && !isEmpty( text ) )
-	}
+		const { id, text } = action;
+		io.to( customerRoom( id ) ).emit( 'typing', text && ! isEmpty( text ) );
+	};
 
 	const handleCustomerJoin = action => {
-		const { chat } = action
-		const accept = canAcceptChat( chat.id, store.getState() )
-		io.to( customerRoom( chat.id ) ).emit( 'accept', accept )
-	}
+		const { chat } = action;
+		const accept = canAcceptChat( chat.id, store.getState() );
+		io.to( customerRoom( chat.id ) ).emit( 'accept', accept );
+	};
 
 	const handleNotifiSystemStatusChange = () => {
 		// get all new chats and notify their status
@@ -126,65 +126,65 @@ export default ( { io, timeout = 1000 }, customerAuth, middlewares = [] ) => sto
 			map( tap( chat => {
 				io
 					.to( customerRoom( chat.id ) )
-					.emit( 'accept', canAcceptChat( chat.id, store.getState() ) )
+					.emit( 'accept', canAcceptChat( chat.id, store.getState() ) );
 			} ) ),
 			getAllNewChats
-		)( store.getState() )
-	}
+		)( store.getState() );
+	};
 
 	const handleSendCustomerChatLog = action => {
-		io.to( customerRoom( action.id ) ).emit( 'log', action.log )
-	}
+		io.to( customerRoom( action.id ) ).emit( 'log', action.log );
+	};
 
 	const hadleChatTranscriptResponse = action => {
 		io.to( action.socketId ).emit(
 			'transcript',
 			{ timestamp: action.timestamp, messages: action.messages }
-		)
-	}
+		);
+	};
 
 	const handleChatTranscriptFailure = action => {
 		io.to( action.socketId ).emit(
 			'transcript.failure',
 			action.errorMessage
-		)
-	}
+		);
+	};
 
 	return next => action => {
 		switch ( action.type ) {
 			case NOTIFY_SYSTEM_STATUS_CHANGE:
-				handleNotifiSystemStatusChange( action )
+				handleNotifiSystemStatusChange( action );
 				break;
 			case NOTIFY_CHAT_STATUS_CHANGED:
-				const status = getChatStatus( action.chat_id, store.getState() );
-				io.to( customerRoom( action.chat_id ) ).emit( 'status', status )
+				const status = getChatStatus( action.chatID, store.getState() );
+				io.to( customerRoom( action.chatID ) ).emit( 'status', status );
 				break;
 			case CUSTOMER_RECEIVE_TYPING:
-				handleCustomerReceiveTyping( action )
-				return next( action )
+				handleCustomerReceiveTyping( action );
+				return next( action );
 			case CUSTOMER_RECEIVE_MESSAGE:
-				handleCustomerReceiveMessage( action )
-				return next( action )
+				handleCustomerReceiveMessage( action );
+				return next( action );
 			case CUSTOMER_JOIN:
-				handleCustomerJoin( action )
-				return next( action )
+				handleCustomerJoin( action );
+				return next( action );
 			case SEND_CUSTOMER_CHAT_LOG:
-				handleSendCustomerChatLog( action )
+				handleSendCustomerChatLog( action );
 				break;
 			case CUSTOMER_SEND_CHAT_TRANSCRIPT_RESPONSE:
-				hadleChatTranscriptResponse( action )
-				break
+				hadleChatTranscriptResponse( action );
+				break;
 			case CUSTOMER_CHAT_TRANSCRIPT_FAILURE:
-				handleChatTranscriptFailure( action )
-				break
+				handleChatTranscriptFailure( action );
+				break;
 		}
-		const result = next( action )
+		const result = next( action );
 		switch ( action.type ) {
 			case SET_CHAT_MISSED:
 			case INSERT_PENDING_CHAT:
-				store.dispatch( assignNextChat() )
+				store.dispatch( assignNextChat() );
 				break;
 		}
-		return result
-	}
-}
+		return result;
+	};
+};

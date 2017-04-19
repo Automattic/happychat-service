@@ -1,6 +1,6 @@
-import operatorMiddleware from './operator'
-import customerMiddleware from './customer'
-import agentMiddleware from './agents'
+import operatorMiddleware from './operator';
+import customerMiddleware from './customer';
+import agentMiddleware from './agents';
 
 export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], timeout = undefined } ) => {
 	return [
@@ -10,5 +10,5 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 			io: io.of( '/customer' ),
 			timeout
 		}, customerAuth, messageMiddlewares )
-	]
-}
+	];
+};
