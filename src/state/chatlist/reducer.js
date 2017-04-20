@@ -113,7 +113,7 @@ const updateStatus = ( status, state ) => compose(
  * Chat reducer for updating/storing a chat's details in an array with the given indexes:
  * - 0 - { string } chat status
  * - 1 - { Object } chat session context
- * - 2 - { string } assigned operator id
+ * - 2 - { Object } assigned operator
  * - 3 - { number } timestamp updated with status changes
  * - 4 - { Object } a map of operator_id: bool of operators in the chat
  * - 5 - { string } the chat's locale
