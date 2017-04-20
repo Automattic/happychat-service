@@ -143,30 +143,18 @@ export const selectSocketIdentity = ( { operators: { sockets, identities } }, so
 	get( sockets, socket.id )
 )
 export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
-export const selectTotalCapacity = ( locale, groups, state ) => compose(
-	reduce( ( { load: totalLoad, capacity: totalCapacity }, { id, status, online } ) =>
-		ifElse(
-			or(
-				whereEq( { status: STATUS_AVAILABLE, online: true } ),
-				whereEq( { status: STATUS_RESERVE, online: true } ),
-			),
-			() => {
-				const { load, capacity, active } = getLocaleMembership( locale, id, state )
-				if ( ! active || ! isMemberOfGroups( id, groups ) ) {
-					return { load: totalLoad, capacity: totalCapacity }
-				}
-				return {
-					load: totalLoad + parseInt( load ),
-					capacity: totalCapacity + parseInt( capacity )
-				}
-			},
-			() => ( { load: totalLoad, capacity: totalCapacity } )
-		)( { status, online } ),
-		{ load: 0, capacity: 0 }
-	),
-	values,
-	path( [ 'operators', 'identities' ] )
-)( state )
+export const selectTotalCapacity = ( locale, groups, state ) =>
+	reduce(
+		( { load: totalLoad, capacity: totalCapacity }, { id, status, online } ) => {
+			const { load, capacity, active } = getLocaleMembership( locale, id, state );
+			return {
+				load: totalLoad + parseInt( load, 10 ),
+				capacity: totalCapacity + parseInt( capacity, 10 )
+			};
+		},
+		{ load: 0, capacity: 0 },
+		getAvailableOperators( locale, groups, state )
+	);
 
 export const getAvailableCapacity = ( locale, groups, state ) => {
 	const { load, capacity } = selectTotalCapacity( locale, groups, state )
@@ -225,10 +213,17 @@ export const isOperatorStatusAvailable = ( id, state ) => equals(
 	STATUS_AVAILABLE
 )
 
+export const isOperatorStatusReserve = ( id, state ) =>
+	get( state, [ 'operators', 'identities', asString( id ), 'status' ] )
+		=== STATUS_RESERVE;
+
+export const isOperatorStatusAvailableOrInReserve = ( id, state ) =>
+	isOperatorStatusAvailable( id, state ) || isOperatorStatusReserve( id, state );
+
 export const isOperatorOnline = getOperatorOnline
 
 export const isOperatorAcceptingChats = ( id, state ) =>
-	isOperatorOnline( id, state ) && isOperatorStatusAvailable( id, state )
+	isOperatorOnline( id, state ) && isOperatorStatusAvailableOrInReserve( id, state );
 
 export const canAcceptChat = ( chatID, state ) => both(
 	getSystemAcceptsCustomers,
