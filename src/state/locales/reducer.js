@@ -24,7 +24,8 @@ import {
 	JOIN_LOCALE,
 	LEAVE_LOCALE,
 	CONFIGURE_LOCALES,
-	SET_USER_LOADS
+	SET_USER_LOADS,
+	ADD_USER_LOCALE
 } from '../action-types';
 
 // List of locales that operators can choose to support
@@ -72,6 +73,8 @@ const membership = ( state = { capacity: DEFAULT_CAPACITY, load: 0, active: true
 			return merge( state, { active: true } );
 		case LEAVE_LOCALE:
 			return merge( state, { active: false } );
+		case ADD_USER_LOCALE:
+			return merge( state, { active: true } );
 		case SET_OPERATOR_CAPACITY:
 			return merge( state, { capacity: parseInt( action.capacity ) } );
 	}
@@ -87,6 +90,9 @@ const memberships = ( state = {}, action ) => {
 		case LEAVE_LOCALE:
 			const userPath = localeUserPath( action );
 			return assocPath( userPath, membership( path( userPath, state ), action ), state );
+		case ADD_USER_LOCALE:
+			const keyPath = [ action.locale, action.operator_id ];
+			return assocPath( keyPath, membership( path( keyPath, state ), action ), state );
 		case SET_USER_LOADS:
 			// every user that has a load set in the action will
 			// have a membership record, so iterating through the current
