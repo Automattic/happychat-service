@@ -1,3 +1,12 @@
+/**
+ * Controller middleware
+ *
+ * Handles all inbound chat messages and filters them through configured message filters.
+ *
+ * Dispatches outbound messages that need to be delivered to any clients that are in a
+ * given chat.
+ *
+ */
 import { assoc, dissoc, compose, slice, append, defaultTo, prop, merge, pipe, when, path, not, isNil } from 'ramda';
 import { run } from '../../../middleware-interface';
 
@@ -26,13 +35,29 @@ const debug = require( 'debug' )( 'happychat-debug:controller' );
 
 const DEFAULT_MAX_MESSAGES = 100;
 
+/**
+ * Chat log caching layer for recently received chat messages.
+ */
 export class ChatLog {
 
+	/**
+	 * @constructor
+	 *
+	 * @param { Object } options - settings for the chat log
+	 * @param { number } options.maxMessages - number of messages to keep in the log
+	 */
 	constructor( options = { maxMessages: DEFAULT_MAX_MESSAGES } ) {
 		this.maxMessages = options.maxMessages;
 		this.chats = {};
 	}
 
+	/**
+	 * Appends message to chat of `id`
+	 *
+	 * @param { String } id - chat id related tot message
+	 * @param { Object } message - message to append to chat log
+	 * @returns { undefined }
+	 */
 	append( id, message ) {
 		this.chats = assoc( id, compose(
 			slice( -this.maxMessages, Infinity ),
@@ -44,6 +69,12 @@ export class ChatLog {
 		return defaultTo( [], prop( id, this.chats ) );
 	}
 
+	/**
+	 * Remove chat log matching chat id
+	 *
+	 * @param { String } id - id of chat to remove
+	 * @returns { undefined }
+	 */
 	evict( id ) {
 		this.chats = dissoc( id, this.chats );
 	}
@@ -64,10 +95,16 @@ const formatAgentMessage = ( author_type, author_id, session_id, { id, timestamp
 	source
 } );
 
-export default ( middlewares ) => store => {
+/**
+ * Creates controlled middleware
+ *
+ * @param { Object[] } filters - list of message filters to be applied to every message
+ * @returns { Function } redux middleware
+ */
+export default ( filters ) => store => {
 	const cache = { operator: new ChatLog( { maxMessages: 20 } ), customer: new ChatLog( { maxMessages: 20 } ) };
 
-	const runMiddleware = ( ... args ) => run( middlewares )( ... args ).then(
+	const runMiddleware = ( ... args ) => run( filters )( ... args ).then(
 		message => {
 			if ( !! message ) {
 				return message;
