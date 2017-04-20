@@ -77,9 +77,8 @@ export const service = ( io, authenticators, initialState, { enhancers = [], mid
 		operatorAuth: auth( operatorAuthenticator, validateKeys( REQUIRED_OPERATOR_KEYS ) ),
 		customerAuth: auth( customerAuthenticator, validateKeys( REQUIRED_CUSTOMER_KEYS ) ),
 		agentAuth: auth( agentAuthenticator ),
-		messageMiddlewares: messageMiddlewares.middlewares(),
-		logCacheBuilder
-	}, middlewares ) ) );
+		messageMiddlewares: messageMiddlewares.middlewares()
+	}, middlewares, logCacheBuilder ) ) );
 
 	broadcast( store, io.of( '/operator' ) )
 
