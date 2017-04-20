@@ -9,7 +9,7 @@ import transferChat from './transfer-chat'
 import eventMessages from './event-messages'
 import transcriptRequester from './transcript-requester'
 
-export default ( messageMiddlewares, timeout = undefined ) => ( [
+export default ( messageMiddlewares, timeout = undefined, logCacheBuilder ) => ( [
 	customerPresence( timeout ),
 	eventMessages,
 	operatorDefaultGroup,
@@ -19,5 +19,5 @@ export default ( messageMiddlewares, timeout = undefined ) => ( [
 	loadUpdater,
 	chatAssignment,
 	transcriptRequester( messageMiddlewares ),
-	controllerMiddleware( messageMiddlewares )
-] )
+	controllerMiddleware( messageMiddlewares, logCacheBuilder )
+] );

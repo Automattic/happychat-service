@@ -9,7 +9,7 @@ import { DESERIALIZE, SERIALIZE } from './action-types';
 export const serializeAction = () => ( { type: SERIALIZE } );
 export const deserializeAction = () => ( { type: DESERIALIZE } );
 
-export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], timeout = undefined }, middlewares = [] ) => {
+export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], timeout = undefined }, middlewares = [], logCacheBuilder ) => {
 	return applyMiddleware(
 		// logs dispatches
 		logger,
@@ -20,6 +20,6 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 		// enables interface for socket.io clients
 		... socketioMiddleware( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares, timeout } ),
 		// core middlewares enabling support chat
-		...systemMiddleware( messageMiddlewares, timeout ),
+		...systemMiddleware( messageMiddlewares, timeout, logCacheBuilder ),
 	);
 };

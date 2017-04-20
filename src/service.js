@@ -56,8 +56,9 @@ const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_H
 	)
 }
 
-export const service = ( io, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, initialState, { enhancers = [], middlewares = []} ) => {
-	log( 'configuring socket.io server' )
+export const service = ( io, authenticators, initialState, { enhancers = [], middlewares = [] }, logCacheBuilder = undefined ) => {
+	const { customerAuthenticator, agentAuthenticator, operatorAuthenticator } = authenticators;
+	log( 'configuring socket.io server' );
 
 	const messageMiddlewares = middlewareInterface()
 
@@ -76,8 +77,9 @@ export const service = ( io, { customerAuthenticator, agentAuthenticator, operat
 		operatorAuth: auth( operatorAuthenticator, validateKeys( REQUIRED_OPERATOR_KEYS ) ),
 		customerAuth: auth( customerAuthenticator, validateKeys( REQUIRED_CUSTOMER_KEYS ) ),
 		agentAuth: auth( agentAuthenticator ),
-		messageMiddlewares: messageMiddlewares.middlewares()
-	}, middlewares ) ) )
+		messageMiddlewares: messageMiddlewares.middlewares(),
+		logCacheBuilder
+	}, middlewares ) ) );
 
 	broadcast( store, io.of( '/operator' ) )
 

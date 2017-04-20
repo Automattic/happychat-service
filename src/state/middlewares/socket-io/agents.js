@@ -13,7 +13,7 @@ const onAuthorized = ( { socket, agent, dispatch } ) => {
   - `chat_id`: the conversation this message is for
   - `timestamp`: timestampe of the message
   - `text`: content of the message
-  - `context`: the id of the channel the message was sent to
+  - `session_id`: the id of the channel the message was sent to
   - `author_id`: the id of the author of the message
   - `author_type`: One of `customer`, `support`, `agent`
 	 */

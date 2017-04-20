@@ -56,32 +56,40 @@ export class ChatLog {
 	 *
 	 * @param { String } id - chat id related tot message
 	 * @param { Object } message - message to append to chat log
-	 * @returns { undefined }
+	 * @returns { Promise } resolves whet append is completed
 	 */
 	append( id, message ) {
 		this.chats = assoc( id, compose(
 			slice( -this.maxMessages, Infinity ),
 			append( message )
-		)( this.findLog( id ) ), this.chats );
+		)( this.getLog( id ) ), this.chats );
+		return Promise.resolve();
 	}
 
-	findLog( id ) {
+	getLog( id ) {
 		return defaultTo( [], prop( id, this.chats ) );
+	}
+
+	/**
+	 * Gets the log for the given chat id
+	 * @param { String } id - chat id
+	 * @returns { Promise } resolves with list of log messages
+	 */
+	findLog( id ) {
+		return Promise.resolve( this.getLog( id ) );
 	}
 
 	/**
 	 * Remove chat log matching chat id
 	 *
 	 * @param { String } id - id of chat to remove
-	 * @returns { undefined }
+	 * @returns { Promise } resolves when chat log is removed
 	 */
 	evict( id ) {
 		this.chats = dissoc( id, this.chats );
+		return Promise.resolve();
 	}
 
-	recordMessage( chat, message ) {
-		return this.append( chat.id, message );
-	}
 }
 
 // change a lib/customer message to what an agent client expects
@@ -95,14 +103,16 @@ const formatAgentMessage = ( author_type, author_id, session_id, { id, timestamp
 	source
 } );
 
+const defaultChatLog = () => new ChatLog( { maxMessages: 20 } );
+
 /**
  * Creates controlled middleware
  *
  * @param { Object[] } filters - list of message filters to be applied to every message
  * @returns { Function } redux middleware
  */
-export default ( filters ) => store => {
-	const cache = { operator: new ChatLog( { maxMessages: 20 } ), customer: new ChatLog( { maxMessages: 20 } ) };
+export default ( filters, chatLogFactory = defaultChatLog ) => store => {
+	const cache = { operator: chatLogFactory( 'operator' ), customer: chatLogFactory( 'customer' ) };
 
 	const runMiddleware = ( ... args ) => run( filters )( ... args ).then(
 		message => {
@@ -116,16 +126,16 @@ export default ( filters ) => store => {
 	// toAgents( customers, 'disconnect', 'customer.disconnect' ) // TODO: do we want to wait till timer triggers?
 	const handleCustomerJoin = action => {
 		const { chat } = action;
-		process.nextTick( () => {
-			store.dispatch( sendCustomerChatLog( chat.id, cache.customer.findLog( chat.id ) ) );
+		cache.customer.findLog( chat.id ).then( messages => {
+			store.dispatch( sendCustomerChatLog( chat.id, messages ) );
 		} );
 	};
 
 	const handleOperatorJoin = action => {
 		const { chat, user } = action;
 		debug( 'sending logs to operator room', user.id );
-		process.nextTick( () => {
-			store.dispatch( sendOperatorChatLog( chat.id, user.id, cache.operator.findLog( chat.id ) ) );
+		cache.operator.findLog( chat.id ).then( messages => {
+			store.dispatch( sendOperatorChatLog( chat.id, user.id, messages ) );
 		} );
 	};
 
@@ -148,8 +158,8 @@ export default ( filters ) => store => {
 
 		const origin = 'customer';
 		runMiddleware( { origin, destination: 'customer', chat, message: customerMessage } )
+		.then( m => cache.customer.append( chat.id, m ).then( () => m ) )
 		.then( m => {
-			cache.customer.recordMessage( chat, m );
 			store.dispatch( customerReceiveMessage( chat.id, m ) );
 			return m;
 		}, e => debug( 'middleware failed ', e.message ) );
@@ -160,8 +170,8 @@ export default ( filters ) => store => {
 		), e => debug( 'middleware failed', e.message ) );
 
 		runMiddleware( { origin, destination: 'operator', chat, message: customerMessage } )
+		.then( m => cache.operator.append( chat.id, m ).then( () => m ) )
 		.then( m => {
-			cache.operator.recordMessage( chat, m );
 			store.dispatch( operatorReceiveMessage( chat.id, m ) );
 			return m;
 		}, e => debug( 'middleware failed', e.message ) );
@@ -182,15 +192,15 @@ export default ( filters ) => store => {
 		) );
 
 		runMiddleware( { origin, destination: 'operator', chat, message: operatorMessage, user: operator } )
+		.then( m => cache.operator.append( chat.id, m ).then( () => m ) )
 		.then( m => {
-			cache.operator.recordMessage( chat, m );
 			store.dispatch( operatorReceiveMessage( chat.id, m ) );
 			return m;
 		} );
 
 		runMiddleware( { origin, destination: 'customer', chat, message: operatorMessage, user: operator } )
+		.then( m => cache.customer.append( chat.id, m ).then( () => m ) )
 		.then( m => {
-			cache.customer.recordMessage( chat, operator, m );
 			store.dispatch( customerReceiveMessage( chat.id, m ) );
 			return m;
 		} );
@@ -211,15 +221,15 @@ export default ( filters ) => store => {
 		) );
 
 		runMiddleware( { origin, destination: 'operator', chat, message: agentMessage } )
+		.then( m => cache.operator.append( chat.id, m ).then( () => m ) )
 		.then( m => {
-			cache.operator.recordMessage( chat, m );
 			store.dispatch( operatorReceiveMessage( chat.id, format( m ) ) );
 			return m;
 		} );
 
 		runMiddleware( { origin, destination: 'customer', chat, message: agentMessage } )
+		.then( m => cache.customer.append( chat.id, message ).then( () => m ) )
 		.then( m => {
-			cache.customer.recordMessage( chat, message );
 			store.dispatch(
 				customerReceiveMessage( chat.id, format( m ) )
 			);
