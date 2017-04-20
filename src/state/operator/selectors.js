@@ -9,6 +9,7 @@ import {
 	ifElse,
 	whereEq,
 	not,
+	or,
 	always,
 	path,
 	reduce,
@@ -145,7 +146,10 @@ export const selectUser = ( { operators: { identities } }, userId ) => get( iden
 export const selectTotalCapacity = ( locale, groups, state ) => compose(
 	reduce( ( { load: totalLoad, capacity: totalCapacity }, { id, status, online } ) =>
 		ifElse(
-			whereEq( { status: STATUS_AVAILABLE, online: true } ),
+			or(
+				whereEq( { status: STATUS_AVAILABLE, online: true } ),
+				whereEq( { status: STATUS_RESERVE, online: true } ),
+			),
 			() => {
 				const { load, capacity, active } = getLocaleMembership( locale, id, state )
 				if ( ! active || ! isMemberOfGroups( id, groups ) ) {
