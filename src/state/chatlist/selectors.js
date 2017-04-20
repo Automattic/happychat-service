@@ -25,7 +25,9 @@ import {
 	find,
 	identity,
 	toLower,
-	keys
+	keys,
+	anyPass,
+	tap
 } from 'ramda';
 import {
 	statusView,
@@ -67,6 +69,12 @@ const selectChat = id => compose(
 const mapToChat = map( chatView );
 const mapToMembers = map( membersView );
 const matchingStatus = status => filter( compose( equals( status ), statusView ) );
+const matchingStatuses = statuses => filter(
+	compose(
+		anyPass( map( equals, statuses ) ),
+		statusView
+	)
+);
 const filterClosed = filter( compose( not, equals( STATUS_CLOSED ), statusView ) );
 
 /**
@@ -193,6 +201,13 @@ export const getChats = getAllChats;
 export const getChatsWithStatus = ( status, state ) => compose(
 	mapToChat,
 	matchingStatus( status ),
+	values,
+	selectChatlist
+)( state );
+
+export const getChatsWithStatuses = ( statuses, state ) => compose(
+	mapToChat,
+	matchingStatuses( statuses ),
 	values,
 	selectChatlist
 )( state );

@@ -29,8 +29,12 @@ import {
 } from '../../chatlist/actions';
 import {
 	getChatStatus,
-	getAllNewChats,
+	getChatsWithStatuses
 } from '../../chatlist/selectors';
+import {
+	STATUS_CLOSED,
+	STATUS_NEW
+} from '../../chatlist/reducer';
 import {
 	canAcceptChat
 } from '../../operator/selectors';
@@ -131,7 +135,7 @@ export default ( { io, timeout = 1000 }, customerAuth, middlewares = [] ) => sto
 					.to( customerRoom( chat.id ) )
 					.emit( 'accept', canAcceptChat( chat.id, store.getState() ) );
 			} ) ),
-			getAllNewChats
+			state => getChatsWithStatuses( [ STATUS_CLOSED, STATUS_NEW ], state ),
 		)( store.getState() );
 	};
 
