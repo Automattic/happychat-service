@@ -6,9 +6,9 @@ import {
 } from 'state/operator/actions'
 import reducer from 'state/operator/reducer';
 import { createStore } from 'redux';
-import { REMOTE_USER_KEY } from 'broadcast'
-import { assoc } from 'ramda'
-import { serializeAction } from 'state'
+import { REMOTE_USER_KEY } from 'state/constants';
+import { assoc } from 'ramda';
+import { serializeAction } from 'state';
 
 describe( 'Operator reducer', () => {
 	it( 'should set operator status', () => {

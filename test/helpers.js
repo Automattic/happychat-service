@@ -1,5 +1,5 @@
-import { REMOTE_USER_KEY } from 'broadcast'
-import { merge, objOf } from 'ramda'
+import { REMOTE_USER_KEY } from 'state/constants';
+import { merge, objOf } from 'ramda';
 
 const debug = require( 'debug' )( 'happychat:test' )
 

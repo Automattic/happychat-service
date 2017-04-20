@@ -8,10 +8,10 @@ import {
 	tap
 } from 'ramda'
 
-import { getDefaultLocale } from './state/locales/selectors'
-import { selectIdentities } from './state/operator/selectors'
-import { setOperatorCapacity } from './state/operator/actions'
-import { REMOTE_USER_KEY } from './broadcast'
+import { getDefaultLocale } from './state/locales/selectors';
+import { selectIdentities } from './state/operator/selectors';
+import { setOperatorCapacity } from './state/operator/actions';
+import { REMOTE_USER_KEY } from './state/constants';
 
 const debug = require( 'debug' )( 'happychat-debug:upgrade-capacities' )
 

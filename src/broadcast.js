@@ -12,6 +12,7 @@ import { v4 as uuid } from 'uuid';
 import { debounce } from 'lodash';
 import { REMOTE_ACTION_TYPE } from './state/action-types';
 import { isEmpty, assoc, evolve, filter, compose, not, equals, keys, contains } from 'ramda';
+import { REMOTE_USER_KEY } from './state/constants';
 
 import canRemoteDispatch from './state/operator/can-remote-dispatch';
 import { STATUS_CLOSED, statusView } from './state/chatlist/reducer';
@@ -19,8 +20,6 @@ import { getSocketOperator } from './state/operator/selectors';
 
 const debug = require( 'debug' )( 'happychat-debug:socket-io:broadcast' );
 const log = require( 'debug' )( 'happychat:socket-io:broadcast' );
-
-export const REMOTE_USER_KEY = 'REMOTE_USER';
 
 const filterClosed = filter( compose(
 	not,
