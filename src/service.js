@@ -10,6 +10,7 @@ import {
 	difference,
 	append,
 	once,
+	identity
 } from 'ramda'
 
 import { createStore, compose } from 'redux'
@@ -18,7 +19,6 @@ import enhancer from './state'
 import reducer from './state/reducer'
 import { removeChat } from './state/chatlist/actions'
 import { getClosedChatsOlderThan } from './state/chatlist/selectors'
-import middlewareInterface from './middleware-interface'
 import { configureLocales } from './state/locales/actions'
 import upgradeCapacities from './upgrade-capacities'
 import broadcast from './broadcast'
@@ -56,11 +56,9 @@ const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_H
 	)
 }
 
-export const service = ( io, authenticators, initialState, { enhancers = [], middlewares = [] }, logCacheBuilder = undefined ) => {
+export const service = ( io, authenticators, initialState, { middlewares = [], enhancers = [] }, logCacheBuilder, filters, measure = () => identity ) => {
 	const { customerAuthenticator, agentAuthenticator, operatorAuthenticator } = authenticators;
-	log( 'configuring socket.io server' );
-
-	const messageMiddlewares = middlewareInterface()
+	log( 'configuring socket.io server' )
 
 	const auth = ( authenticator, validator = user => user ) => socket => new Promise( ( resolve, reject ) => {
 		authenticator( socket, ( e, result ) => {
@@ -77,10 +75,10 @@ export const service = ( io, authenticators, initialState, { enhancers = [], mid
 		operatorAuth: auth( operatorAuthenticator, validateKeys( REQUIRED_OPERATOR_KEYS ) ),
 		customerAuth: auth( customerAuthenticator, validateKeys( REQUIRED_CUSTOMER_KEYS ) ),
 		agentAuth: auth( agentAuthenticator ),
-		messageMiddlewares: messageMiddlewares.middlewares()
+		messageMiddlewares: filters
 	}, middlewares, logCacheBuilder ) ) );
 
-	broadcast( store, io.of( '/operator' ) )
+	broadcast( store, io.of( '/operator' ), measure( 'broadcast' ) )
 
 	const removeStaleChats = buildRemoveStaleChats( store )
 	setInterval( removeStaleChats, 1000 * 60 ) // every minute
@@ -90,7 +88,6 @@ export const service = ( io, authenticators, initialState, { enhancers = [], mid
 
 	return {
 		io,
-		controller: messageMiddlewares.external,
 		store,
 		configureLocales: ( defaultLocale, supportedLocales ) => {
 			store.dispatch( configureLocales( defaultLocale, supportedLocales ) )

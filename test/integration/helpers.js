@@ -8,7 +8,7 @@ import {
 } from 'state/operator/actions'
 import {
 	STATUS_AVAILABLE
-} from 'state/operator/selectors'
+} from 'state/operator/constants'
 import { addGroup } from 'state/groups/actions'
 
 import IOServer from 'socket.io'
@@ -54,11 +54,11 @@ export const startClients = ( port ) => new Promise( ( resolve, reject ) => {
 	.catch( reject )
 } )
 
-export default ( authenticators, enhancers = [], middlewares = [], preloadedState = undefined, port = 65115 ) => {
+export default ( authenticators, enhancers = [], middlewares = [], preloadedState = undefined, filters, port = 65115 ) => {
 	const server = createServer()
 	const io = new IOServer( server )
 	const result = {
-		service: service( io, authenticators, preloadedState, { enhancers, middlewares } ),
+		service: service( io, authenticators, preloadedState, { enhancers, middlewares }, undefined, filters ),
 		start: () => startServer( server, port ),
 		stop: () => stopServer( server ),
 		startClients: () => startClients( port ),

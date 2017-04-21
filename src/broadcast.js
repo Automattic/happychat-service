@@ -11,11 +11,13 @@ import jsondiff from 'simperium-jsondiff';
 import { v4 as uuid } from 'uuid';
 import { debounce } from 'lodash';
 import { REMOTE_ACTION_TYPE } from './state/action-types';
-import { isEmpty, assoc, evolve, filter, compose, not, equals, keys, contains } from 'ramda';
+import {
+	isEmpty, assoc, evolve, filter, compose, not, equals, keys, contains, anyPass, identity
+} from 'ramda';
 import { REMOTE_USER_KEY } from './state/constants';
 
 import canRemoteDispatch from './state/operator/can-remote-dispatch';
-import { STATUS_CLOSED, statusView } from './state/chatlist/reducer';
+import { STATUS_CLOSED, STATUS_NEW, statusView } from './state/chatlist/reducer';
 import { getSocketOperator } from './state/operator/selectors';
 
 const debug = require( 'debug' )( 'happychat-debug:socket-io:broadcast' );
@@ -23,7 +25,7 @@ const log = require( 'debug' )( 'happychat:socket-io:broadcast' );
 
 const filterClosed = filter( compose(
 	not,
-	equals( STATUS_CLOSED ),
+	anyPass( [ equals( STATUS_CLOSED ), equals( STATUS_NEW ) ] ),
 	statusView,
 ) );
 
@@ -44,26 +46,16 @@ const broadcastVersion = ( io, version, nextVersion, patch ) => {
 	} );
 };
 
-const measure = ( label, work, logWhenLongerThan = 100 ) => ( ... args ) => {
-	const startTime = Date.now();
-	const result = work( ... args );
-	const ellapsed = Date.now() - startTime;
-	if ( ellapsed > logWhenLongerThan ) {
-		log( `task ${ label } completed in ${ ellapsed }ms` );
-	}
-	return result;
-};
-
 const selector = evolve( { chatlist: filterClosed } );
 
-export default ( store, io ) => {
+export default ( store, io, measure = identity ) => {
 	const { getState, dispatch } = store;
 	const { diff } = jsondiff();
 	let version = uuid();
 	let currentState = selector( getState() );
 	let patch;
 
-	const measureDiff = measure( 'diff', diff );
+	const measureDiff = measure( diff );
 
 	const broadcastChange = state => {
 		const nextState = selector( state );

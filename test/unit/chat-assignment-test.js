@@ -13,11 +13,13 @@ import {
 	SET_CHAT_MISSED
 } from 'state/action-types'
 import {
-	STATUS_PENDING
+	STATUS_PENDING,
+	STATUS_ASSIGNED
 }	from 'state/chatlist/reducer'
 import {
-	STATUS_AVAILABLE
-} from 'state/operator/selectors'
+	STATUS_AVAILABLE,
+	STATUS_RESERVE
+} from 'state/operator/constants'
 import {
 	DEFAULT_GROUP_ID
 } from 'state/groups/reducer'
@@ -160,4 +162,68 @@ describe( 'state/middlewares/system/chat-assignment', () => {
 	).then( action => {
 		deepEqual( action, assignChat( { id: 'chat_en'} ) )
 	} ) )
+
+	const reserveState = ( { activeLoad = 0, reserve1Load = 0, reserve2Load = 0 } ) => ( {
+		locales: { defaultLocale: 'en', supported: [ 'en', 'fr' ], memberships: {
+			en: {},
+			fr: {
+				active1: { capacity: 2, load: activeLoad, active: true },
+				active2: { capacity: 2, load: activeLoad, active: true },
+				reserve1: { capacity: 5, load: reserve1Load, active: true },
+				reserve2: { capacity: 4, load: reserve2Load, active: true },
+			}
+		} },
+		chatlist: {
+			chat: [ STATUS_PENDING, { id: 'chat' }, null, 2, {}, 'fr' ],
+		},
+		operators: { identities: {
+			active1: { id: 'active1', status: STATUS_AVAILABLE, online: true },
+			active2: { id: 'active2', status: STATUS_AVAILABLE, online: true },
+			reserve1: { id: 'reserve1', status: STATUS_RESERVE, online: true },
+			reserve2: { id: 'reserve2', status: STATUS_RESERVE, online: true },
+		} },
+		groups: {
+			[ DEFAULT_GROUP_ID ]: { members: { active1: true, active2: true, reserve1: true, reserve2: true } },
+		}
+	} );
+
+	it( 'should assign active operator before reserve operator', () => dispatchAction(
+		assignChat( { id: 'chat' } ),
+		reserveState( { activeLoad: 0 } )
+	).then( action => {
+		equal( action.type, SET_CHAT_OPERATOR )
+		equal( action.operator.id, 'active1' )
+	} ) );
+
+	it( 'should assign reserve operator when active operators are busy', () => dispatchAction(
+		assignChat( { id: 'chat' } ),
+		reserveState( { activeLoad: 2 } )
+	).then( action => {
+		equal( action.type, SET_CHAT_OPERATOR )
+		equal( action.operator.id, 'reserve1' )
+	} ) );
+
+	it( 'should assign to a reserve operator that is already chatting', () => dispatchAction(
+		assignChat( { id: 'chat' } ),
+		reserveState( { activeLoad: 2, reserve1Load: 0, reserve2Load: 1 } )
+	).then( action => {
+		equal( action.type, SET_CHAT_OPERATOR )
+		equal( action.operator.id, 'reserve2' )
+	} ) );
+
+	it( 'should assign to a different reserve operator when the first has reached two chats', () => dispatchAction(
+		assignChat( { id: 'chat' } ),
+		reserveState( { activeLoad: 2, reserve1Load: 0, reserve2Load: 2 } )
+	).then( action => {
+		equal( action.type, SET_CHAT_OPERATOR )
+		equal( action.operator.id, 'reserve1' )
+	} ) );
+
+	it( 'should assign evenly when all reserve operators have reached two chats', () => dispatchAction(
+		assignChat( { id: 'chat' } ),
+		reserveState( { activeLoad: 2, reserve1Load: 2, reserve2Load: 2 } )
+	).then( action => {
+		equal( action.type, SET_CHAT_OPERATOR )
+		equal( action.operator.id, 'reserve1' )
+	} ) );
 } )

@@ -9,6 +9,7 @@ import {
 	ifElse,
 	whereEq,
 	not,
+	or,
 	always,
 	path,
 	reduce,
@@ -33,11 +34,55 @@ import {
 } from '../locales/selectors'
 import { getGroups, makeLocaleGroupToken, getDefaultGroup } from '../groups/selectors'
 
-export const STATUS_AVAILABLE = 'available';
+import { STATUS_AVAILABLE, STATUS_RESERVE } from './constants';
 
 const percentAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) ) / capacity
 const totalAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) )
-const compare = ( a, b ) => {
+
+// This is the maximum number of chats a reserve operator can have before
+// another reserve operator is brought in to handle further chats. When
+// all reserve operators reach this limit, new chats will be balanced
+// between reserve operators.
+const RESERVE_MAX_CHATS = 2;
+
+/**
+/* Compare function for sorting operator priority. 
+ *
+ * The first operator in the resulting list should be the next one
+ * to be assigned to a chat. This is used for balancing chat load
+ * evenly across operators.
+ *
+ * @param {Operator} a First operator to compare
+ * @param {Operator} b Second operator to compare
+ * @return {Number} -1 if operator a should come first
+ *                  0 if both operators are equal priority
+ *                  1 if operator b should come first
+ */
+const compareOperatorPriority = ( a, b ) => {
+	// When comparing two operators, always prioritise the one whose
+	// status is available over the one who is in reserve
+	if ( a.status === STATUS_RESERVE && b.status === STATUS_AVAILABLE ) {
+		return 1;
+	}
+	if ( a.status === STATUS_AVAILABLE && b.status === STATUS_RESERVE ) {
+		return -1;
+	}
+
+	// When comparing two operators in reserve, prioritise the one
+	// already chatting to avoid disturbing the other.
+	if ( a.status === STATUS_RESERVE && b.status === STATUS_RESERVE ) {
+		const aLoad = a.load || 0;
+		const bLoad = b.load || 0;
+		if ( aLoad > 0 && aLoad < RESERVE_MAX_CHATS && bLoad === 0 ) {
+			return -1;
+		}
+
+		if ( bLoad > 0 && bLoad < RESERVE_MAX_CHATS && aLoad === 0 ) {
+			return 1;
+		}
+	}
+
+	// Compare operators by their current chat load
 	if ( a.percentAvailable === b.percentAvailable ) {
 		if ( a.totalAvailable === b.totalAvailable ) {
 			return 0;
@@ -58,16 +103,22 @@ const isMemberOfGroups = ( userID, groups ) => compose(
 	mergeAll
 )( groups )
 
+/**
+ * Returns a list of available operators for the given locale and groups,
+ * sorted by priority where the first operator in the list should be
+ * assigned the next chat.
+ */
 export const getAvailableOperators = ( locale, groups, state ) => compose(
 	flatten,
 	operators => map( group => compose(
-		sort( compare ),
+		sort( compareOperatorPriority ),
 		map( user => merge( user, {
 			percentAvailable: percentAvailable( user ),
 			totalAvailable: totalAvailable( user )
 		} ) ),
 		filter( ( { status, online, load, capacity, active, id } ) => {
-			if ( !online || status !== STATUS_AVAILABLE ) {
+			const isAvailable = status === STATUS_AVAILABLE || status === STATUS_RESERVE;
+			if ( ! online || ! isAvailable ) {
 				return false
 			}
 			if ( active !== true ) {
@@ -92,27 +143,18 @@ export const getSocketOperator = ( socket, { operators: { sockets, identities } 
 	get( sockets, socket.id )
 )
 export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
-export const selectTotalCapacity = ( locale, groups, state ) => compose(
-	reduce( ( { load: totalLoad, capacity: totalCapacity }, { id, status, online } ) =>
-		ifElse(
-			whereEq( { status: STATUS_AVAILABLE, online: true } ),
-			() => {
-				const { load, capacity, active } = getLocaleMembership( locale, id, state )
-				if ( ! active || ! isMemberOfGroups( id, groups ) ) {
-					return { load: totalLoad, capacity: totalCapacity }
-				}
-				return {
-					load: totalLoad + parseInt( load ),
-					capacity: totalCapacity + parseInt( capacity )
-				}
-			},
-			() => ( { load: totalLoad, capacity: totalCapacity } )
-		)( { status, online } ),
-		{ load: 0, capacity: 0 }
-	),
-	values,
-	path( [ 'operators', 'identities' ] )
-)( state )
+export const selectTotalCapacity = ( locale, groups, state ) =>
+	reduce(
+		( { load: totalLoad, capacity: totalCapacity }, { id, status, online } ) => {
+			const { load, capacity, active } = getLocaleMembership( locale, id, state );
+			return {
+				load: totalLoad + parseInt( load, 10 ),
+				capacity: totalCapacity + parseInt( capacity, 10 )
+			};
+		},
+		{ load: 0, capacity: 0 },
+		getAvailableOperators( locale, groups, state )
+	);
 
 export const getAvailableCapacity = ( locale, groups, state ) => {
 	const { load, capacity } = selectTotalCapacity( locale, groups, state )
@@ -171,10 +213,17 @@ export const isOperatorStatusAvailable = ( id, state ) => equals(
 	STATUS_AVAILABLE
 )
 
+export const isOperatorStatusReserve = ( id, state ) =>
+	get( state, [ 'operators', 'identities', asString( id ), 'status' ] )
+		=== STATUS_RESERVE;
+
+export const isOperatorStatusAvailableOrInReserve = ( id, state ) =>
+	isOperatorStatusAvailable( id, state ) || isOperatorStatusReserve( id, state );
+
 export const isOperatorOnline = getOperatorOnline
 
 export const isOperatorAcceptingChats = ( id, state ) =>
-	isOperatorOnline( id, state ) && isOperatorStatusAvailable( id, state )
+	isOperatorOnline( id, state ) && isOperatorStatusAvailableOrInReserve( id, state );
 
 export const canAcceptChat = ( chatID, state ) => both(
 	getSystemAcceptsCustomers,

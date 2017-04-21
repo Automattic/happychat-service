@@ -44,6 +44,7 @@ const handleCustomerResponse = ( store, messageFilter ) => action => {
 	// debug time to run each message through middleware
 	const dispatch = deferred => setImmediate( () => store.dispatch( deferred ) )
 
+	debug( 'dispatching later?' )
 	new Promise( ( resolve, reject ) => {
 		const chat = getChat( action.chat_id, store.getState() )
 		if ( ! chat ) {
@@ -52,8 +53,14 @@ const handleCustomerResponse = ( store, messageFilter ) => action => {
 		messageFilter( chat, action.messages ).then( resolve, reject )
 	} )
 	.then(
-		messages => dispatch( sendCustomerChatTranscriptResponse( action.socketId, action.chat_id, action.timestamp, messages ) ),
-		error => dispatch( customerChatTranscriptFailure( action.socketId, action.chat_id, error.message ) )
+		messages => {
+			debug( 'dispatching success' )
+			dispatch( sendCustomerChatTranscriptResponse( action.socketId, action.chat_id, action.timestamp, messages ) )
+		},
+		error => {
+			debug( 'dispatching failure', error )
+			dispatch( customerChatTranscriptFailure( action.socketId, action.chat_id, error.message ) )
+		}
 	)
 }
 
@@ -66,7 +73,10 @@ export default messageMiddlewares => {
 		message,
 		chat
 	} ), messages ) )
-	.then( filter( message => !! message ) )
+	.then(
+		filter( message => !! message ),
+		e => debug( 'wtf', e )
+	)
 
 	return store => beforeNextAction( handlers(
 		handleActionType( OPERATOR_CHAT_TRANSCRIPT_RESPONSE, handleOperatorResponse( store, filterMessagesFor( 'operator' ) ) ),
