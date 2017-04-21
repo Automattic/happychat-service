@@ -26,18 +26,7 @@ const broadcastVersion = ( io, version, nextVersion, patch ) => {
 
 const getTime = () => ( new Date() ).getTime()
 
-const measure = ( label, work, logWhenLongerThan = 100 ) => ( ... args ) => {
-	const startTime = getTime()
-	const result = work( ... args )
-	const endTime = getTime()
-	const ellapsed = endTime - startTime
-	if ( ellapsed > logWhenLongerThan ) {
-		log( `task ${ label } completed in ${ ellapsed }ms` )
-	}
-	return result
-}
-
-export default ( io, { canRemoteDispatch = always( false ), selector = identity, shouldBroadcastStateChange = always( true ) } ) => ( { getState, dispatch } ) => {
+export default ( io, { canRemoteDispatch = always( false ), selector = identity, shouldBroadcastStateChange = always( true ) }, measure = identity ) => ( { getState, dispatch } ) => {
 	const { diff } = jsondiff()
 	let version = uuid()
 	let currentState = selector( getState() )
@@ -84,7 +73,7 @@ export default ( io, { canRemoteDispatch = always( false ), selector = identity,
 		sendState( action.socket )
 	}
 
-	const measureDiff = measure( 'diff', diff )
+	const measureDiff = measure( diff )
 
 	const broadcastChange = state => {
 		const nextState = selector( state )

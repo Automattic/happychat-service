@@ -18,7 +18,6 @@ import enhancer from './state'
 import reducer from './state/reducer'
 import { removeChat } from './state/chatlist/actions'
 import { getClosedChatsOlderThan } from './state/chatlist/selectors'
-import middlewareInterface from './middleware-interface'
 import { configureLocales } from './state/locales/actions'
 import upgradeCapacities from './upgrade-capacities'
 
@@ -55,10 +54,8 @@ const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_H
 	)
 }
 
-export const service = ( io, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, initialState, enhancers = [] ) => {
+export const service = ( io, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, initialState, enhancers = [], filters, measure ) => {
 	log( 'configuring socket.io server' )
-
-	const middlewares = middlewareInterface()
 
 	const auth = ( authenticator, validator = user => user ) => socket => new Promise( ( resolve, reject ) => {
 		authenticator( socket, ( e, result ) => {
@@ -75,8 +72,8 @@ export const service = ( io, { customerAuthenticator, agentAuthenticator, operat
 		operatorAuth: auth( operatorAuthenticator, validateKeys( REQUIRED_OPERATOR_KEYS ) ),
 		customerAuth: auth( customerAuthenticator, validateKeys( REQUIRED_CUSTOMER_KEYS ) ),
 		agentAuth: auth( agentAuthenticator ),
-		messageMiddlewares: middlewares.middlewares()
-	} ), ... enhancers ) )
+		messageMiddlewares: filters
+	}, measure ), ... enhancers ) )
 
 	const removeStaleChats = buildRemoveStaleChats( store )
 	setInterval( removeStaleChats, 1000 * 60 ) // every minute
@@ -86,7 +83,6 @@ export const service = ( io, { customerAuthenticator, agentAuthenticator, operat
 
 	return {
 		io,
-		controller: middlewares.external,
 		store,
 		configureLocales: ( defaultLocale, supportedLocales ) => {
 			store.dispatch( configureLocales( defaultLocale, supportedLocales ) )
