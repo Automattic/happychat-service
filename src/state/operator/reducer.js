@@ -51,7 +51,6 @@ const user_sockets = ( state = {}, action ) => {
 }
 
 const identity = ( state = { online: false, requestingChat: false }, action ) => {
-	console.log( state );
 	switch ( action.type ) {
 		case SERIALIZE:
 			return exclude( [ 'capacity', 'load', 'requestingChat' ], state )

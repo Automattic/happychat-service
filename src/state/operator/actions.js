@@ -21,7 +21,7 @@ import {
 	LEAVE_LOCALE
 } from '../action-types'
 import { allowRemote } from './can-remote-dispatch'
-console.log( 'SET_OPERATOR_REQUESTING_CHAT===' + SET_OPERATOR_REQUESTING_CHAT );
+
 export const setUserOffline = user => ( {
 	type: SET_USER_OFFLINE, user
 } )
