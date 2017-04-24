@@ -1,6 +1,6 @@
 import systemStatusNotifier from './system-status-notifier'
 import chatStatusNotifier from './chat-status-notifier'
 import loadUpdater from './load-updater'
-import ignoreCapacityMiddleware from './ignore-capacity-updater';
+import requestingChatMiddleware from './requesting-chat-updater';
 
-export default [ systemStatusNotifier, chatStatusNotifier, loadUpdater, ignoreCapacityMiddleware ]
+export default [ systemStatusNotifier, chatStatusNotifier, loadUpdater, requestingChatMiddleware ]

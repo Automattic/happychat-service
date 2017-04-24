@@ -24,7 +24,7 @@ import {
 	REMOVE_USER_SOCKET,
 	SET_SYSTEM_ACCEPTS_CUSTOMERS,
 	SET_OPERATOR_STATUS,
-	SET_OPERATOR_IGNORE_CAPACITY,
+	SET_OPERATOR_REQUESTING_CHAT,
 	SET_USER_OFFLINE,
 	SERIALIZE,
 	DESERIALIZE
@@ -50,20 +50,21 @@ const user_sockets = ( state = {}, action ) => {
 	}
 }
 
-const identity = ( state = { online: false, ignoreCapacity: false }, action ) => {
+const identity = ( state = { online: false, requestingChat: false }, action ) => {
+	console.log( state );
 	switch ( action.type ) {
 		case SERIALIZE:
-			return exclude( [ 'capacity', 'load', 'ignoreCapacity' ], state )
+			return exclude( [ 'capacity', 'load', 'requestingChat' ], state )
 		case DESERIALIZE:
-			return merge( state, { online: false, ignoreCapacity: false } )
+			return merge( state, { online: false, requestingChat: false } )
 		case UPDATE_IDENTITY:
 			return mergeAll( [ state, action.user, { online: true } ] )
 		case SET_OPERATOR_STATUS:
-			return merge( state, { status: action.status, online: true, ignoreCapacity: false } )
+			return merge( state, { status: action.status, online: true, requestingChat: false } )
 		case SET_USER_OFFLINE:
 			return merge( state, { status: 'unavailable', online: false } );
-		case SET_OPERATOR_IGNORE_CAPACITY:
-			return merge( state, { ignoreCapacity: action.ignoreCapacity } )
+		case SET_OPERATOR_REQUESTING_CHAT:
+			return merge( state, { requestingChat: action.requestingChat } )
 	}
 	return state
 }
@@ -92,7 +93,7 @@ const identities = ( state = {}, action ) => {
 				lens,
 				identity( view( lens, state ), action )
 			)( state )
-		case SET_OPERATOR_IGNORE_CAPACITY:
+		case SET_OPERATOR_REQUESTING_CHAT:
 		case SET_OPERATOR_STATUS:
 			return set_ramda(
 				lensRemoteUser( action ),
