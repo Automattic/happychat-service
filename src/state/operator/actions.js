@@ -12,7 +12,7 @@ import {
 	OPERATOR_CHAT_TRANSCRIPT_REQUEST,
 	OPERATOR_CHAT_TRANSFER,
 	OPERATOR_READY,
-	SET_OPERATOR_IGNORE_CAPACITY,
+	SET_OPERATOR_REQUESTING_CHAT,
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
 	SET_USER_OFFLINE,
@@ -21,7 +21,7 @@ import {
 	LEAVE_LOCALE
 } from '../action-types'
 import { allowRemote } from './can-remote-dispatch'
-
+console.log( 'SET_OPERATOR_REQUESTING_CHAT===' + SET_OPERATOR_REQUESTING_CHAT );
 export const setUserOffline = user => ( {
 	type: SET_USER_OFFLINE, user
 } )
@@ -48,8 +48,8 @@ export const setOperatorStatus = allowRemote( SET_OPERATOR_STATUS, ( status ) =>
 	status, type: SET_OPERATOR_STATUS
 } ) )
 
-export const setOperatorIgnoreCapacity = allowRemote( SET_OPERATOR_IGNORE_CAPACITY, ( ignoreCapacity ) => ( {
-	ignoreCapacity
+export const setOperatorRequestingChat = allowRemote( SET_OPERATOR_REQUESTING_CHAT, ( requestingChat ) => ( {
+	requestingChat
 } ) )
 
 export const setUserLoads = ( loads ) => ( {

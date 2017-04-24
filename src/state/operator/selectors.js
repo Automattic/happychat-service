@@ -115,7 +115,7 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 			percentAvailable: percentAvailable( user ),
 			totalAvailable: totalAvailable( user )
 		} ) ),
-		filter( ( { ignoreCapacity, status, online, load, capacity, active, id } ) => {
+		filter( ( { requestingChat, status, online, load, capacity, active, id } ) => {
 			const isAvailable = status === STATUS_AVAILABLE || status === STATUS_RESERVE;
 			if ( ! online || ! isAvailable ) {
 				return false
@@ -127,7 +127,7 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 				return false
 			}
 
-			if ( ignoreCapacity ) {
+			if ( requestingChat ) {
 				return true;
 			}
 
@@ -160,13 +160,13 @@ export const selectTotalCapacity = ( locale, groups, state ) =>
 		getAvailableOperators( locale, groups, state )
 	);
 
-export const hasOperatorIgnoringCapacity = ( locale, groups, state ) => {
+export const hasOperatorRequestingChat = ( locale, groups, state ) => {
 	const identities = get( state, 'operators.identities' );
 
 	for( const operatorId in identities ) {
-		const { ignoreCapacity } = identities[ operatorId ];
+		const { requestingChat } = identities[ operatorId ];
 
-		if ( ignoreCapacity ) {
+		if ( requestingChat ) {
 			const { active } = getLocaleMembership( locale, operatorId, state );
 			return active && isMemberOfGroups( operatorId, groups );
 		}
@@ -252,7 +252,7 @@ export const canAcceptChat = ( chatID, state ) => {
 	const chatLocale = getChatLocale( chatID, state );
 	const chatGroups = getChatGroups( chatID, state );
 
-	return hasOperatorIgnoringCapacity( chatLocale, chatGroups, state ) ||
+	return hasOperatorRequestingChat( chatLocale, chatGroups, state ) ||
 		haveAvailableCapacity( chatLocale, chatGroups, state );
 }
 

@@ -3,7 +3,7 @@ import {
 	setOperatorCapacity,
 	setOperatorStatus,
 	setUserOffline,
-	setOperatorIgnoreCapacity,
+	setOperatorRequestingChat,
 } from 'state/operator/actions'
 import reducer from 'state/operator/reducer';
 import { createStore } from 'redux';
@@ -27,13 +27,13 @@ describe( 'Operator reducer', () => {
 	it( 'should update user', () => {
 		const store = createStore( reducer )
 		store.dispatch( { type: 'UPDATE_IDENTITY', user: { id: 1, name: 'hi' }, socket: {} } )
-		deepEqual( store.getState().identities, { 1: { id: 1, ignoreCapacity: false, name: 'hi', online: true } } )
+		deepEqual( store.getState().identities, { 1: { id: 1, requestingChat: false, name: 'hi', online: true } } )
 	} )
 
-	it( 'should ignore capacity', () => {
-		const store = createStore( reducer, { identities: { 'user-a': { ignoreCapacity: false, online: false } } } );
-		store.dispatch( assoc( REMOTE_USER_KEY, { id: 'user-a' }, setOperatorIgnoreCapacity( true ) ) );
-		deepEqual( store.getState().identities, { 'user-a': { ignoreCapacity: true, online: false } } );
+	it( 'should update requestingChat', () => {
+		const store = createStore( reducer, { identities: { 'user-a': { requestingChat: false, online: false } } } );
+		store.dispatch( assoc( REMOTE_USER_KEY, { id: 'user-a' }, setOperatorRequestingChat( true ) ) );
+		deepEqual( store.getState().identities, { 'user-a': { requestingChat: true, online: false } } );
 	} );
 
 	it( 'should remove sockets on serialize', () => {

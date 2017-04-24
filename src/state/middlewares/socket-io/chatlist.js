@@ -86,7 +86,7 @@ import {
 import {
 	getAvailableOperators,
 	isOperatorAcceptingChats,
-	hasOperatorIgnoringCapacity,
+	hasOperatorRequestingChat,
 	haveAvailableCapacity,
 	canAcceptChat
 } from '../../operator/selectors'
@@ -538,7 +538,7 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 			const groups = getChatGroups( chat.id, store.getState() )
 			debug( 'checking capacity to assign chat', locale, groups )
 
-			if ( hasOperatorIgnoringCapacity( store.getState() ) || haveAvailableCapacity( locale, groups, store.getState() ) ) {
+			if ( hasOperatorRequestingChat( store.getState() ) || haveAvailableCapacity( locale, groups, store.getState() ) ) {
 				return store.dispatch( assignChat( chat ) )
 			}
 			debug( 'no capacity to assign chat', chat.id, locale )
