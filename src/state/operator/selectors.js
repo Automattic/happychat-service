@@ -45,28 +45,53 @@ const totalAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load
 const RESERVE_MAX_CHATS = 2;
 
 /**
-/* Compare function for sorting operator priority. 
- *
- * The first operator in the resulting list should be the next one
- * to be assigned to a chat. This is used for balancing chat load
- * evenly across operators.
+ * Comparison function for sorting operators by the requestingChat property
  *
  * @param {Operator} a First operator to compare
  * @param {Operator} b Second operator to compare
- * @return {Number} -1 if operator a should come first
- *                  0 if both operators are equal priority
- *                  1 if operator b should come first
+ * @return {Number} -1 if operator a is requesting a chat
+ *                  0 if neither are requesting a chat
+ *                  1 if operator b is requesting a chat
  */
-const compareOperatorPriority = ( a, b ) => {
-	// When comparing two operators, always prioritise the one whose
-	// status is available over the one who is in reserve
-	if ( a.status === STATUS_RESERVE && b.status === STATUS_AVAILABLE ) {
-		return 1;
-	}
-	if ( a.status === STATUS_AVAILABLE && b.status === STATUS_RESERVE ) {
-		return -1;
+const compareByRequestForChat = ( a, b ) => {
+	// Neither operators are requesting a chat so don't alter their order
+	if ( ! a.requestingChat && ! b.requestingChat ) {
+		return 0;
 	}
 
+	// Only one of the operators is requesting a chat
+	if ( a.requestingChat !== b.requestingChat ) {
+		return a.requestingChat ? -1 : 1;
+	}
+
+	// Both are requesting a chat so lets use their status
+	// To break the tie
+	const statusComparison = compareOperatorByStatus( a, b );
+	if ( statusComparison !== 0 ) {
+		return statusComparison;
+	}
+
+	// They're still tied so lets try to break it using
+	// their chat load
+	const loadComparison = compareOperatorsByChatLoad( a, b );
+	if ( loadComparison !== 0 ) {
+		return loadComparison;
+	}
+
+	// still have a tie so let "a" win
+	return -1;
+}
+
+/**
+ * Compare function for sorting operators by their chat load
+ *
+ * @param {Operator} a First operator to compare
+ * @param {Operator} b Second operator to compare
+ * @return {Number} -1 if operator a is requesting a chat
+ *                  0 if neither are requesting a chat
+ *                  1 if operator b is requesting a chat
+ */
+const compareOperatorsByChatLoad = ( a, b ) => {
 	// When comparing two operators in reserve, prioritise the one
 	// already chatting to avoid disturbing the other.
 	if ( a.status === STATUS_RESERVE && b.status === STATUS_RESERVE ) {
@@ -81,14 +106,62 @@ const compareOperatorPriority = ( a, b ) => {
 		}
 	}
 
-	// Compare operators by their current chat load
 	if ( a.percentAvailable === b.percentAvailable ) {
 		if ( a.totalAvailable === b.totalAvailable ) {
 			return 0;
 		}
-		return a.totalAvailable > b.totalAvailable ? -1 : 1
+		return a.totalAvailable > b.totalAvailable ? -1 : 1;
 	}
-	return a.percentAvailable > b.percentAvailable ? -1 : 1
+	return a.percentAvailable > b.percentAvailable ? -1 : 1;
+}
+
+/**
+ * Compare two operators using their status
+ *
+ * @param {Operator} a First operator to compare
+ * @param {Operator} b Second operator to compare
+ * @return {Number} -1 if operator a is available
+ *                  0 if they have the same status
+ *                  1 if operator b is available
+ */
+const compareOperatorByStatus = ( a, b ) => {
+	if ( a.status === b.status ) {
+		return 0;
+	}
+
+	// When comparing two operators, always prioritise the one whose
+	// status is available over the one who is in reserve
+	return a.status === STATUS_AVAILABLE ? -1 : 1;
+}
+
+/**
+/* Compare function for sorting operator priority.
+ *
+ * The first operator in the resulting list should be the next one
+ * to be assigned to a chat. This is used for balancing chat load
+ * evenly across operators.
+ *
+ * @param {Operator} a First operator to compare
+ * @param {Operator} b Second operator to compare
+ * @return {Number} -1 if operator a should come first
+ *                  0 if both operators are equal priority
+ *                  1 if operator b should come first
+ */
+const compareOperatorPriority = ( a, b ) => {
+	// Prioritize operators who are requesting a chat
+	const requestForChatComparison = compareByRequestForChat( a, b );
+	if ( requestForChatComparison !== 0 ) {
+		return requestForChatComparison;
+	}
+
+	// When comparing two operators, always prioritise the one whose
+	// status is available over the one who is in reserve
+	const statusComparison = compareOperatorByStatus( a, b );
+	if ( statusComparison !== 0 ) {
+		return statusComparison;
+	}
+
+	return compareOperatorsByChatLoad( a, b );
 }
 
 const isMemberOfGroup = ( userID, group ) => compose(
