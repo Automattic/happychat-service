@@ -35,7 +35,7 @@ import { getGroups, makeLocaleGroupToken, getDefaultGroup } from '../groups/sele
 
 import { STATUS_AVAILABLE, STATUS_RESERVE } from './constants';
 
-const percentAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) ) / capacity
+const percentAvailable = ( { load, capacity } ) => capacity > 0 ? ( capacity - defaultTo( 0, load ) ) / capacity : 0
 const totalAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) )
 
 // This is the maximum number of chats a reserve operator can have before
