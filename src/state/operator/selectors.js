@@ -241,7 +241,9 @@ export const hasOperatorRequestingChat = ( locale, groups, state ) => {
 
 		if ( requestingChat ) {
 			const { active } = getLocaleMembership( locale, operatorId, state );
-			return active && isMemberOfGroups( operatorId, groups );
+			return active &&
+				isMemberOfGroups( operatorId, groups ) &&
+				isOperatorAcceptingChats( operatorId, state );
 		}
 	}
 
