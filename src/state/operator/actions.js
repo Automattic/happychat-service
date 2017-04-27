@@ -15,7 +15,6 @@ import {
 	OPERATOR_SEND_CHAT_TRANSCRIPT_RESPONSE,
 	OPERATOR_CHAT_TRANSFER,
 	OPERATOR_READY,
-	SET_OPERATOR_REQUESTING_CHAT,
 	SET_OPERATOR_CAPACITY,
 	SET_OPERATOR_STATUS,
 	SET_USER_OFFLINE,
@@ -50,10 +49,6 @@ export const setOperatorCapacity = allowRemote( SET_OPERATOR_CAPACITY, ( locale,
 
 export const setOperatorStatus = allowRemote( SET_OPERATOR_STATUS, ( status ) => ( {
 	status, type: SET_OPERATOR_STATUS
-} ) )
-
-export const setOperatorRequestingChat = allowRemote( SET_OPERATOR_REQUESTING_CHAT, ( requestingChat ) => ( {
-	requestingChat
 } ) )
 
 export const setUserLoads = ( loads ) => ( {

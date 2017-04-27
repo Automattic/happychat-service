@@ -34,8 +34,7 @@ import {
 	haveAvailableCapacity,
 	getAvailableOperators,
 	canAcceptChat,
-	isOperatorAcceptingChats,
-	hasOperatorRequestingChat
+	isOperatorAcceptingChats
 } from '../../operator/selectors';
 import { handleActionType, handleActionTypes, handlers, beforeNextAction } from './handlers';
 
@@ -77,7 +76,7 @@ const handleAssignNextChat = ( { getState, dispatch } ) => () => {
 		const groups = getChatGroups( chat.id, getState() );
 		debug( 'checking capacity to assign chat', locale, groups );
 
-		if ( hasOperatorRequestingChat( getState() ) || haveAvailableCapacity( locale, groups, getState() ) ) {
+		if ( haveAvailableCapacity( locale, groups, getState() ) ) {
 			return dispatch( assignChat( chat ) );
 		}
 		log( 'no capacity to assign chat', chat.id, locale, groups );

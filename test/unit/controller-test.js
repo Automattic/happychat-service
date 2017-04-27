@@ -261,7 +261,7 @@ describe( 'Controller', () => {
 			client.on( 'init', () => {
 				client.once( 'system.info', data => {
 					deepEqual( data.chats, [] );
-					deepEqual( data.operators, [ { id: 'operator', online: true, requestingChat: false } ] );
+					deepEqual( data.operators, [ { id: 'operator', online: true } ] );
 					done();
 				} );
 				client.emit( 'system.info' );
