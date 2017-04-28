@@ -5,11 +5,11 @@ import {
 } from 'ramda'
 
 import { notifySystemStatusChange } from '../../chatlist/actions'
+import { getAvailableLocales } from '../../operator/selectors'
 import {
-	getAvailableLocales,
-	hasOperatorRequestingChat,
-} from '../../operator/selectors'
-import { NOTIFY_SYSTEM_STATUS_CHANGE } from '../../action-types'
+	NOTIFY_SYSTEM_STATUS_CHANGE,
+	SET_OPERATOR_REQUESTING_CHAT
+} from '../../action-types'
 
 const notifySystemStatus = ( { getState, dispatch } ) => next => action => {
 	if ( action.type === NOTIFY_SYSTEM_STATUS_CHANGE ) {
@@ -17,13 +17,11 @@ const notifySystemStatus = ( { getState, dispatch } ) => next => action => {
 	}
 
 	const previous = getAvailableLocales( getState() );
-	const previouslyRequestingChat = hasOperatorRequestingChat( getState() );
 	const result = next( action );
 	const current = getAvailableLocales( getState() );
-	const requestingChat = hasOperatorRequestingChat( getState() );
 
 	const localeAvailabilityChanged = ! isEmpty( symmetricDifference( previous, current ) );
-	const requestingChatChanged = requestingChat === previouslyRequestingChat;
+	const requestingChatChanged = ( action.type === SET_OPERATOR_REQUESTING_CHAT );
 
 	if ( requestingChatChanged || localeAvailabilityChanged ) {
 		dispatch( notifySystemStatusChange( current ) )
