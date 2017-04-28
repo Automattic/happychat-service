@@ -1,4 +1,7 @@
-import get from 'lodash/get'
+import {
+	find,
+	get,
+} from 'lodash';
 import {
 	filter,
 	compose,
@@ -128,20 +131,20 @@ const compareOperatorByStatus = ( a, b ) => {
  *                  1 if operator b should come first
  */
 const compareOperatorPriority = ( a, b ) => {
-	// Prioritize operators who are requesting a chat
-	const requestForChatComparison = compareByRequestForChat( a, b );
-	if ( requestForChatComparison !== 0 ) {
-		return requestForChatComparison;
-	}
+	// Order matters here as the first non zero comparison result will be used.
+	const prioritizedComparisons = [
+		compareByRequestForChat,
+		compareOperatorByStatus,
+		compareOperatorsByChatLoad,
+	];
 
-	// When comparing two operators, always prioritise the one whose
-	// status is available over the one who is in reserve
-	const statusComparison = compareOperatorByStatus( a, b );
-	if ( statusComparison !== 0 ) {
-		return statusComparison;
-	}
+	let result = 0;
 
-	return compareOperatorsByChatLoad( a, b );
+	// get the first comparison thats truthy.
+	// Take advantage of -1 and 1 being truthy while 0 is falsy.
+	find( prioritizedComparisons, compare => result = compare( a, b ) );
+
+	return result;
 }
 
 const isMemberOfGroup = ( userID, group ) => compose(
