@@ -54,32 +54,12 @@ const RESERVE_MAX_CHATS = 2;
  *                  1 if operator b is requesting a chat
  */
 const compareByRequestForChat = ( a, b ) => {
-	// Neither operators are requesting a chat so don't alter their order
-	if ( ! a.requestingChat && ! b.requestingChat ) {
+	// using ! here incase one is undefined and the other is false
+	if ( ! a.requestingChat === ! b.requestingChat ) {
 		return 0;
 	}
 
-	// Only one of the operators is requesting a chat
-	if ( a.requestingChat !== b.requestingChat ) {
-		return a.requestingChat ? -1 : 1;
-	}
-
-	// Both are requesting a chat so lets use their status
-	// To break the tie
-	const statusComparison = compareOperatorByStatus( a, b );
-	if ( statusComparison !== 0 ) {
-		return statusComparison;
-	}
-
-	// They're still tied so lets try to break it using
-	// their chat load
-	const loadComparison = compareOperatorsByChatLoad( a, b );
-	if ( loadComparison !== 0 ) {
-		return loadComparison;
-	}
-
-	// still have a tie so let "a" win
-	return -1;
+	return a.requestingChat ? -1 : 1;
 }
 
 /**
