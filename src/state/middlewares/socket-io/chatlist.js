@@ -11,7 +11,7 @@ import {
 } from 'ramda'
 import { v4 as uuid } from 'uuid'
 import { delayAction, cancelAction } from 'redux-delayed-dispatch'
-import { throttle } from 'lodash'
+import { assign, throttle } from 'lodash';
 import {
 	ASSIGN_CHAT,
 	ASSIGN_NEXT_CHAT,
@@ -36,7 +36,8 @@ import {
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_READY,
 	OPERATOR_CHAT_JOIN,
-	OPERATOR_CHAT_TRANSFER
+	OPERATOR_CHAT_TRANSFER,
+	UPDATE_PREFERENCES
 } from '../../action-types'
 import {
 	assignChat,
@@ -61,6 +62,7 @@ import {
 	customerLeft,
 	autocloseChat,
 	updateChat,
+	updatePreferences,
 	removeChat
 } from '../../chatlist/actions'
 import {
@@ -70,7 +72,6 @@ import {
 	getChatStatus,
 	getChatLocale,
 	getAllAssignableChats,
-	getNextAssignableChat,
 	getOperatorAbandonedChats,
 	haveAssignableChat,
 	isChatStatusNew,
@@ -172,6 +173,10 @@ const init = ( { user, socket, io, store, chat }, middlewares ) => () => {
 			e => callback( e.message, null )
 		)
 	} )
+
+	socket.on( 'preferences', ( preferences ) => {
+		store.dispatch( updatePreferences( chat, user, preferences ) );
+	} );
 
 	socket.emit( 'init', user )
 	store.dispatch( customerJoin( socket, chat, user ) )
@@ -355,6 +360,15 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		removeOperatorFromChat( operator, chat )
 		.catch( e => debug( 'failed to remove operator from chat', e.message ) )
 	}, chat_id => debug( 'chat.leave without existing chat', chat_id ) )( action.chat_id, action.user )
+
+	const handleUpdatePreferences = action => {
+		const { chat, preferences } = action;
+		const updatedChat = assign( {}, chat, preferences );
+
+		store.dispatch( updateChat( updatedChat ) );
+
+		const accept = canAcceptChat( chat.id, store.getState() );
+		customer_io.to( customerRoom( chat.id ) ).emit( 'accept', accept )};
 
 	const handleCustomerBlock = action => whenChatExists( ( chat ) => {
 		const operator = getChatOperator( chat.id, store.getState() );
@@ -582,6 +596,9 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 				return next( action );
 			case OPERATOR_CHAT_JOIN:
 				handleOperatorChatJoin( action )
+				return next( action );
+			case UPDATE_PREFERENCES:
+				handleUpdatePreferences( action );
 				return next( action );
 			case CUSTOMER_BLOCK:
 				handleCustomerBlock( action );
