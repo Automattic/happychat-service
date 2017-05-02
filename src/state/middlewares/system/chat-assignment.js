@@ -1,3 +1,10 @@
+/**
+ * Chat Assignment Middleware
+ *
+ * Responsible for assigning chats to operators. Determines when a chat should
+ * be queue for assignment and picks the next available operator for that chat.
+ */
+
 import { isEmpty, forEach, when } from 'ramda';
 
 import {
@@ -36,104 +43,126 @@ import {
 	canAcceptChat,
 	isOperatorAcceptingChats
 } from '../../operator/selectors';
-import { handleActionType, handleActionTypes, handlers, beforeNextAction } from './handlers';
 
 const debug = require( 'debug' )( 'happychat-debug:chat-assignment' );
 const log = require( 'debug' )( 'happychat:chat-assignment' );
 
-const handleAssignChat = ( { getState, dispatch } ) => ( action ) => {
-	const { chat } = action;
-	debug( 'attempting to assign chat' );
+export default store => {
+	// assign the given chat to an available operator
+	const handleAssignChat = ( action ) => {
+		const { chat } = action;
+		debug( 'attempting to assign chat' );
 
-	const locale = getChatLocale( chat.id, getState() );
-	const groups = getChatGroups( chat.id, getState() );
-	const list = getAvailableOperators( locale, groups, getState() );
+		const locale = getChatLocale( chat.id, store.getState() );
+		const groups = getChatGroups( chat.id, store.getState() );
+		const list = getAvailableOperators( locale, groups, store.getState() );
 
-	if ( isEmpty( list ) ) {
-		return dispatch( setChatMissed( chat.id, new Error( 'no operators available' ) ) );
-	}
-
-	const [ next ] = list;
-
-	debug( 'assigning to operator', next );
-	process.nextTick( () => dispatch( setChatOperator( chat.id, next ) ) );
-};
-
-const handleAssignNextChat = ( { getState, dispatch } ) => () => {
-	if ( isAssigningChat( getState() ) ) {
-		debug( 'already assigning chat, wait until complete' );
-		return;
-	}
-
-	if ( ! haveAssignableChat( getState() ) ) {
-		// no chats waiting to be assigned
-		return;
-	}
-
-	const chats = getAllAssignableChats( getState() );
-	for ( const chat of chats ) {
-		const locale = getChatLocale( chat.id, getState() );
-		const groups = getChatGroups( chat.id, getState() );
-		debug( 'checking capacity to assign chat', locale, groups );
-
-		if ( haveAvailableCapacity( locale, groups, getState() ) ) {
-			return dispatch( assignChat( chat ) );
+		if ( isEmpty( list ) ) {
+			return store.dispatch( setChatMissed( chat.id, new Error( 'no operators available' ) ) );
 		}
-		log( 'no capacity to assign chat', chat.id, locale, groups );
-	}
+
+		const [ next ] = list;
+
+		debug( 'assigning to operator', next );
+		process.nextTick( () => store.dispatch( setChatOperator( chat.id, next ) ) );
+	};
+
+	// Pick the next chat that needs to be assigned
+	const handleAssignNextChat = () => {
+		if ( isAssigningChat( store.getState() ) ) {
+			debug( 'already assigning chat, wait until complete' );
+			return;
+		}
+
+		if ( ! haveAssignableChat( store.getState() ) ) {
+			// no chats waiting to be assigned
+			return;
+		}
+
+		const chats = getAllAssignableChats( store.getState() );
+		for ( const chat of chats ) {
+			const locale = getChatLocale( chat.id, store.getState() );
+			const groups = getChatGroups( chat.id, store.getState() );
+			debug( 'checking capacity to assign chat', locale, groups );
+
+			if ( haveAvailableCapacity( locale, groups, store.getState() ) ) {
+				return store.dispatch( assignChat( chat ) );
+			}
+			log( 'no capacity to assign chat', chat.id, locale, groups );
+		}
+	};
+
+	// When system switches from not accepting chats to accepting chats
+	// add all missed chats to chat assignment queue
+	const handleSystemStatusChange = () => {
+		forEach(
+			when(
+				chat => canAcceptChat( chat.id, store.getState() ),
+				chat => insertPendingChat( chat )
+			),
+			getAllMissedChats( store.getState() )
+		);
+	};
+
+	// When a customer sends a message, make sure the customer has an assigned
+	// operator and if not queue the chat for assignment.
+	const handleCustomerInboundMessage = ( { chat } ) => {
+		const state = store.getState();
+		const operator = getChatOperator( chat.id, state );
+		const isNew = isChatStatusNew( chat.id, state );
+		const isClosed = isChatStatusClosed( chat.id, state );
+		const isAssigned = isChatStatusAssigned( chat.id, state );
+
+		if ( operator && isOperatorAcceptingChats( operator.id, state ) && isClosed ) {
+			store.dispatch( setChatOperator( chat.id, operator ) );
+			return;
+		}
+
+		if ( isAssigned && isEmpty( operator ) ) {
+			store.dispatch( setChatMissed( chat.id ) );
+			return;
+		}
+
+		if ( isNew || isClosed ) {
+			store.dispatch( insertPendingChat( chat ) );
+			return;
+		}
+
+		// TODO: check if there is an operator in the room
+		debug( 'chat exists time to make sure someone is assigned' );
+	};
+
+	const handleOperatorReady = ( { user, socket_id } ) => {
+		store.dispatch( recoverChats( user, socket_id ) );
+		store.dispatch( reassignChats( user, socket_id ) );
+	};
+
+	const handleOperatorDisconnect = action => {
+		store.dispatch( setOperatorChatsAbandoned( action.user.id ) );
+	};
+	return next => action => {
+		switch ( action.type ) {
+			case ASSIGN_NEXT_CHAT:
+				handleAssignNextChat( action );
+				break;
+			case ASSIGN_CHAT:
+				handleAssignChat( action );
+				break;
+			case NOTIFY_SYSTEM_STATUS_CHANGE:
+				handleSystemStatusChange( action );
+				break;
+			case CUSTOMER_INBOUND_MESSAGE:
+				handleCustomerInboundMessage( action );
+				break;
+			case OPERATOR_READY:
+				handleOperatorReady( action );
+				break;
+			case REMOVE_USER:
+			case SET_USER_OFFLINE:
+				handleOperatorDisconnect( action );
+				break;
+		}
+		return next( action );
+	};
 };
-
-const handleSystemStatusChange = store => () => {
-	forEach(
-		when(
-			chat => canAcceptChat( chat.id, store.getState() ),
-			chat => insertPendingChat( chat )
-		),
-		getAllMissedChats( store.getState() )
-	);
-};
-
-const handleCustomerInboundMessage = store => ( { chat } ) => {
-	const state = store.getState();
-	const operator = getChatOperator( chat.id, state );
-	const isNew = isChatStatusNew( chat.id, state );
-	const isClosed = isChatStatusClosed( chat.id, state );
-	const isAssigned = isChatStatusAssigned( chat.id, state );
-
-	if ( operator && isOperatorAcceptingChats( operator.id, state ) && isClosed ) {
-		store.dispatch( setChatOperator( chat.id, operator ) );
-		return;
-	}
-
-	if ( isAssigned && isEmpty( operator ) ) {
-		store.dispatch( setChatMissed( chat.id ) );
-		return;
-	}
-
-	if ( isNew || isClosed ) {
-		store.dispatch( insertPendingChat( chat ) );
-		return;
-	}
-
-	// TODO: check if there is an operator in the room
-	debug( 'chat exists time to make sure someone is home' );
-};
-
-const handleOperatorReady = store => ( { user, socket_id } ) => {
-	store.dispatch( recoverChats( user, socket_id ) );
-	store.dispatch( reassignChats( user, socket_id ) );
-};
-
-const handleOperatorDisconnect = store => action => {
-	store.dispatch( setOperatorChatsAbandoned( action.user.id ) );
-};
-
-export default store => beforeNextAction( handlers(
-	handleActionType( ASSIGN_NEXT_CHAT, handleAssignNextChat( store ) ),
-	handleActionType( ASSIGN_CHAT, handleAssignChat( store ) ),
-	handleActionType( NOTIFY_SYSTEM_STATUS_CHANGE, handleSystemStatusChange( store ) ),
-	handleActionType( CUSTOMER_INBOUND_MESSAGE, handleCustomerInboundMessage( store ) ),
-	handleActionType( OPERATOR_READY, handleOperatorReady( store ) ),
-	handleActionTypes( [ REMOVE_USER, SET_USER_OFFLINE ], handleOperatorDisconnect( store ) )
-) );
 

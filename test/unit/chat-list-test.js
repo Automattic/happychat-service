@@ -193,17 +193,17 @@ describe( 'ChatList component', () => {
 				equal( getChatStatus( chat.id, store.getState() ), STATUS_CLOSED )
 				done()
 			}, true )
-			client.emit( 'chat.close', 'the-id' )
+			setImmediate( () => client.emit( 'chat.close', 'the-id' ) )
 		} )
 
 		it( 'should request chat transfer', ( done ) => {
-			watchingMiddleware.watchForType( OPERATOR_CHAT_TRANSFER, ( action ) => {
+			watchingMiddleware.watchForType( OPERATOR_CHAT_TRANSFER, ( action ) => setImmediate( () => {
 				equal( action.chat_id, 'the-id' )
 				equal( action.user.id, operator_id )
 				// No operator connected so user is undefined
 				equal( action.toUser, undefined )
 				done()
-			} )
+			} ) )
 			client.emit( 'chat.transfer', chat.id, 'other-user' )
 		} )
 

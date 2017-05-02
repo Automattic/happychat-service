@@ -27,7 +27,6 @@ import {
 	toLower,
 	keys,
 	anyPass,
-	tap
 } from 'ramda';
 import {
 	statusView,
@@ -75,6 +74,13 @@ const matchingStatuses = statuses => filter(
 		statusView
 	)
 );
+
+/**
+ * Removes closed chats from a list of chat records
+ * @function
+ * @param { Array[] } chatlist - array of chat records
+ * @returns { Array[] } chatlist with chats with STATUS_CLOSED removed
+ */
 const filterClosed = filter( compose( not, equals( STATUS_CLOSED ), statusView ) );
 
 /**
@@ -185,10 +191,18 @@ export const getOpenChatMembers = state => compose(
 /**
  * Selects all chats in the chatlist.
  *
+ * @function
  * @param { Object } state - redux state
  * @returns { Object[] } list of chats
  */
 export const getAllChats = compose( mapToChat, values, selectChatlist );
+
+/**
+ * Alias of getAllChats
+ * @function
+ * @param { Object } state - redux state
+ * @returns { Object[] } list of chats
+ */
 export const getChats = getAllChats;
 
 /**
@@ -229,6 +243,13 @@ export const getAllNewChats = state => getChatsWithStatus( STATUS_NEW, state );
  * @returns { Object[] } list of chats that have STATUS_MISSED
  */
 export const getAllMissedChats = state => getChatsWithStatus( STATUS_MISSED, state );
+
+/**
+ * Alias of getAllMissedChats
+ * @function
+ * @param { Object } state redux state
+ * @returns { Object[] } list of chats that have STATUS_MISSED
+ */
 export const getMissedChats = getAllMissedChats;
 /**
  * Gets a list of all chats that are assigned to operator of `id` and have status
@@ -388,6 +409,7 @@ export const getChatGroups = ( chatID, state ) => compose(
 /**
  * Filter to match chats that are considered pending.
  *
+ * @function
  * @param { Object[] } chats - list of chatlist records
  * @returns { Object[] } chat recordes that are considered pending
  */
@@ -399,6 +421,7 @@ const findPending = filter( compose(
 /**
  * Gets a list of chatlist records that are considered pending.
  *
+ * @function
  * @param { Object } state - redux state
  * @returns { Object[] } list of chat records that are pending assignment
  */
@@ -410,7 +433,7 @@ const getAssignableChats = compose(
 
 /**
  * Gets a list of chats that are considered pending.
- *
+ * @function
  * @param { Object } state - redux state
  * @returns { Object } list of chats that are considered pending
  */
@@ -422,6 +445,7 @@ export const getAllAssignableChats = compose(
 );
 
 /**
+ * @function
  * @param { Object } state - redux state
  * @returns { Boolean } true if any chat is needing assignment
  */
@@ -432,6 +456,7 @@ export const haveAssignableChat = compose(
 );
 
 /**
+ * @function
  * @param { Object } state - redux state
  * @returns { Object } chat that needs next assignment
  */
