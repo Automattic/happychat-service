@@ -31,7 +31,6 @@ import {
 	CLOSE_CHAT,
 	AUTOCLOSE_CHAT,
 	OPERATOR_JOIN,
-	OPERATOR_OPEN_CHAT_FOR_CLIENTS,
 	SET_USER_OFFLINE,
 	REMOVE_USER,
 	OPERATOR_CHAT_LEAVE,
@@ -167,11 +166,6 @@ const chat = ( state = [ null, null, null, null, {}, null, null ], action ) => {
 				assoc( action.user.id, true, membersView( state ) ),
 				state
 			);
-		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
-			return setMembers(
-				assoc( action.operator.id, true, membersView( state ) ),
-				state
-			);
 		case SET_CHAT_CUSTOMER_DISCONNECT:
 			return updateStatus( STATUS_CUSTOMER_DISCONNECT, state );
 	}
@@ -220,7 +214,6 @@ export default ( state = {}, action ) => {
 			return set( chatIdLens, chat( view( chatIdLens, state ), action ) )( state );
 		case INSERT_PENDING_CHAT:
 		case INSERT_NEW_CHAT:
-		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
 		case ASSIGN_CHAT:
 		case OPERATOR_JOIN:
 		case UPDATE_CHAT:
