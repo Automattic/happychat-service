@@ -1,5 +1,5 @@
 import delayedDispatch from 'redux-delayed-dispatch';
-import { keys, evolve, filter, compose, equals, not } from 'ramda'
+import { evolve, filter, compose, equals, not, anyPass } from 'ramda'
 import { applyMiddleware } from 'redux'
 
 import operatorMiddleware from './middlewares/socket-io/operator'
@@ -11,44 +11,21 @@ import systemMiddleware from './middlewares/system'
 import canRemoteDispatch from './operator/can-remote-dispatch'
 import shouldBroadcastStateChange from './should-broadcast'
 import { DESERIALIZE, SERIALIZE } from './action-types'
-import { STATUS_CLOSED, statusView } from './chatlist/reducer'
-
-const getTime = () => ( new Date() ).getTime()
-
-const log = require( 'debug' )( 'happychat:store' )
-const debug = require( 'debug' )( 'happychat-debug:store' )
-
-const logger = () => next => action => {
-	debug( 'ACTION_START', action.type, ... keys( action ) )
-	const startTime = getTime()
-	try {
-		const result = next( action )
-		const endTime = getTime()
-		const ellapsed = endTime - startTime
-		if ( ellapsed > 100 ) {
-			log( 'slow ACTION', action.type )
-		}
-		debug( 'ACTION_END', action.type )
-		return result
-	} catch ( e ) {
-		log( 'ACTION_ERROR', action.type, e.message )
-		debug( 'ACTION', action )
-		throw ( e )
-	}
-}
+import { STATUS_CLOSED, STATUS_NEW, statusView } from './chatlist/reducer'
 
 const filterClosed = filter( compose(
 	not,
-	equals( STATUS_CLOSED ),
+	anyPass( [ equals( STATUS_CLOSED ), equals( STATUS_NEW ) ] ),
 	statusView,
 ) )
+
+const selector = evolve( { chatlist: filterClosed } )
 
 export const serializeAction = () => ( { type: SERIALIZE } )
 export const deserializeAction = () => ( { type: DESERIALIZE } )
 
-export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], timeout = undefined } ) => {
+export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], timeout = undefined }, measure = ( key, fn ) => fn ) => {
 	return applyMiddleware(
-			logger,
 			delayedDispatch,
 			controllerMiddleware( messageMiddlewares ),
 			operatorMiddleware( io.of( '/operator' ), operatorAuth, messageMiddlewares ),
@@ -59,7 +36,7 @@ export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares
 				customerDisconnectTimeout: timeout,
 				customerDisconnectMessageTimeout: timeout
 			}, customerAuth, messageMiddlewares ),
-			broadcastMiddleware( io.of( '/operator' ), { canRemoteDispatch, shouldBroadcastStateChange, selector: evolve( { chatlist: filterClosed } ) } ),
+			broadcastMiddleware( io.of( '/operator' ), { canRemoteDispatch, shouldBroadcastStateChange, selector }, measure( 'broadcast' ) ),
 			...systemMiddleware
 	)
 }

@@ -6,7 +6,6 @@ import enhancer from 'state'
 import { reducer } from 'service'
 import mockio from '../mock-io'
 import WatchingMiddleware from '../mock-middleware'
-import middlewareInterface from 'middleware-interface'
 import {
 	AGENT_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_MESSAGE,
@@ -19,8 +18,8 @@ import {
 } from 'state/chatlist/actions'
 
 describe( 'Controller middleware', () => {
-	let customers, agents, operators, watchingMiddleware
-	let compat, store
+	let customers, agents, operators, watchingMiddleware, chats
+	let store
 
 	const watchForType = ( ... args ) => watchingMiddleware.watchForType( ... args )
 
@@ -28,9 +27,11 @@ describe( 'Controller middleware', () => {
 		customers = new EventEmitter()
 		agents = new EventEmitter()
 		operators = new EventEmitter()
-		let chats = new EventEmitter()
-		compat = middlewareInterface()
+		chats = new EventEmitter()
 		watchingMiddleware = new WatchingMiddleware()
+	} )
+
+	const run = middlewares => {
 		store = createStore( reducer, compose(
 			enhancer( {
 				io: mockio().server,
@@ -38,32 +39,24 @@ describe( 'Controller middleware', () => {
 				operators,
 				agents,
 				chatlist: chats,
-				messageMiddlewares: compat.middlewares(),
+				messageMiddlewares: middlewares,
 			} ),
 			applyMiddleware( watchingMiddleware.middleware() )
 		) )
-	} )
-
-	it( 'should register middleware', () => {
-		compat.external
-		.middleware( () => {} )
-		.middleware( () => {} )
-
-		equal( compat.middlewares().length, 2 )
-	} )
+	}
 
 	it( 'should pass customer message through middleware', ( done ) => {
-		compat.external.middleware( ( { origin, destination, message } ) => {
-			equal( origin, 'customer' )
-			equal( destination, 'customer' )
-			equal( message.text, 'hello' )
-			return assign( {}, message, {text: 'middleware intercepted'} )
-		} )
 		watchForType( CUSTOMER_RECEIVE_MESSAGE, action => {
 			const { message } = action
 			equal( message.text, 'middleware intercepted' )
 			done()
 		} )
+		run( [ ( { origin, destination, message } ) => {
+			equal( origin, 'customer' )
+			equal( destination, 'customer' )
+			equal( message.text, 'hello' )
+			return assign( {}, message, {text: 'middleware intercepted'} )
+		}  ] )
 		store.dispatch( customerInboundMessage(
 			{ id: 'user-id' },
 			{ context: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
@@ -71,11 +64,11 @@ describe( 'Controller middleware', () => {
 	} )
 
 	it( 'should pass customer message to operator', done => {
-		compat.external.middleware( ( { origin, destination } ) => {
+		run( [ ( { origin, destination } ) => {
 			if ( origin === 'customer' && destination === 'operator' ) {
 				done()
 			}
-		} )
+		} ] )
 		store.dispatch( customerInboundMessage(
 			{ id: 'user-id' },
 			{ context: 'user-id', id: 'message-id', text: 'hello', timestamp: 12345 }
@@ -83,11 +76,6 @@ describe( 'Controller middleware', () => {
 	} )
 
 	it( 'should support promise based middleware', ( done ) => {
-		compat.external.middleware( ( { origin, destination, message } ) => new Promise( ( resolve ) => {
-			equal( origin, 'agent' )
-			equal( destination, 'agent' )
-			resolve( assign( {}, message, { text: 'hello world' } ) )
-		} ) )
 
 		watchingMiddleware.watchForType( AGENT_RECEIVE_MESSAGE, ( action ) => {
 			const { message } = action
@@ -95,22 +83,29 @@ describe( 'Controller middleware', () => {
 			done()
 		} )
 
+		run( [ ( { origin, destination, message } ) => new Promise( ( resolve ) => {
+			equal( origin, 'agent' )
+			equal( destination, 'agent' )
+			resolve( assign( {}, message, { text: 'hello world' } ) )
+		} ) ] )
+
 		store.dispatch( agentInboundMessage( 'agent',
 			{ id: 'message-id', context: 'chat-id', timestamp: 12345, author_id: 'author' }
 		) )
 	} )
 
 	it( 'should support callback based middleware', ( done ) => {
-		compat.external.middleware( ( { origin, destination, message }, next ) => {
-			equal( origin, 'operator' )
-			equal( destination, 'operator' )
-			next( assign( {}, message, { text: 'intercepted' } ) )
-		} )
 
 		watchingMiddleware.watchForType( OPERATOR_RECEIVE_MESSAGE, ( action ) => {
 			equal( action.message.text, 'intercepted' )
 			done()
 		} )
+
+		run( [ ( { origin, destination, message }, next ) => {
+			equal( origin, 'operator' )
+			equal( destination, 'operator' )
+			next( assign( {}, message, { text: 'intercepted' } ) )
+		} ] )
 
 		store.dispatch( operatorInboundMessage(
 			'chat-id',
@@ -120,19 +115,21 @@ describe( 'Controller middleware', () => {
 	} )
 
 	it( 'should still succeed when middlewares fail', ( done ) => {
-		compat.external
-		.middleware( ( { message } ) => new Promise( ( resolve ) => {
-			resolve( assign( {}, message, { text: 'goodbye' } ) )
-		} ) )
-		.middleware( () => {
-			throw new Error( 'failed to work' )
-		} )
-		.middleware( ( { message } ) => assign( {}, message, { text: message.text + ' world' } ) )
 
 		watchingMiddleware.watchForType( OPERATOR_RECEIVE_MESSAGE, ( action ) => {
 			equal( action.message.text, 'goodbye world' )
 			done()
 		} )
+
+		run( [
+			( { message } ) => new Promise( ( resolve ) => {
+				resolve( assign( {}, message, { text: 'goodbye' } ) )
+			} ),
+			() => {
+				throw new Error( 'failed to work' )
+			},
+			( { message } ) => assign( {}, message, { text: message.text + ' world' } )
+		] )
 
 		store.dispatch( customerInboundMessage(
 			{ id: 'user-id' },
@@ -144,7 +141,6 @@ describe( 'Controller middleware', () => {
 		const failOnEmit = ( ... args ) => {
 			done( new Error( 'message emitted: ' + JSON.stringify( args, null, '\t' ) ) )
 		}
-		compat.external.middleware( () => false )
 
 		// if any of the namespaces send the message, fail the test
 		customers.on( 'receive', failOnEmit )
@@ -154,6 +150,7 @@ describe( 'Controller middleware', () => {
 		// kind of hacky, the end result is that nothing happens due to the middleware preventing the message from being sent
 		setTimeout( done, 100 )
 
+		run( [ () => false ] )
 		store.dispatch( customerInboundMessage(
 			{ id: 'user-id' },
 			{ context: 'user-id', id: 'message-id', text: 'hello', timestamp: 1 }

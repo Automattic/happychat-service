@@ -56,6 +56,12 @@ describe( 'Chat logs', () => {
 	} )
 
 	beforeEach( () => {
+		const filter = ( { destination, message } ) => {
+			if ( destination === 'customer' ) {
+				return assign( {}, message, { text: 'test: ' + message.text } )
+			}
+			return message
+		}
 		service = makeService( authenticators(
 			// customer
 			{ id: 'customer-a', session_id: '12345', picture: '', displayName: '', username: '' },
@@ -63,13 +69,7 @@ describe( 'Chat logs', () => {
 			{ id: 'operator-1', picture: '', displayName: '', username: '' },
 			// agent
 			{ id: 'agent', picture: '', displayName: '', username: '' }
-		) )
-		service.service.controller.middleware( ( { destination, message } ) => {
-			if ( destination === 'customer' ) {
-				return assign( {}, message, { text: 'test: ' + message.text } )
-			}
-			return message
-		} )
+		), undefined, [ filter ] )
 		return service.start()
 	} )
 	afterEach( () => service.stop() )
