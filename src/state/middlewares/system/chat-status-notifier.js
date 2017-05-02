@@ -1,3 +1,9 @@
+/**
+ * Chat Status Notifier middleware
+ *
+ * Detects when a chat's status changes and dispatches an event with the chat id,
+ * new status, and old status.
+ */
 import {
 	assoc,
 	isEmpty,

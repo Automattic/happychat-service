@@ -10,7 +10,6 @@ const typeOf = v => typeof( v )
  * @returns String value of the string
  * @type String
  */
-
 export default when(
 	compose(
 		equals( 'number' ),
