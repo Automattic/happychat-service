@@ -7,9 +7,8 @@ import customerPresence from './customer-presence'
 import operatorDefaultGroup from './operator-default-group'
 import transferChat from './transfer-chat'
 import eventMessages from './event-messages'
-import transcriptRequester from './transcript-requester'
 
-export default ( messageMiddlewares, timeout = undefined, logCacheBuilder ) => ( [
+export default ( messageFilter, timeout = undefined, logCacheBuilder ) => ( [
 	customerPresence( timeout ),
 	eventMessages,
 	operatorDefaultGroup,
@@ -18,6 +17,5 @@ export default ( messageMiddlewares, timeout = undefined, logCacheBuilder ) => (
 	chatStatusNotifier,
 	loadUpdater,
 	chatAssignment,
-	transcriptRequester( messageMiddlewares ),
-	controllerMiddleware( messageMiddlewares, logCacheBuilder )
+	controllerMiddleware( messageFilter, logCacheBuilder )
 ] );

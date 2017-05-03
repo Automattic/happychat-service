@@ -9,9 +9,6 @@ import {
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_CHAT_JOIN,
 	OPERATOR_CHAT_TRANSCRIPT_REQUEST,
-	OPERATOR_CHAT_TRANSCRIPT_RESPONSE,
-	OPERATOR_CHAT_TRANSCRIPT_FAILURE,
-	OPERATOR_SEND_CHAT_TRANSCRIPT_RESPONSE,
 	OPERATOR_CHAT_TRANSFER,
 	OPERATOR_READY,
 	SET_OPERATOR_CAPACITY,
@@ -181,31 +178,8 @@ export const operatorReady = ( user, socket_id, room ) => (
 /**
  * @returns { Object } redux action
  */
-export const operatorChatTranscriptRequest = ( socketId, chat_id, timestamp ) => ( {
-	type: OPERATOR_CHAT_TRANSCRIPT_REQUEST, socketId, chat_id, timestamp
-} );
-
-/**
- * @returns { Object } redux action
- */
-export const operatorChatTranscriptFailure = ( socketId, chat_id, errorMessage ) => ( {
-	type: OPERATOR_CHAT_TRANSCRIPT_FAILURE, socketId, chat_id, errorMessage
-} );
-
-/**
- * @returns { Object } redux action
- */
-export const operatorChatTranscriptResponse = ( socketId, chat_id, timestamp, messages ) => ( {
-	type: OPERATOR_CHAT_TRANSCRIPT_RESPONSE,
-	socketId, chat_id, timestamp, messages
-} );
-
-/**
- * @returns { Object } redux action
- */
-export const sendOperatorChatTranscriptResponse = ( socketId, chat_id, timestamp, messages ) => ( {
-	type: OPERATOR_SEND_CHAT_TRANSCRIPT_RESPONSE,
-	socketId, chat_id, timestamp, messages
+export const operatorChatTranscriptRequest = ( chat_id, timestamp ) => ( {
+	type: OPERATOR_CHAT_TRANSCRIPT_REQUEST, chat_id, timestamp
 } );
 
 /**

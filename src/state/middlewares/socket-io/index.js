@@ -2,13 +2,13 @@ import operatorMiddleware from './operator';
 import customerMiddleware from './customer';
 import agentMiddleware from './agents';
 
-export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], timeout = undefined } ) => {
+export default ( { io, customerAuth, operatorAuth, agentAuth, messageFilter, timeout = undefined } ) => {
 	return [
-		operatorMiddleware( io.of( '/operator' ), operatorAuth, messageMiddlewares ),
-		agentMiddleware( io.of( '/agent' ), agentAuth ),
+		operatorMiddleware( io.of( '/operator' ), operatorAuth, messageFilter ),
+		agentMiddleware( io.of( '/agent' ), agentAuth, messageFilter ),
 		customerMiddleware( {
 			io: io.of( '/customer' ),
 			timeout
-		}, customerAuth, messageMiddlewares )
+		}, customerAuth, messageFilter )
 	];
 };

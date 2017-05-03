@@ -17,7 +17,7 @@ import {
 	operatorInboundMessage,
 } from 'state/chatlist/actions'
 
-describe( 'Controller middleware', () => {
+describe( 'Controller filter', () => {
 	let customers, agents, operators, watchingMiddleware, chats
 	let store
 
@@ -31,7 +31,7 @@ describe( 'Controller middleware', () => {
 		watchingMiddleware = new WatchingMiddleware()
 	} )
 
-	const run = middlewares => {
+	const run = filters => {
 		store = createStore( reducer, compose(
 			enhancer( {
 				io: mockio().server,
@@ -39,7 +39,7 @@ describe( 'Controller middleware', () => {
 				operators,
 				agents,
 				chatlist: chats,
-				messageMiddlewares: middlewares,
+				messageFilters: filters,
 			} ),
 			applyMiddleware( watchingMiddleware.middleware() )
 		) )

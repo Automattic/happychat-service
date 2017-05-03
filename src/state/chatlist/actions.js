@@ -30,9 +30,6 @@ import {
 	UPDATE_CHAT,
 	RECEIVE_CHAT_MESSAGE,
 	CUSTOMER_CHAT_TRANSCRIPT_REQUEST,
-	CUSTOMER_CHAT_TRANSCRIPT_RESPONSE,
-	CUSTOMER_CHAT_TRANSCRIPT_FAILURE,
-	CUSTOMER_SEND_CHAT_TRANSCRIPT_RESPONSE,
 	REMOVE_CHAT,
 	INSERT_NEW_CHAT,
 	SEND_CUSTOMER_CHAT_LOG
@@ -381,20 +378,8 @@ export const updateChat = ( chat ) => ( {
 	type: UPDATE_CHAT, chat
 } );
 
-export const customerChatTranscriptRequest = ( socketId, chat_id, timestamp ) => ( {
-	type: CUSTOMER_CHAT_TRANSCRIPT_REQUEST, socketId, chat_id, timestamp
-} );
-
-export const customerChatTranscriptResponse = ( socketId, chat_id, timestamp, messages ) => ( {
-	type: CUSTOMER_CHAT_TRANSCRIPT_RESPONSE, socketId, chat_id, timestamp, messages
-} );
-
-export const customerChatTranscriptFailure = ( socketId, chat_id, errorMessage ) => ( {
-	type: CUSTOMER_CHAT_TRANSCRIPT_FAILURE, socketId, chat_id, errorMessage
-} );
-
-export const sendCustomerChatTranscriptResponse = ( socketId, chat_id, timestamp, messages ) => ( {
-	type: CUSTOMER_SEND_CHAT_TRANSCRIPT_RESPONSE, socketId, chat_id, timestamp, messages
+export const customerChatTranscriptRequest = ( chat_id, timestamp ) => ( {
+	type: CUSTOMER_CHAT_TRANSCRIPT_REQUEST, chat_id, timestamp
 } );
 
 /**
