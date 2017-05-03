@@ -22,12 +22,10 @@ export default store => next => action => {
 			const toUser = selectUser( store.getState(), toUserId );
 			const chat = getChat( chat_id, store.getState() );
 
-			debug( 'no to user?', action, store.getState() );
-
 			if ( ! toUser ) {
 				debug( 'failed to transfer chat, operator not available' );
 				store.dispatch( setChatMissed( chat.id ) );
-				return;
+				break;
 			}
 
 			store.dispatch( setChatOperator( chat.id, toUser ) );

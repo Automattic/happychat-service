@@ -1,4 +1,4 @@
-import { map, ifElse, lensPath, view } from 'ramda';
+import { map, ifElse, lensPath, view, filter } from 'ramda';
 import timestamp from '../../timestamp';
 import {
 	OPERATOR_CHAT_LEAVE,
@@ -11,8 +11,6 @@ import {
 	OPERATOR_CHAT_JOIN,
 	CLOSE_CHAT,
 	AUTOCLOSE_CHAT,
-	OPERATOR_SEND_CHAT_TRANSCRIPT_RESPONSE,
-	OPERATOR_CHAT_TRANSCRIPT_FAILURE
 } from '../../action-types';
 import {
 	operatorInboundMessage,
@@ -48,7 +46,7 @@ const identityForUser = ( { id, displayName, avatarURL } ) => (
 
 export const operatorRoom = id => `operator/${ id }`;
 
-const join = ( { socket, dispatch, user, io } ) => {
+const join = ( { socket, dispatch, user, io }, messageFilter ) => {
 	const user_room = operatorRoom( user.id );
 
 	socket.on( 'disconnect', () => {
@@ -113,16 +111,41 @@ const join = ( { socket, dispatch, user, io } ) => {
 		dispatch( operatorChatTransfer( chat_id, user, user_id ) );
 	} );
 
-	socket.on( 'chat.transcript', ( chat_id, message_timestamp ) => {
+	socket.on( 'chat.transcript', ( chat_id, message_timestamp, callback ) => {
 		debug( 'operator is requesting chat backlog', chat_id, 'before', message_timestamp );
-		dispatch( operatorChatTranscriptRequest( socket.id, chat_id, message_timestamp ) );
+
+		new Promise( ( resolve, reject ) => {
+			dispatch(
+				operatorChatTranscriptRequest( chat_id, message_timestamp )
+			).then( resolve, reject );
+		} )
+		.then( result => new Promise( ( resolve, reject ) => {
+			debug( 'chat.transcript', chat_id, result.timestamp, result.messages.length );
+			// debug time to run each message through middleware
+			Promise.all( map( message => messageFilter( {
+				origin: message.source,
+				destination: 'operator',
+				user: message.user,
+				message,
+				chat: { id: chat_id }
+			} ), result.messages ) )
+			.then( filter( message => !! message ) )
+			.then(
+				messages => resolve( { timestamp: result.timestamp, messages } ),
+				reject
+			);
+		} ) )
+		.then(
+			result => setImmediate( () => callback( null, result ) ),
+			e => setImmediate( () => callback( e.message, null ) )
+		);
 	} );
 };
 
-export default ( io, operatorAuth ) => ( store ) => {
+export default ( io, operatorAuth, messageFilter ) => ( store ) => {
 	io.on( 'connection', ( socket ) => {
 		operatorAuth( socket ).then(
-			user => join( { socket, dispatch: store.dispatch, user, io } ),
+			user => join( { socket, dispatch: store.dispatch, user, io }, messageFilter ),
 			e => {
 				socket.emit( 'unauthorized' );
 				log( 'operator auth failed: ', e.message );
@@ -249,15 +272,6 @@ export default ( io, operatorAuth ) => ( store ) => {
 		toOperatorsInChat( chat.id ).emit( 'chat.close', chat, operator );
 	};
 
-	const handleChatTranscriptFailure = action => {
-		io.to( action.socketId ).emit( 'chat.transcript.failure', { id: action.chat_id }, action.errorMessage );
-	};
-
-	const handleChatTranscriptResponse = action => {
-		// debug time to run each message through middleware
-		io.to( action.socketId ).emit( 'chat.transcript', { id: action.chat_id }, { messages: action.messages, timestamp: action.timestamp } );
-	};
-
 	return ( next ) => ( action ) => {
 		switch ( action.type ) {
 			case OPERATOR_RECEIVE_MESSAGE:
@@ -289,12 +303,6 @@ export default ( io, operatorAuth ) => ( store ) => {
 				break;
 			case AUTOCLOSE_CHAT:
 				handleAutocloseChat( action );
-				break;
-			case OPERATOR_SEND_CHAT_TRANSCRIPT_RESPONSE:
-				handleChatTranscriptResponse( action );
-				break;
-			case OPERATOR_CHAT_TRANSCRIPT_FAILURE:
-				handleChatTranscriptFailure( action );
 				break;
 		}
 		return next( action );

@@ -5,11 +5,6 @@ import {
 	CUSTOMER_CHAT_TRANSCRIPT_REQUEST
 } from 'state/action-types'
 
-import {
-	customerChatTranscriptResponse,
-	customerChatTranscriptFailure
-} from 'state/chatlist/actions'
-
 const debug = require( 'debug' )( 'happychat:test:integration' )
 
 describe( 'Customer transcript request', () => {
@@ -22,22 +17,19 @@ describe( 'Customer transcript request', () => {
 				case CUSTOMER_CHAT_TRANSCRIPT_REQUEST:
 					debug( 'transcript requested', action )
 					if ( action.chat_id === 'session-id' && action.timestamp > 0 ) {
-						setImmediate( () => {
-							dispatch( customerChatTranscriptResponse( action.socketId, action.chat_id, action.timestamp, [
-								{ id: 'message-1', timestamp: action.timestamp - 1 },
-								{ id: 'message-2', timestamp: action.timestamp - 2 }
-							] ) )
-						} )
+						return Promise.resolve( { timestamp: action.timestamp, messages: [
+							{ id: 'message-1', timestamp: action.timestamp - 1 },
+							{ id: 'message-2', timestamp: action.timestamp - 2 }
+						] } );
 					} else {
-						setImmediate( () => {
-							dispatch( customerChatTranscriptFailure( action.socketId, action.chat_id, 'error' ) )
-						} )
+						return Promise.reject( new Error( 'transcript failed' ) );
 					}
 					break
 			}
 			return next( action )
 		} ],
-		{ chatlist: { 'chat-id': [ 'closed', { id: 'chat-id' } ] } }
+		{ chatlist: { 'chat-id': [ 'closed', { id: 'chat-id' } ] } },
+		[ () => false ]
 	)
 
 	before( () => {
@@ -58,25 +50,28 @@ describe( 'Customer transcript request', () => {
 		} )
 	} ) )
 
-	it( 'should provide transcript history to an operator', () => startClient()
+	it( 'should provide transcript history a customer', () => startClient()
 		.then( client => new Promise( ( resolve, reject ) => {
 			debug( 'wait for the transcript' )
-			client.once( 'transcript', ( transcript ) => {
+			client.emit( 'transcript', 1000, ( error, transcript ) => {
+				if ( error ) {
+					return reject( error );
+				}
 				equal( transcript.timestamp, 1000 )
 				ok( transcript.messages )
-				resolve()
+				resolve();
 			} )
-			client.once( 'transcript.failure', ( errorMessage ) => {
-				reject( new Error( errorMessage ) )
-			} )
-			client.emit( 'transcript', 1000 )
 		} ) )
 	)
 
 	it( 'should receive transcript failure response', () => startClient()
 		.then( client => new Promise( resolve => {
-			client.once( 'transcript.failure', resolve )
-			client.emit( 'transcript', -1 )
+			client.emit( 'transcript', -1, ( error ) => {
+				if ( ! error ) {
+					return reject( new Error( 'no error' ) );
+				}
+				resolve();
+			} );
 		} ) )
 	)
 } )

@@ -75,7 +75,7 @@ export const service = ( io, authenticators, initialState, { middlewares = [], e
 		operatorAuth: auth( operatorAuthenticator, validateKeys( REQUIRED_OPERATOR_KEYS ) ),
 		customerAuth: auth( customerAuthenticator, validateKeys( REQUIRED_CUSTOMER_KEYS ) ),
 		agentAuth: auth( agentAuthenticator ),
-		messageMiddlewares: filters
+		messageFilters: filters
 	}, middlewares, logCacheBuilder ) ) );
 
 	broadcast( store, io.of( '/operator' ), measure( 'broadcast' ) )

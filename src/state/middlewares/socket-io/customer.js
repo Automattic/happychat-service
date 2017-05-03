@@ -3,6 +3,7 @@ import {
 	isEmpty,
 	compose,
 	tap,
+	filter
 } from 'ramda';
 import { throttle } from 'lodash';
 import {
@@ -14,8 +15,6 @@ import {
 	NOTIFY_SYSTEM_STATUS_CHANGE,
 	NOTIFY_CHAT_STATUS_CHANGED,
 	SEND_CUSTOMER_CHAT_LOG,
-	CUSTOMER_CHAT_TRANSCRIPT_FAILURE,
-	CUSTOMER_SEND_CHAT_TRANSCRIPT_RESPONSE,
 	CUSTOMER_BLOCK
 } from '../../action-types';
 import {
@@ -57,7 +56,7 @@ const haveOtherConnections = ( io, room ) => new Promise( ( resolve, reject ) =>
 	} );
 } );
 
-const init = ( { user, socket, io, dispatch, chat } ) => () => {
+const init = ( { user, socket, io, dispatch, chat }, messageFilter ) => () => {
 	socket.on( 'message', ( { text, id, meta } ) => {
 		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta };
 		// all customer connections for this user receive the message
@@ -79,8 +78,30 @@ const init = ( { user, socket, io, dispatch, chat } ) => () => {
 			} );
 	} );
 
-	socket.on( 'transcript', ( transcript_timestamp ) => {
-		dispatch( customerChatTranscriptRequest( socket.id, chat.id, transcript_timestamp ) );
+	socket.on( 'transcript', ( transcript_timestamp, callback ) => {
+		new Promise( ( resolve, reject ) => {
+			dispatch(
+				customerChatTranscriptRequest( chat.id, transcript_timestamp )
+			).then( resolve, reject );
+		} )
+		.then( result => new Promise( ( resolve, reject ) => {
+			Promise.all( map( message => messageFilter( {
+				origin: message.source,
+				destination: 'customer',
+				user: message.user,
+				message,
+				chat
+			} ), result.messages ) )
+			.then( filter( message => !! message ) )
+			.then(
+				messages => resolve( { timestamp: result.timestamp, messages } ),
+				reject
+			);
+		} ) )
+		.then(
+			result => callback( null, result ),
+			e => callback( e.message, null )
+		);
 	} );
 
 	socket.emit( 'init', user );
@@ -100,10 +121,10 @@ const join = ( { io, user, socket, dispatch }, middlewares ) => {
 	socket.join( customerRoom( chat.id ), init( { user, socket, io, dispatch, chat }, middlewares ) );
 };
 
-export default ( { io, timeout = 1000 }, customerAuth, middlewares = [] ) => store => {
+export default ( { io, timeout = 1000 }, customerAuth, messageFilter ) => store => {
 	io.on( 'connection', socket => {
 		customerAuth( socket ).then(
-			user => join( { socket, user, io, dispatch: store.dispatch }, middlewares ),
+			user => join( { socket, user, io, dispatch: store.dispatch }, messageFilter ),
 			e => {
 				socket.emit( 'unauthorized' );
 				log( 'customer auth failed', e.message );
@@ -143,20 +164,6 @@ export default ( { io, timeout = 1000 }, customerAuth, middlewares = [] ) => sto
 		io.to( customerRoom( action.id ) ).emit( 'log', action.log );
 	};
 
-	const hadleChatTranscriptResponse = action => {
-		io.to( action.socketId ).emit(
-			'transcript',
-			{ timestamp: action.timestamp, messages: action.messages }
-		);
-	};
-
-	const handleChatTranscriptFailure = action => {
-		io.to( action.socketId ).emit(
-			'transcript.failure',
-			action.errorMessage
-		);
-	};
-
 	const handleCustomerBlock = action => {
 		// notify status to customer
 		io.to( customerRoom( action.chat_id ) ).emit( 'accept', false );
@@ -185,12 +192,6 @@ export default ( { io, timeout = 1000 }, customerAuth, middlewares = [] ) => sto
 				break;
 			case SEND_CUSTOMER_CHAT_LOG:
 				handleSendCustomerChatLog( action );
-				break;
-			case CUSTOMER_SEND_CHAT_TRANSCRIPT_RESPONSE:
-				hadleChatTranscriptResponse( action );
-				break;
-			case CUSTOMER_CHAT_TRANSCRIPT_FAILURE:
-				handleChatTranscriptFailure( action );
 				break;
 		}
 		const result = next( action );
