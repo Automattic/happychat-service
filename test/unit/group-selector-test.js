@@ -1,5 +1,5 @@
-import { ok, equal } from 'assert'
-import { isOperatorMemberOfAnyGroup, getDefaultLocaleGroup } from 'state/groups/selectors'
+import { ok, equal } from 'assert';
+import { isOperatorMemberOfAnyGroup, getDefaultLocaleGroup } from 'state/groups/selectors';
 
 describe( 'Group selectors', () => {
 	it( 'isOperatorMemberOfAnyGroup', () => {
@@ -7,14 +7,14 @@ describe( 'Group selectors', () => {
 			somegroup: { members: {
 				1: true
 			} }
-		} } ) )
+		} } ) );
 
-		ok( !isOperatorMemberOfAnyGroup( 2, { groups: {
+		ok( ! isOperatorMemberOfAnyGroup( 2, { groups: {
 			othergroup: { members: {
 				1: true
 			} }
-		} } ) )
-	} )
+		} } ) );
+	} );
 
 	it( 'getDefaultLocaleGroup', () => {
 		equal( 'en-__default', getDefaultLocaleGroup( {
@@ -22,6 +22,6 @@ describe( 'Group selectors', () => {
 			groups: {
 				__default: { id: '__default' }
 			}
-		} ) )
-	} )
-} )
+		} ) );
+	} );
+} );

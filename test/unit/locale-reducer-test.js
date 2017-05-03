@@ -1,41 +1,41 @@
-import { deepEqual } from 'assert'
-import { createStore } from 'redux'
-import reducer from 'state/locales/reducer'
+import { deepEqual } from 'assert';
+import { createStore } from 'redux';
+import reducer from 'state/locales/reducer';
 
-import { configureLocales } from 'state/locales/actions'
-import { setUserLoads } from 'state/operator/actions'
+import { configureLocales } from 'state/locales/actions';
+import { setUserLoads } from 'state/operator/actions';
 
 describe( 'Locale reducer', () => {
 	it( 'should have default state', () => {
-		const store = createStore( reducer )
+		const store = createStore( reducer );
 		deepEqual( store.getState(), {
 			defaultLocale: 'en-US',
 			supported: [ 'en-US' ],
 			memberships: {}
-		} )
-	} )
+		} );
+	} );
 
 	it( 'should configure locales', () => {
-		const store = createStore( reducer )
-		store.dispatch( configureLocales( 'fr', [ 'en-US' ] ) )
+		const store = createStore( reducer );
+		store.dispatch( configureLocales( 'fr', [ 'en-US' ] ) );
 		deepEqual( store.getState(), {
 			defaultLocale: 'fr',
 			supported: [ 'fr', 'en-US' ],
 			memberships: {}
-		} )
-	} )
+		} );
+	} );
 
 	it( 'should add default if no supported locales', () => {
-		const store = createStore( reducer )
-		store.dispatch( configureLocales( 'en' ) )
-		deepEqual( store.getState().supported, [ 'en' ] )
-	} )
+		const store = createStore( reducer );
+		store.dispatch( configureLocales( 'en' ) );
+		deepEqual( store.getState().supported, [ 'en' ] );
+	} );
 
 	it( 'should not change supported when default is present', () => {
-		const store = createStore( reducer )
-		store.dispatch( configureLocales( 'en', [ 'fr', 'en' ] ) )
-		deepEqual( store.getState().supported, [ 'fr', 'en' ] )
-	} )
+		const store = createStore( reducer );
+		store.dispatch( configureLocales( 'en', [ 'fr', 'en' ] ) );
+		deepEqual( store.getState().supported, [ 'fr', 'en' ] );
+	} );
 
 	it( 'should set operator loads per locale', () => {
 		const store = createStore( reducer, {
@@ -45,14 +45,14 @@ describe( 'Locale reducer', () => {
 					userb: { load: 1, capacity: 2, active: false }
 				}
 			}
-		} )
-		store.dispatch( setUserLoads( { en: { usera: 1 } } ) )
+		} );
+		store.dispatch( setUserLoads( { en: { usera: 1 } } ) );
 		deepEqual(
 			store.getState().memberships,
 			{ en: {
 				usera: { load: 1, capacity: 1, active: true },
 				userb: { load: 0, capacity: 2, active: false }
 			} }
-		)
-	} )
-} )
+		);
+	} );
+} );
