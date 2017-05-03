@@ -1,5 +1,5 @@
-import { deepEqual } from 'assert'
-import { merge } from 'ramda'
+import { deepEqual } from 'assert';
+import { merge } from 'ramda';
 
 import upgradeCapacities from 'upgrade-capacities';
 import { setOperatorCapacity } from 'state/operator/actions';
@@ -7,7 +7,7 @@ import { REMOTE_USER_KEY } from 'state/constants';
 
 describe( 'Upgrade capacities to locales', () => {
 	it( 'should update default locale capacities', () => {
-		const actions = []
+		const actions = [];
 		upgradeCapacities( {
 			getState: () => ( {
 				locales: { defaultLocale: 'xx' },
@@ -19,11 +19,11 @@ describe( 'Upgrade capacities to locales', () => {
 				} }
 			} ),
 			dispatch: action => actions.push( action )
-		} )()
+		} )();
 
 		deepEqual( actions, [
-			merge( setOperatorCapacity( 'xx', 1 ), { [REMOTE_USER_KEY]: { id: 'a', capacity: 1 } } ),
-			merge( setOperatorCapacity( 'xx', 2 ), { [REMOTE_USER_KEY]: { id: 'b', capacity: 2 } } ),
-		] )
-	} )
-} )
+			merge( setOperatorCapacity( 'xx', 1 ), { [ REMOTE_USER_KEY ]: { id: 'a', capacity: 1 } } ),
+			merge( setOperatorCapacity( 'xx', 2 ), { [ REMOTE_USER_KEY ]: { id: 'b', capacity: 2 } } ),
+		] );
+	} );
+} );
