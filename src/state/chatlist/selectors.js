@@ -175,7 +175,7 @@ const getLocale = ( localeCode, state ) => {
  * the total load of the system.
  *
  * @param { Object } state redux state
- * @returns { Object } map of chat operator ids for all open chats in the system
+ * @returns { Object } map of chats operator ids grouped by locales
  */
 export const getOpenChatMembers = state => compose(
 	mapObjIndexed( mapToMembers ),
