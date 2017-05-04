@@ -11,15 +11,6 @@ export const serializeAction = () => ( { type: SERIALIZE } );
 export const deserializeAction = () => ( { type: DESERIALIZE } );
 
 export default ( { io, customerAuth, operatorAuth, agentAuth, messageFilters = [], timeout = undefined }, middlewares = [], logCacheBuilder ) => {
-	// const runMiddleware = ( ... args ) => run( filters )( ... args ).then(
-	// 	message => {
-	// 		if ( !! message ) {
-	// 			return message;
-	// 		}
-	// 		return Promise.reject( message );
-	// 	}
-	// );
-
 	const messageFilter = ( ... args ) => run( messageFilters )( ... args );
 	return applyMiddleware(
 		// logs dispatches
