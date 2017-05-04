@@ -94,7 +94,13 @@ export default ( store, io, measure = identity ) => {
 			}
 			debug( 'dispatching', request.action.type );
 			dispatch( request.action );
-			callback();
+			if ( callback ) {
+				try {
+					callback();
+				} catch ( e ) {
+					debug( 'client callback was not a function', e );
+				}
+			}
 		} );
 		socket.on( 'broadcast.state', () => {
 			const user = getSocketOperator( socket, getState() );
