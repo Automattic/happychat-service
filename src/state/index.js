@@ -5,7 +5,7 @@ import socketioMiddleware from './middlewares/socket-io';
 import systemMiddleware from './middlewares/system';
 import logger from './middlewares/logger';
 import { DESERIALIZE, SERIALIZE } from './action-types';
-import { run } from '../middleware-interface';
+import { run } from '../message-filter';
 
 export const serializeAction = () => ( { type: SERIALIZE } );
 export const deserializeAction = () => ( { type: DESERIALIZE } );
