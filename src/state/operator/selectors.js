@@ -273,7 +273,20 @@ export const selectTotalCapacity = ( locale, groups, state ) =>
 		getAvailableOperators( locale, groups, state )
 	);
 
-	export const hasOperatorRequestingChat = ( locale, groups, state ) => {
+export const isAnyOperatorRequestingChat = ( state ) => {
+	const identities = get( state, 'operators.identities' );
+
+	for( const operatorId in identities ) {
+		const { requestingChat } = identities[ operatorId ];
+		if ( requestingChat ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+export const hasOperatorRequestingChat = ( locale, groups, state ) => {
 	const identities = get( state, 'operators.identities' );
 
 	for( const operatorId in identities ) {
