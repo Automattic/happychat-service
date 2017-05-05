@@ -23,7 +23,7 @@ const notifySystemStatus = ( { getState, dispatch } ) => next => action => {
 	const requestingChat = isAnyOperatorRequestingChat( getState() );
 
 	const localeAvailabilityChanged = ! isEmpty( symmetricDifference( previous, current ) );
-	const requestingChatChanged = requestingChat === previouslyRequestingChat;
+	const requestingChatChanged = requestingChat !== previouslyRequestingChat;
 
 	if ( requestingChatChanged || localeAvailabilityChanged ) {
 		dispatch( notifySystemStatusChange( current ) )
