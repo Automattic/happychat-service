@@ -1,7 +1,7 @@
-import { ok } from 'assert'
+import { ok } from 'assert';
 
-export * from 'assert'
+export * from 'assert';
 
 export const contains = ( container, ... elements ) => {
-	elements.forEach( ( element ) => ok( container.indexOf( element ) > -1 ) )
-}
+	elements.forEach( ( element ) => ok( container.indexOf( element ) > -1 ) );
+};
