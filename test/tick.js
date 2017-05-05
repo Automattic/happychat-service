@@ -1,1 +1,1 @@
-export const tick = ( fn ) => ( ... args ) => process.nextTick( () => fn( ... args ) )
+export const tick = ( fn ) => ( ... args ) => process.nextTick( () => fn( ... args ) );
