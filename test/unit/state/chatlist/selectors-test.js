@@ -51,7 +51,7 @@ describe( 'state/chatlist/selectors', () => {
 			{ [ getDefaultLocale( state ) ]: [ {
 				[ onlineOperator.id ]: true,
 				[ transferOnlyOperator.id ]: true
-			} ] }
+			}, {} ] }
 		);
 	} );
 
