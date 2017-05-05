@@ -1,15 +1,15 @@
-import { deepEqual, equal } from 'assert'
+import { deepEqual, equal } from 'assert';
 
-import { SET_USER_LOADS } from 'state/action-types'
-import middleware from 'state/middlewares/system/load-updater'
-import { operatorChatJoin } from 'state/operator/actions'
-import { STATUS_ASSIGNED } from 'state/chatlist/reducer'
+import { SET_USER_LOADS } from 'state/action-types';
+import middleware from 'state/middlewares/system/load-updater';
+import { operatorChatJoin } from 'state/operator/actions';
+import { STATUS_ASSIGNED } from 'state/chatlist/reducer';
 
 describe( 'Operator loads', () => {
-	const next = v => v
+	const next = v => v;
 
 	it( 'should update operator loads per locale', () => {
-		let dispatchedAction
+		let dispatchedAction;
 		const updater = middleware( {
 			getState: () => ( {
 				locales: { defaultLocale: 'en', supported: [ 'en', 'fr' ] },
@@ -33,16 +33,16 @@ describe( 'Operator loads', () => {
 			} ),
 			dispatch: dispatched => dispatchedAction = dispatched
 		}
-		)( next )
+		)( next );
 
-		const action = operatorChatJoin()
-		const result = updater( action )
+		const action = operatorChatJoin();
+		const result = updater( action );
 
-		deepEqual( result, action )
-		equal( dispatchedAction.type, SET_USER_LOADS )
+		deepEqual( result, action );
+		equal( dispatchedAction.type, SET_USER_LOADS );
 		deepEqual( dispatchedAction.loads, {
 			en: { op1: 1, op2: 1 },
 			fr: { op1: 1 }
-		} )
-	} )
-} )
+		} );
+	} );
+} );

@@ -1,0 +1,22 @@
+describe( 'state/operator/selectors', () => {
+	it( 'getAvailableOperators' );
+	it( 'selectIdentities' );
+	it( 'getOperators' );
+	it( 'getSocketOperator' );
+	it( 'selectUser' );
+	it( 'selectTotalCapacity' );
+	it( 'getAvailableCapacity' );
+	it( 'haveAvailableCapacity' );
+	it( 'getSystemAcceptsCustomers' );
+	it( 'getOperatorOnline' );
+	it( 'getLocaleCapacities' );
+	it( 'getAvailableLocales' );
+	it( 'getOperatorIdentity' );
+	it( 'getOperatorStatus' );
+	it( 'isOperatorStatusAvailable' );
+	it( 'isOperatorStatusReserve' );
+	it( 'isOperatorStatusAvailableOrInReserve' );
+	it( 'isOperatorAcceptingChats' );
+	it( 'canAcceptChat' );
+	it( 'defaultLocaleIsAvailable' );
+} );
