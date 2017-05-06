@@ -226,4 +226,64 @@ describe( 'state/middlewares/system/chat-assignment', () => {
 		equal( action.type, SET_CHAT_OPERATOR )
 		equal( action.operator.id, 'reserve1' )
 	} ) );
+
+	describe( '#requestingChat', () => {
+		const requestingChatState = ( { activeLoad = 0, requestingChatLoad1 = 0, requestingChatLoad2 = 0 } ) => ( {
+			locales: { defaultLocale: 'en', supported: [ 'en', 'fr' ], memberships: {
+				en: {
+					active1: { capacity: 2, load: activeLoad, active: true },
+					active2: { capacity: 2, load: activeLoad, active: true },
+					requstingChatOperator1: { capacity: 5, load: requestingChatLoad1, active: true },
+					requstingChatOperator2: { capacity: 5, load: requestingChatLoad2, active: true },
+				},
+				fr: {}
+			} },
+			chatlist: {
+				chat: [ STATUS_PENDING, { id: 'chat' }, null, 2, {}, 'en' ],
+			},
+			operators: { identities: {
+				active1: { id: 'active1', status: STATUS_AVAILABLE, online: true },
+				active2: { id: 'active2', status: STATUS_AVAILABLE, online: true },
+				requstingChatOperator1: { id: 'requstingChatOperator1', status: STATUS_AVAILABLE, online: true, requestingChat: true },
+				requstingChatOperator2: { id: 'requstingChatOperator2', status: STATUS_AVAILABLE, online: true, requestingChat: true },
+			} },
+			groups: {
+				[ DEFAULT_GROUP_ID ]: { members: { active1: true, active2: true, requstingChatOperator1: true, requstingChatOperator2: true } },
+			}
+		} );
+
+		const leastLoadTest = requestingChatState( { activeLoad: 0, requestingChatLoad1: 10, requestingChatLoad2: 9 } );
+
+		it( 'should assign chat to operator with least load', () => dispatchAction(
+			assignChat( { id: 'chat' } ),
+			leastLoadTest
+		).then( action => {
+			equal( action.type, SET_CHAT_OPERATOR )
+			equal( action.operator.id, 'requstingChatOperator2' )
+		} ) );
+
+		const reserveStatusTest = requestingChatState( { activeLoad: 0, requestingChatLoad1: 9, requestingChatLoad2: 8 } );
+		reserveStatusTest.operators.identities.requstingChatOperator1.status = STATUS_AVAILABLE;
+		reserveStatusTest.operators.identities.requstingChatOperator2.status = STATUS_RESERVE;
+
+		it( 'should assign chat to "available" operator before "reserve" operator', () => dispatchAction(
+			assignChat( { id: 'chat' } ),
+			reserveStatusTest
+		).then( action => {
+			equal( action.type, SET_CHAT_OPERATOR )
+			equal( action.operator.id, 'requstingChatOperator1' )
+		} ) );
+
+		const reserveStatusVsNormalTest = requestingChatState( { activeLoad: 0, requestingChatLoad1: 9, requestingChatLoad2: 8 } );
+		reserveStatusVsNormalTest.operators.identities.requstingChatOperator1.status = STATUS_RESERVE;
+		reserveStatusVsNormalTest.operators.identities.requstingChatOperator2.status = STATUS_RESERVE;
+
+		it( 'should assign chat to "reserve" operator requesting a chat before "available" regular operators', () => dispatchAction(
+			assignChat( { id: 'chat' } ),
+			reserveStatusVsNormalTest
+		).then( action => {
+			equal( action.type, SET_CHAT_OPERATOR )
+			equal( action.operator.id, 'requstingChatOperator2' )
+		} ) );
+	} );
 } )

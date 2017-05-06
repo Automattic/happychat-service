@@ -261,10 +261,10 @@ describe( 'Controller', () => {
 			client.on( 'init', () => {
 				client.once( 'system.info', data => {
 					deepEqual( data.chats, [] );
-					deepEqual( data.operators, [ { id: 'operator', online: true } ] );
+					deepEqual( data.operators, [ { id: 'operator', requestingChat: false, online: true } ] );
 					done();
 				} );
-				client.emit( 'system.info' );
+				client.emit( 'system.info' )
 			} ).connect();
 		} );
 	} );

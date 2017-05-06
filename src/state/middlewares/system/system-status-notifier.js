@@ -9,24 +9,33 @@
 
 import {
 	isEmpty,
-	not,
 	symmetricDifference
 } from 'ramda';
 import { throttle } from 'lodash';
-
 import { notifySystemStatusChange } from '../../chatlist/actions';
-import { getAvailableLocales } from '../../operator/selectors';
+import {
+	getAvailableLocales,
+	isAnyOperatorRequestingChat
+} from '../../operator/selectors';
 import { NOTIFY_SYSTEM_STATUS_CHANGE } from '../../action-types';
 
 export default ( { getState, dispatch } ) => {
-	let current = getAvailableLocales( getState() );
-	const check = throttle( () => {
-		const updated = getAvailableLocales( getState() );
-		if ( not( isEmpty( symmetricDifference( current, updated ) ) ) ) {
-			dispatch( notifySystemStatusChange( updated ) );
+	let currentLocales = getAvailableLocales( getState() );
+	let currentRequesting = isAnyOperatorRequestingChat( getState() );
+	const dispatchIfUpdated = () => {
+		const updatedLocales = getAvailableLocales( getState() );
+		const updatedRequesting = isAnyOperatorRequestingChat( getState() );
+		const updatedLocalesChanged = ! isEmpty( symmetricDifference( currentLocales, updatedLocales ) );
+		const updatedRequestingChanged = currentRequesting !== updatedRequesting;
+
+		if ( updatedLocalesChanged || updatedRequestingChanged ) {
+			dispatch( notifySystemStatusChange( updatedLocales ) );
 		}
-		current = updated;
-	}, 1000, { leading: true } );
+
+		currentLocales = updatedLocales;
+		currentRequesting = updatedRequesting;
+	};
+	const check = throttle( dispatchIfUpdated, 1000, { leading: true } );
 	return next => action => {
 		if ( action.type === NOTIFY_SYSTEM_STATUS_CHANGE ) {
 			return next( action );
