@@ -1,6 +1,6 @@
 {
   "name": "happychat-service",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "description": "Socket.IO based chat server for happychat.",
   "main": "index.js",
   "scripts": {
