@@ -175,8 +175,8 @@ export default ( { io, timeout = 1000 }, customerAuth, messageFilter ) => store 
 				handleNotifiSystemStatusChange( action );
 				break;
 			case NOTIFY_CHAT_STATUS_CHANGED:
-				const status = getChatStatus( action.chatID, store.getState() );
-				io.to( customerRoom( action.chatID ) ).emit( 'status', status );
+				const status = getChatStatus( action.chat_id, store.getState() );
+				io.to( customerRoom( action.chat_id ) ).emit( 'status', status );
 				break;
 			case CUSTOMER_RECEIVE_TYPING:
 				handleCustomerReceiveTyping( action );
