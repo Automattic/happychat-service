@@ -1,3 +1,4 @@
+import validator from 'is-my-json-valid';
 
 import {
 	compose,
@@ -39,7 +40,9 @@ import {
 	UPDATE_CHAT,
 	REMOVE_CHAT,
 	SERIALIZE
-} from '../action-types'
+} from '../action-types';
+import { validateReducer } from '../validate';
+import { chat as chatSchema } from './schema';
 
 export const STATUS_NEW = 'new'
 export const STATUS_PENDING = 'pending'
@@ -88,51 +91,73 @@ const updateStatus = ( status, state ) => compose(
 	setStatus( status )
 )( state )
 
-const chat = ( state = [ null, null, null, null, {}, null, null ], action ) => {
-	switch ( action.type ) {
-		case INSERT_NEW_CHAT:
-			return compose(
-				setStatus( STATUS_NEW ),
-				updateChat( action.chat )
-			)( state )
-		case INSERT_PENDING_CHAT:
-			return compose(
-				setStatus( STATUS_PENDING ),
-				updateChat( action.chat )
-			)( state )
-		case UPDATE_CHAT:
-			return updateChat( action.chat )( state )
-		case CLOSE_CHAT:
-		case AUTOCLOSE_CHAT:
-			return updateStatus( STATUS_CLOSED, state );
-		case SET_CHAT_OPERATOR:
-		case SET_CHATS_RECOVERED:
-			return compose(
-				setMembers( set( lensProp( action.operator.id ), true, membersView( state ) ) ),
-				setStatus( STATUS_ASSIGNED ),
-				setOperator( action.operator ),
-			)( state )
-		case SET_OPERATOR_CHATS_ABANDONED:
-			return updateStatus( STATUS_ABANDONED, state )
-		case ASSIGN_CHAT:
-			return updateStatus( STATUS_ASSIGNING, state )
-		case SET_CHAT_MISSED:
-			return updateStatus( STATUS_MISSED, state )
-		case OPERATOR_CHAT_TRANSFER:
-		case OPERATOR_CHAT_LEAVE:
-		case SET_USER_OFFLINE:
-		case REMOVE_USER:
-			return setMembers( dissoc( asString( action.user.id ), membersView( state ) ), state )
-		case OPERATOR_CHAT_JOIN:
-		case OPERATOR_JOIN:
-			return setMembers( set( lensProp( action.user.id ), true, membersView( state ) ), state )
-		case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
-			return setMembers( set( lensProp( action.operator.id ), true, membersView( state ) ), state )
-		case SET_CHAT_CUSTOMER_DISCONNECT:
-			return updateStatus( STATUS_CUSTOMER_DISCONNECT, state )
+/**
+/* Reducer tuple indexes:
+ * - 0 - { string } chat status
+ * - 1 - { Object } chat session context
+ * - 2 - { Object } assigned operator
+ * - 3 - { number } timestamp updated with status changes
+ * - 4 - { Object } a map of operator_id: bool of operators in the chat
+ * - 5 - { string } the chat's locale
+ * - 6 - { string[] } groups for the chat
+ */
+const chatDefault = [ null, null, null, null, {}, null, null ];
+const chatValidator = validator( chatSchema, { verbose: true } );
+
+/**
+ * Reducer for updating/storing a chat's details in an tuple array.
+ *
+ * @param { array } state - a chat record's state.
+ * @param { Object } action - redux action
+ * @returns { array } a chat record
+ */
+const chat = validateReducer( 'chatList.chat', chatValidator,
+	( state = chatDefault, action ) => {
+		switch ( action.type ) {
+			case INSERT_NEW_CHAT:
+				return compose(
+					setStatus( STATUS_NEW ),
+					updateChat( action.chat )
+				)( state )
+			case INSERT_PENDING_CHAT:
+				return compose(
+					setStatus( STATUS_PENDING ),
+					updateChat( action.chat )
+				)( state )
+			case UPDATE_CHAT:
+				return updateChat( action.chat )( state )
+			case CLOSE_CHAT:
+			case AUTOCLOSE_CHAT:
+				return updateStatus( STATUS_CLOSED, state );
+			case SET_CHAT_OPERATOR:
+			case SET_CHATS_RECOVERED:
+				return compose(
+					setMembers( set( lensProp( action.operator.id ), true, membersView( state ) ) ),
+					setStatus( STATUS_ASSIGNED ),
+					setOperator( action.operator ),
+				)( state )
+			case SET_OPERATOR_CHATS_ABANDONED:
+				return updateStatus( STATUS_ABANDONED, state )
+			case ASSIGN_CHAT:
+				return updateStatus( STATUS_ASSIGNING, state )
+			case SET_CHAT_MISSED:
+				return updateStatus( STATUS_MISSED, state )
+			case OPERATOR_CHAT_TRANSFER:
+			case OPERATOR_CHAT_LEAVE:
+			case SET_USER_OFFLINE:
+			case REMOVE_USER:
+				return setMembers( dissoc( asString( action.user.id ), membersView( state ) ), state )
+			case OPERATOR_CHAT_JOIN:
+			case OPERATOR_JOIN:
+				return setMembers( set( lensProp( action.user.id ), true, membersView( state ) ), state )
+			case OPERATOR_OPEN_CHAT_FOR_CLIENTS:
+				return setMembers( set( lensProp( action.operator.id ), true, membersView( state ) ), state )
+			case SET_CHAT_CUSTOMER_DISCONNECT:
+				return updateStatus( STATUS_CUSTOMER_DISCONNECT, state )
+		}
+		return state
 	}
-	return state
-}
+);
 
 const whereOperatorIs = id => compose(
 	whereEq( { id } ),
