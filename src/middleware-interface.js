@@ -12,7 +12,7 @@ const normalize = middleware => {
 
 const runMiddleware = ( provided = [] ) => {
 	const middlewares = provided.map( normalize )
-	return ( { origin, destination, chat, user, message } ) => new Promise( ( resolveMiddleware, reject ) => {
+	return ( { origin, destination, chat, user, message } ) => new Promise( ( resolveMiddleware ) => {
 		new Promise( middlewareComplete => {
 			if ( isEmpty( middlewares ) ) {
 				debug( 'no middlewares registered' )
@@ -25,7 +25,7 @@ const runMiddleware = ( provided = [] ) => {
 			// the next middleware
 			const run = ( data, [ head, ... rest ] ) => {
 				if ( !head ) {
-					debug( 'middleware complete', chat.id, data.type, data.message )
+					debug( 'middleware complete', chat.id, data.type )
 					return middlewareComplete( data.message )
 				}
 
@@ -36,6 +36,7 @@ const runMiddleware = ( provided = [] ) => {
 				// if middleware fails, log the error and continue processing
 				.catch( e => {
 					debug( 'middleware failed to run', e )
+					debug( e.stack )
 					run( data, rest )
 				} )
 			}
@@ -43,11 +44,12 @@ const runMiddleware = ( provided = [] ) => {
 			run( { origin, destination, chat, user, message }, context )
 		} )
 		.then( result => {
-			// if ( ! result ) {
-			// 	return reject( new Error( `middleware prevented message(id:${ message.id }) from being sent from ${ origin } to ${ destination } in chat ${ chat.id }` ) )
-			// }
+			if ( ! result ) {
+				throw new Error( `middleware prevented message(id:${ message.id }) from being sent from ${ origin } to ${ destination } in chat ${ chat.id }` )
+			}
 			resolveMiddleware( result )
 		} )
+		.catch( e => debug( e.message, e ) )
 	} )
 }
 export { runMiddleware as run }

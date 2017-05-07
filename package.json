@@ -1,6 +1,6 @@
 {
   "name": "happychat-service",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "description": "Socket.IO based chat server for happychat.",
   "main": "index.js",
   "scripts": {
@@ -30,10 +30,10 @@
     "babel-register": "^6.18.0",
     "eslines": "^0.0.12",
     "eslint": "^3.13.0",
-    "eslint-config-wpcalypso": "^0.6.0",
     "eslint-eslines": "0.0.1",
+    "eslint-config-wpcalypso": "^0.6.0",
     "eslint-loader": "^1.2.0",
-    "eslint-plugin-wpcalypso": "^3.2.0",
+    "eslint-plugin-wpcalypso": "^3.0.2",
     "isparta": "^4.0.0",
     "mocha": "^2.4.5",
     "mocha-junit-reporter": "^1.12.0",
@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "lodash": "^4.11.1",
-    "ramda": "^0.23.0",
+    "ramda": "^0.22.1",
     "redux": "^3.5.2",
     "redux-delayed-dispatch": "^1.0.0-2",
     "simperium-jsondiff": "^1.0.1-1",

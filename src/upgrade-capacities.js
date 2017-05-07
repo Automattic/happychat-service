@@ -8,15 +8,17 @@ import {
 	tap
 } from 'ramda'
 
-import { getDefaultLocale } from './state/locales/selectors';
-import { selectIdentities } from './state/operator/selectors';
-import { setOperatorCapacity } from './state/operator/actions';
-import { REMOTE_USER_KEY } from './state/constants';
+import { getDefaultLocale } from './state/locales/selectors'
+import { selectIdentities } from './state/operator/selectors'
+import { setOperatorCapacity } from './state/operator/actions'
+import { REMOTE_USER_KEY } from './state/middlewares/socket-io/broadcast'
 
 const debug = require( 'debug' )( 'happychat-debug:upgrade-capacities' )
 
-// When the system adds locale support, the existing capacities store in the
-// operator identities will be added to the default locales.
+/**
+ * When the system adds locale support, the existing capacities store in the
+ * operator identities will be added to the default locales.
+ */
 export default ( store ) => {
 	const state = store.getState()
 	return () => {

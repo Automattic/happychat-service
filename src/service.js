@@ -10,7 +10,6 @@ import {
 	difference,
 	append,
 	once,
-	identity
 } from 'ramda'
 
 import { createStore, compose } from 'redux'
@@ -21,7 +20,6 @@ import { removeChat } from './state/chatlist/actions'
 import { getClosedChatsOlderThan } from './state/chatlist/selectors'
 import { configureLocales } from './state/locales/actions'
 import upgradeCapacities from './upgrade-capacities'
-import broadcast from './broadcast'
 
 const log = require( 'debug' )( 'happychat:service' )
 
@@ -56,8 +54,7 @@ const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_H
 	)
 }
 
-export const service = ( io, authenticators, initialState, { middlewares = [], enhancers = [] }, logCacheBuilder, filters, measure = () => identity ) => {
-	const { customerAuthenticator, agentAuthenticator, operatorAuthenticator } = authenticators;
+export const service = ( io, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, initialState, enhancers = [], filters, measure ) => {
 	log( 'configuring socket.io server' )
 
 	const auth = ( authenticator, validator = user => user ) => socket => new Promise( ( resolve, reject ) => {
@@ -70,15 +67,13 @@ export const service = ( io, authenticators, initialState, { middlewares = [], e
 	} )
 	.then( validator );
 
-	const store = createStore( reducer, initialState, compose( ... enhancers, enhancer( {
+	const store = createStore( reducer, initialState, compose( enhancer( {
 		io,
 		operatorAuth: auth( operatorAuthenticator, validateKeys( REQUIRED_OPERATOR_KEYS ) ),
 		customerAuth: auth( customerAuthenticator, validateKeys( REQUIRED_CUSTOMER_KEYS ) ),
 		agentAuth: auth( agentAuthenticator ),
-		messageFilters: filters
-	}, middlewares, logCacheBuilder ) ) );
-
-	broadcast( store, io.of( '/operator' ), measure( 'broadcast' ) )
+		messageMiddlewares: filters
+	}, measure ), ... enhancers ) )
 
 	const removeStaleChats = buildRemoveStaleChats( store )
 	setInterval( removeStaleChats, 1000 * 60 ) // every minute
