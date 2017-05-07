@@ -1,8 +1,6 @@
 import systemStatusNotifier from './system-status-notifier'
 import chatStatusNotifier from './chat-status-notifier'
 import loadUpdater from './load-updater'
-import requestingChatMiddleware from './requesting-chat-updater';
-
 import controllerMiddleware from './controller'
 import chatAssignment from './chat-assignment'
 import customerPresence from './customer-presence'
@@ -19,6 +17,5 @@ export default ( messageFilter, timeout = undefined, logCacheBuilder ) => ( [
 	chatStatusNotifier,
 	loadUpdater,
 	chatAssignment,
-	requestingChatMiddleware,
 	controllerMiddleware( messageFilter, logCacheBuilder )
 ] );

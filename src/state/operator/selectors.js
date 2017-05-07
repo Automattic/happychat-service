@@ -1,4 +1,4 @@
-import { get, find } from 'lodash';
+import { get } from 'lodash'
 import {
 	filter,
 	compose,
@@ -13,6 +13,7 @@ import {
 	reduce,
 	merge,
 	map,
+	both,
 	pickBy,
 	keys,
 	flatten,
@@ -33,7 +34,7 @@ import { getGroups, makeLocaleGroupToken, getDefaultGroup } from '../groups/sele
 
 import { STATUS_AVAILABLE, STATUS_RESERVE } from './constants';
 
-const percentAvailable = ( { load, capacity } ) => capacity > 0 ? ( capacity - defaultTo( 0, load ) ) / capacity : 0
+const percentAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) ) / capacity
 const totalAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) )
 
 // This is the maximum number of chats a reserve operator can have before
@@ -41,79 +42,6 @@ const totalAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load
 // all reserve operators reach this limit, new chats will be balanced
 // between reserve operators.
 const RESERVE_MAX_CHATS = 2;
-
-/* Compare function for sorting operator priority.
- *
- * The first operator in the resulting list should be the next one
- * to be assigned to a chat. This is used for balancing chat load
- * evenly across operators.
- *
- * @param {Operator} a First operator to compare
- * @param {Operator} b Second operator to compare
- * @return {Number} -1 if operator a is requesting a chat
- *                  0 if neither are requesting a chat
- *                  1 if operator b is requesting a chat
- */
-const compareByRequestForChat = ( a, b ) => {
-	// using ! here incase one is undefined and the other is false
-	if ( ! a.requestingChat === ! b.requestingChat ) {
-		return 0;
-	}
-
-	return a.requestingChat ? -1 : 1;
-}
-
-/**
- * Compare function for sorting operators by their chat load
- *
- * @param {Operator} a First operator to compare
- * @param {Operator} b Second operator to compare
- * @return {Number} -1 if operator a is requesting a chat
- *                  0 if neither are requesting a chat
- *                  1 if operator b is requesting a chat
- */
-const compareOperatorsByChatLoad = ( a, b ) => {
-	// When comparing two operators in reserve, prioritise the one
-	// already chatting to avoid disturbing the other.
-	if ( a.status === STATUS_RESERVE && b.status === STATUS_RESERVE ) {
-		const aLoad = a.load || 0;
-		const bLoad = b.load || 0;
-		if ( aLoad > 0 && aLoad < RESERVE_MAX_CHATS && bLoad === 0 ) {
-			return -1;
-		}
-
-		if ( bLoad > 0 && bLoad < RESERVE_MAX_CHATS && aLoad === 0 ) {
-			return 1;
-		}
-	}
-
-	if ( a.percentAvailable === b.percentAvailable ) {
-		if ( a.totalAvailable === b.totalAvailable ) {
-			return 0;
-		}
-		return a.totalAvailable > b.totalAvailable ? -1 : 1;
-	}
-	return a.percentAvailable > b.percentAvailable ? -1 : 1;
-}
-
-/**
- * Compare two operators using their status
- *
- * @param {Operator} a First operator to compare
- * @param {Operator} b Second operator to compare
- * @return {Number} -1 if operator a is available
- *                  0 if they have the same status
- *                  1 if operator b is available
- */
-const compareOperatorByStatus = ( a, b ) => {
-	if ( a.status === b.status ) {
-		return 0;
-	}
-
-	// When comparing two operators, always prioritise the one whose
-	// status is available over the one who is in reserve
-	return a.status === STATUS_AVAILABLE ? -1 : 1;
-}
 
 /**
 /* Compare function for sorting operator priority.
@@ -129,20 +57,37 @@ const compareOperatorByStatus = ( a, b ) => {
  *                  1 if operator b should come first
  */
 const compareOperatorPriority = ( a, b ) => {
-	// Order matters here as the first non zero comparison result will be used.
-	const prioritizedComparisons = [
-		compareByRequestForChat,
-		compareOperatorByStatus,
-		compareOperatorsByChatLoad,
-	];
+	// When comparing two operators, always prioritise the one whose
+	// status is available over the one who is in reserve
+	if ( a.status === STATUS_RESERVE && b.status === STATUS_AVAILABLE ) {
+		return 1;
+	}
+	if ( a.status === STATUS_AVAILABLE && b.status === STATUS_RESERVE ) {
+		return -1;
+	}
 
-	let result = 0;
+	// When comparing two operators in reserve, prioritise the one
+	// already chatting to avoid disturbing the other.
+	if ( a.status === STATUS_RESERVE && b.status === STATUS_RESERVE ) {
+		const aLoad = a.load || 0;
+		const bLoad = b.load || 0;
+		if ( aLoad > 0 && aLoad < RESERVE_MAX_CHATS && bLoad === 0 ) {
+			return -1;
+		}
 
-	// get the first comparison thats truthy.
-	// Take advantage of -1 and 1 being truthy while 0 is falsy.
-	find( prioritizedComparisons, compare => result = compare( a, b ) );
+		if ( bLoad > 0 && bLoad < RESERVE_MAX_CHATS && aLoad === 0 ) {
+			return 1;
+		}
+	}
 
-	return result;
+	// Compare operators by their current chat load
+	if ( a.percentAvailable === b.percentAvailable ) {
+		if ( a.totalAvailable === b.totalAvailable ) {
+			return 0;
+		}
+		return a.totalAvailable > b.totalAvailable ? -1 : 1
+	}
+	return a.percentAvailable > b.percentAvailable ? -1 : 1
 }
 
 /**
@@ -188,7 +133,7 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 			percentAvailable: percentAvailable( user ),
 			totalAvailable: totalAvailable( user )
 		} ) ),
-		filter( ( { requestingChat, status, online, load, capacity, active, id } ) => {
+		filter( ( { status, online, load, capacity, active, id } ) => {
 			const isAvailable = status === STATUS_AVAILABLE || status === STATUS_RESERVE;
 			if ( ! online || ! isAvailable ) {
 				return false
@@ -199,11 +144,6 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 			if ( ! isMemberOfGroup( id, group ) ) {
 				return false
 			}
-
-			if ( requestingChat ) {
-				return true;
-			}
-
 			return capacity - defaultTo( 0, load ) > 0
 		} )
 	)( operators ), groups ),
@@ -272,36 +212,6 @@ export const selectTotalCapacity = ( locale, groups, state ) =>
 		{ load: 0, capacity: 0 },
 		getAvailableOperators( locale, groups, state )
 	);
-
-export const isAnyOperatorRequestingChat = ( state ) => {
-	const identities = get( state, 'operators.identities' );
-
-	for( const operatorId in identities ) {
-		const { requestingChat } = identities[ operatorId ];
-		if ( requestingChat ) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-export const hasOperatorRequestingChat = ( locale, groups, state ) => {
-	const identities = get( state, 'operators.identities' );
-
-	for( const operatorId in identities ) {
-		const { requestingChat } = identities[ operatorId ];
-
-		if ( requestingChat ) {
-			const { active } = getLocaleMembership( locale, operatorId, state );
-			return active &&
-				isMemberOfGroups( operatorId, groups ) &&
-				isOperatorAcceptingChats( operatorId, state );
-		}
-	}
-
-	return false;
-}
 
 /**
  * Total number of chats that can still be assigned in the locale with
@@ -441,17 +351,14 @@ export const isOperatorAcceptingChats = ( id, state ) =>
  * @param { Object } state - global redux state
  * @returns { boolean } true if chat can be accepted
  */
-export const canAcceptChat = ( chatID, state ) => {
-	if ( ! getSystemAcceptsCustomers( state  ) ) {
-		return false;
-	}
-
-	const chatLocale = getChatLocale( chatID, state );
-	const chatGroups = getChatGroups( chatID, state );
-
-	return hasOperatorRequestingChat( chatLocale, chatGroups, state ) ||
-		haveAvailableCapacity( chatLocale, chatGroups, state );
-}
+export const canAcceptChat = ( chatID, state ) => both(
+	getSystemAcceptsCustomers,
+	() => haveAvailableCapacity(
+		getChatLocale( chatID, state ),
+		getChatGroups( chatID, state ),
+		state
+	)
+)( state )
 
 /**
  * @param { Object } state - global redux state

@@ -41,8 +41,7 @@ import {
 	haveAvailableCapacity,
 	getAvailableOperators,
 	canAcceptChat,
-	isOperatorAcceptingChats,
-	hasOperatorRequestingChat
+	isOperatorAcceptingChats
 } from '../../operator/selectors';
 
 const debug = require( 'debug' )( 'happychat-debug:chat-assignment' );
@@ -86,9 +85,7 @@ export default store => {
 			const groups = getChatGroups( chat.id, store.getState() );
 			debug( 'checking capacity to assign chat', locale, groups );
 
-			const isRequestingChat = hasOperatorRequestingChat( locale, groups, store.getState() );
-			const isAvailableCapacity = haveAvailableCapacity( locale, groups, store.getState() );
-			if ( isRequestingChat || isAvailableCapacity ) {
+			if ( haveAvailableCapacity( locale, groups, store.getState() ) ) {
 				return store.dispatch( assignChat( chat ) );
 			}
 			log( 'no capacity to assign chat', chat.id, locale, groups );
