@@ -1,4 +1,4 @@
-import get from 'lodash/get'
+import { get, find } from 'lodash';
 import {
 	filter,
 	compose,
@@ -7,15 +7,12 @@ import {
 	values,
 	equals,
 	ifElse,
-	whereEq,
 	not,
-	or,
 	always,
 	path,
 	reduce,
 	merge,
 	map,
-	both,
 	pickBy,
 	keys,
 	flatten,
@@ -36,7 +33,7 @@ import { getGroups, makeLocaleGroupToken, getDefaultGroup } from '../groups/sele
 
 import { STATUS_AVAILABLE, STATUS_RESERVE } from './constants';
 
-const percentAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) ) / capacity
+const percentAvailable = ( { load, capacity } ) => capacity > 0 ? ( capacity - defaultTo( 0, load ) ) / capacity : 0
 const totalAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load ) )
 
 // This is the maximum number of chats a reserve operator can have before
@@ -45,8 +42,7 @@ const totalAvailable = ( { load, capacity } ) => ( capacity - defaultTo( 0, load
 // between reserve operators.
 const RESERVE_MAX_CHATS = 2;
 
-/**
-/* Compare function for sorting operator priority. 
+/* Compare function for sorting operator priority.
  *
  * The first operator in the resulting list should be the next one
  * to be assigned to a chat. This is used for balancing chat load
@@ -54,20 +50,29 @@ const RESERVE_MAX_CHATS = 2;
  *
  * @param {Operator} a First operator to compare
  * @param {Operator} b Second operator to compare
- * @return {Number} -1 if operator a should come first
- *                  0 if both operators are equal priority
- *                  1 if operator b should come first
+ * @return {Number} -1 if operator a is requesting a chat
+ *                  0 if neither are requesting a chat
+ *                  1 if operator b is requesting a chat
  */
-const compareOperatorPriority = ( a, b ) => {
-	// When comparing two operators, always prioritise the one whose
-	// status is available over the one who is in reserve
-	if ( a.status === STATUS_RESERVE && b.status === STATUS_AVAILABLE ) {
-		return 1;
-	}
-	if ( a.status === STATUS_AVAILABLE && b.status === STATUS_RESERVE ) {
-		return -1;
+const compareByRequestForChat = ( a, b ) => {
+	// using ! here incase one is undefined and the other is false
+	if ( ! a.requestingChat === ! b.requestingChat ) {
+		return 0;
 	}
 
+	return a.requestingChat ? -1 : 1;
+}
+
+/**
+ * Compare function for sorting operators by their chat load
+ *
+ * @param {Operator} a First operator to compare
+ * @param {Operator} b Second operator to compare
+ * @return {Number} -1 if operator a is requesting a chat
+ *                  0 if neither are requesting a chat
+ *                  1 if operator b is requesting a chat
+ */
+const compareOperatorsByChatLoad = ( a, b ) => {
 	// When comparing two operators in reserve, prioritise the one
 	// already chatting to avoid disturbing the other.
 	if ( a.status === STATUS_RESERVE && b.status === STATUS_RESERVE ) {
@@ -82,21 +87,83 @@ const compareOperatorPriority = ( a, b ) => {
 		}
 	}
 
-	// Compare operators by their current chat load
 	if ( a.percentAvailable === b.percentAvailable ) {
 		if ( a.totalAvailable === b.totalAvailable ) {
 			return 0;
 		}
-		return a.totalAvailable > b.totalAvailable ? -1 : 1
+		return a.totalAvailable > b.totalAvailable ? -1 : 1;
 	}
-	return a.percentAvailable > b.percentAvailable ? -1 : 1
+	return a.percentAvailable > b.percentAvailable ? -1 : 1;
 }
 
+/**
+ * Compare two operators using their status
+ *
+ * @param {Operator} a First operator to compare
+ * @param {Operator} b Second operator to compare
+ * @return {Number} -1 if operator a is available
+ *                  0 if they have the same status
+ *                  1 if operator b is available
+ */
+const compareOperatorByStatus = ( a, b ) => {
+	if ( a.status === b.status ) {
+		return 0;
+	}
+
+	// When comparing two operators, always prioritise the one whose
+	// status is available over the one who is in reserve
+	return a.status === STATUS_AVAILABLE ? -1 : 1;
+}
+
+/**
+/* Compare function for sorting operator priority.
+ *
+ * The first operator in the resulting list should be the next one
+ * to be assigned to a chat. This is used for balancing chat load
+ * evenly across operators.
+ *
+ * @param {Operator} a First operator to compare
+ * @param {Operator} b Second operator to compare
+ * @return {Number} -1 if operator a should come first
+ *                  0 if both operators are equal priority
+ *                  1 if operator b should come first
+ */
+const compareOperatorPriority = ( a, b ) => {
+	// Order matters here as the first non zero comparison result will be used.
+	const prioritizedComparisons = [
+		compareByRequestForChat,
+		compareOperatorByStatus,
+		compareOperatorsByChatLoad,
+	];
+
+	let result = 0;
+
+	// get the first comparison thats truthy.
+	// Take advantage of -1 and 1 being truthy while 0 is falsy.
+	find( prioritizedComparisons, compare => result = compare( a, b ) );
+
+	return result;
+}
+
+/**
+ * Checks if operator is a member in a group
+ *
+ * @param { String } userID - id of operator to check
+ * @param { Object } group - group record from the group reducer state
+ * @returns { boolean } true if the user is a member of the group
+ */
 const isMemberOfGroup = ( userID, group ) => compose(
 	defaultTo( false ),
 	path( [ 'members', asString( userID ) ] ),
 )( group )
 
+/**
+ * Checks if an operator is a member of 1 or more groups
+ *
+ * @param { String } userID - id of the operator
+ * @param { Object[] } groups - list of group records from group reducer
+ * @returns { boolean } true if the operator is a member of any of the groups
+ */
 const isMemberOfGroups = ( userID, groups ) => compose(
 	defaultTo( false ),
 	path( [ 'members', asString( userID ) ] ),
@@ -107,6 +174,11 @@ const isMemberOfGroups = ( userID, groups ) => compose(
  * Returns a list of available operators for the given locale and groups,
  * sorted by priority where the first operator in the list should be
  * assigned the next chat.
+ *
+ * @param { String } locale - locale code for the chat
+ * @param { Object[] } groups - list of groups for the chat
+ * @param { Object } state - redux global state
+ * @returns { Object[] } sorted list of operators that can be assigned
  */
 export const getAvailableOperators = ( locale, groups, state ) => compose(
 	flatten,
@@ -116,7 +188,7 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 			percentAvailable: percentAvailable( user ),
 			totalAvailable: totalAvailable( user )
 		} ) ),
-		filter( ( { status, online, load, capacity, active, id } ) => {
+		filter( ( { requestingChat, status, online, load, capacity, active, id } ) => {
 			const isAvailable = status === STATUS_AVAILABLE || status === STATUS_RESERVE;
 			if ( ! online || ! isAvailable ) {
 				return false
@@ -127,6 +199,11 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 			if ( ! isMemberOfGroup( id, group ) ) {
 				return false
 			}
+
+			if ( requestingChat ) {
+				return true;
+			}
+
 			return capacity - defaultTo( 0, load ) > 0
 		} )
 	)( operators ), groups ),
@@ -136,13 +213,53 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 	path( [ 'operators', 'identities' ] )
 )( state )
 
+/**
+ *
+ * @function
+ * @param { Object } state - global redux state
+ * @returns { Object } all operator indentities mapped by operator id
+ */
 export const selectIdentities = path( [ 'operators', 'identities' ] )
+
+/**
+ * @function
+ * @param { Object } state - global redux state
+ * @returns { Object[] } list of operator identities
+ */
 export const getOperators = compose( values, selectIdentities )
-export const selectSocketIdentity = ( { operators: { sockets, identities } }, socket ) => get(
+
+/**
+ * Get the operator identity associated with a Socket.IO socket
+ *
+ * @param { Object } socket - Socket.IO socket instance
+ * @param { Object } state - redux state
+ * @returns { Object } operator identity
+ */
+export const getSocketOperator = ( socket, { operators: { sockets, identities } } ) => get(
 	identities,
 	get( sockets, socket.id )
 )
+
+/**
+ * Get the identity of the given userId
+ * @param { Object } state - global redux state
+ * @param { String } userId - id of the identity to get
+ * @returns { Object } operator identity
+ */
 export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
+
+/**
+ * @typedef Capacity
+ * @property { number } load - number of open chats assigned
+ * @property { number } capacity - number of total chats that can be assigned
+ */
+
+/**
+ * @param { String } locale - locale code
+ * @param { Object[] } groups - list of groups in locale
+ * @param { Object } state - global redux state
+ * @returns { Capacity }
+ */
 export const selectTotalCapacity = ( locale, groups, state ) =>
 	reduce(
 		( { load: totalLoad, capacity: totalCapacity }, { id, status, online } ) => {
@@ -156,20 +273,79 @@ export const selectTotalCapacity = ( locale, groups, state ) =>
 		getAvailableOperators( locale, groups, state )
 	);
 
+export const isAnyOperatorRequestingChat = ( state ) => {
+	const identities = get( state, 'operators.identities' );
+
+	for( const operatorId in identities ) {
+		const { requestingChat } = identities[ operatorId ];
+		if ( requestingChat ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+export const hasOperatorRequestingChat = ( locale, groups, state ) => {
+	const identities = get( state, 'operators.identities' );
+
+	for( const operatorId in identities ) {
+		const { requestingChat } = identities[ operatorId ];
+
+		if ( requestingChat ) {
+			const { active } = getLocaleMembership( locale, operatorId, state );
+			return active &&
+				isMemberOfGroups( operatorId, groups ) &&
+				isOperatorAcceptingChats( operatorId, state );
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Total number of chats that can still be assigned in the locale with
+ * the given groups.
+ *
+ * @param { String } locale - locale code
+ * @param { Object[] } groups - list of groups from groups reducer
+ * @param { Object } state - global redux state
+ * @returns { number } total available chats
+ */
 export const getAvailableCapacity = ( locale, groups, state ) => {
 	const { load, capacity } = selectTotalCapacity( locale, groups, state )
 	return capacity - load
 }
 
+/**
+ * @param { String } locale - locale code
+ * @param { Object[] } groups - list of groups from groups reducer
+ * @param { Object } state - global redux state
+ * @returns { boolean } available chat capacity is greater than 0
+ */
 export const haveAvailableCapacity = ( locale, groups, state ) => getAvailableCapacity( locale, groups, state ) > 0
 
+/**
+ * @param { Object } state - global redux state
+ * @returns { boolean } true if new chats can be accepted
+ */
 export const getSystemAcceptsCustomers = ( { operators: { system: { acceptsCustomers } } } ) => acceptsCustomers
 
+/**
+ * @param { String } id - operator id
+ * @param { Object } state - global redux state
+ * @returns { boolean } true if operator has a connected client
+ */
 export const getOperatorOnline = ( id, state ) => path(
 	[ 'operators', 'identities', asString( id ), 'online' ],
 	state
 )
+export const isOperatorOnline = getOperatorOnline
 
+/**
+ * @param { Object } state - global redux state
+ * @returns { Object[] } list of locale groups and their capacities
+ */
 export const getLocaleCapacities = state => compose(
 	flatten,
 	map( locale => compose(
@@ -185,6 +361,12 @@ export const getLocaleCapacities = state => compose(
 	getSupportedLocales
 )( state )
 
+/**
+ * Gets a list of locales that have operators than can accept chats.
+ *
+ * @param { Object } state - global redux state
+ * @returns { String[] } list of locale group codes that can accept chats
+ */
 export const getAvailableLocales = state => ifElse(
 	compose( not, getSystemAcceptsCustomers ),
 	always( [] ),
@@ -200,40 +382,81 @@ export const getAvailableLocales = state => ifElse(
 	)
 )( state )
 
+/**
+ * @param { String } id - operator id
+ * @param { Object } state - global redux state
+ * @returns { Object } operator indentity
+ */
 export const getOperatorIdentity = ( id, state ) => path(
 	[ 'operators', 'identities', asString( id ) ],
 	state
 )
 
+/**
+ * @param { String } id - operator id
+ * @param { Object } state - global redux state
+ * @returns { String } operator's status
+ */
+export const getOperatorStatus = ( id, state ) => path(
+	[ 'operators', 'identities', asString( id ), 'status' ],
+	state
+)
+
+/**
+ * @param { String } id - operator id
+ * @param { Object } state - global redux state
+ * @returns { boolean } true if user status is STATUS_AVAILABLE
+ */
 export const isOperatorStatusAvailable = ( id, state ) => equals(
-	path(
-		[ 'operators', 'identities', asString( id ), 'status' ],
-		state
-	),
+	getOperatorStatus( id, state ),
 	STATUS_AVAILABLE
 )
 
+/**
+ * @param { String } id - operator id
+ * @param { Object } state - global redux state
+ * @returns { boolean } true if user status is STATUS_RESERVE
+ */
 export const isOperatorStatusReserve = ( id, state ) =>
-	get( state, [ 'operators', 'identities', asString( id ), 'status' ] )
-		=== STATUS_RESERVE;
+	getOperatorStatus( id, state ) === STATUS_RESERVE;
 
+/**
+ * @param { String } id - operator id
+ * @param { Object } state - global redux state
+ * @returns { boolean } true if user status is STATUS_RESERVE
+ */
 export const isOperatorStatusAvailableOrInReserve = ( id, state ) =>
 	isOperatorStatusAvailable( id, state ) || isOperatorStatusReserve( id, state );
 
-export const isOperatorOnline = getOperatorOnline
-
+/**
+ * @param { String } id - operator id
+ * @param { Object } state - global redux state
+ * @param { boolean } true if user can accept a chat
+ */
 export const isOperatorAcceptingChats = ( id, state ) =>
 	isOperatorOnline( id, state ) && isOperatorStatusAvailableOrInReserve( id, state );
 
-export const canAcceptChat = ( chatID, state ) => both(
-	getSystemAcceptsCustomers,
-	() => haveAvailableCapacity(
-		getChatLocale( chatID, state ),
-		getChatGroups( chatID, state ),
-		state
-	)
-)( state )
+/**
+ * @param { String } chatID - id of chat to check
+ * @param { Object } state - global redux state
+ * @returns { boolean } true if chat can be accepted
+ */
+export const canAcceptChat = ( chatID, state ) => {
+	if ( ! getSystemAcceptsCustomers( state  ) ) {
+		return false;
+	}
 
+	const chatLocale = getChatLocale( chatID, state );
+	const chatGroups = getChatGroups( chatID, state );
+
+	return hasOperatorRequestingChat( chatLocale, chatGroups, state ) ||
+		haveAvailableCapacity( chatLocale, chatGroups, state );
+}
+
+/**
+ * @param { Object } state - global redux state
+ * @returns { boolean } true of the default locale can accept a chat
+ */
 export const defaultLocaleIsAvailable = ( state ) => {
 	const locale = getDefaultLocale( state )
 	const group = getDefaultGroup( state )
