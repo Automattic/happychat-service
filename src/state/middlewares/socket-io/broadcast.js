@@ -4,8 +4,7 @@ import { debounce } from 'lodash'
 import { OPERATOR_READY, REMOTE_ACTION_TYPE } from '../../action-types'
 import { isEmpty } from 'ramda'
 import { selectSocketIdentity } from '../../operator/selectors'
-import { always, identity } from 'ramda'
-import { withRemoteUser } from './lib';
+import { assoc, always, identity } from 'ramda'
 
 const debug = require( 'debug' )( 'happychat-debug:socket-io:broadcast' )
 const log = require( 'debug' )( 'happychat:socket-io:broadcast' )
@@ -40,7 +39,7 @@ export default ( io, { canRemoteDispatch = always( false ), selector = identity,
 			const user = selectSocketIdentity( getState(), socket )
 			const action = {
 				type: REMOTE_ACTION_TYPE,
-				action: withRemoteUser( remoteAction, user ),
+				action: assoc( REMOTE_USER_KEY, user, remoteAction ),
 				socket,
 				user
 			}

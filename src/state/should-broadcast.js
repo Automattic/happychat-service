@@ -3,7 +3,7 @@ import {
 	OPERATOR_RECEIVE_TYPING,
 	CUSTOMER_TYPING,
 	CUSTOMER_RECEIVE_TYPING
-} from './action-types';
+} from './action-types'
 
 export default ( { type } ) => {
 	switch ( type ) {
@@ -11,7 +11,7 @@ export default ( { type } ) => {
 		case OPERATOR_RECEIVE_TYPING:
 		case CUSTOMER_TYPING:
 		case CUSTOMER_RECEIVE_TYPING:
-			return false;
+			return false
 	}
-	return true;
-};
+	return true
+}

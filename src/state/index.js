@@ -1,28 +1,42 @@
 import delayedDispatch from 'redux-delayed-dispatch';
-import { applyMiddleware } from 'redux';
+import { evolve, filter, compose, equals, not, anyPass } from 'ramda'
+import { applyMiddleware } from 'redux'
 
-import socketioMiddleware from './middlewares/socket-io';
-import systemMiddleware from './middlewares/system';
-import logger from './middlewares/logger';
-import { DESERIALIZE, SERIALIZE } from './action-types';
-import { run } from '../message-filter';
+import operatorMiddleware from './middlewares/socket-io/operator'
+import chatlistMiddleware from './middlewares/socket-io/chatlist'
+import broadcastMiddleware from './middlewares/socket-io/broadcast'
+import agentMiddleware from './middlewares/socket-io/agents'
+import controllerMiddleware from './middlewares/system/controller'
+import systemMiddleware from './middlewares/system'
+import canRemoteDispatch from './operator/can-remote-dispatch'
+import shouldBroadcastStateChange from './should-broadcast'
+import { DESERIALIZE, SERIALIZE } from './action-types'
+import { STATUS_CLOSED, STATUS_NEW, statusView } from './chatlist/reducer'
 
-export const serializeAction = () => ( { type: SERIALIZE } );
-export const deserializeAction = () => ( { type: DESERIALIZE } );
+const filterClosed = filter( compose(
+	not,
+	anyPass( [ equals( STATUS_CLOSED ), equals( STATUS_NEW ) ] ),
+	statusView,
+) )
 
-export default ( { io, customerAuth, operatorAuth, agentAuth, messageFilters = [], timeout = undefined }, middlewares = [], logCacheBuilder ) => {
-	const messageFilter = ( ... args ) => run( messageFilters )( ... args );
+const selector = evolve( { chatlist: filterClosed } )
+
+export const serializeAction = () => ( { type: SERIALIZE } )
+export const deserializeAction = () => ( { type: DESERIALIZE } )
+
+export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], timeout = undefined }, measure = ( key, fn ) => fn ) => {
 	return applyMiddleware(
-		// logs dispatches
-		logger,
-		// allows middleware to be injected
-		... middlewares,
-		// middlware for dispatching in the future and cancelling scheduled dispatches
-		delayedDispatch,
-		// enables interface for socket.io clients
-		... socketioMiddleware( { io, customerAuth, operatorAuth, agentAuth, messageFilter, timeout } ),
-		// core middlewares enabling support chat
-		...systemMiddleware( messageFilter, timeout, logCacheBuilder ),
-	);
-};
-
+			delayedDispatch,
+			controllerMiddleware( messageMiddlewares ),
+			operatorMiddleware( io.of( '/operator' ), operatorAuth, messageMiddlewares ),
+			agentMiddleware( io.of( '/agent' ), agentAuth ),
+			chatlistMiddleware( {
+				io,
+				timeout,
+				customerDisconnectTimeout: timeout,
+				customerDisconnectMessageTimeout: timeout
+			}, customerAuth, messageMiddlewares ),
+			broadcastMiddleware( io.of( '/operator' ), { canRemoteDispatch, shouldBroadcastStateChange, selector }, measure( 'broadcast' ) ),
+			...systemMiddleware
+	)
+}

@@ -1,29 +1,13 @@
-import { map, ifElse, lensPath, view, filter } from 'ramda';
-import timestamp from '../../timestamp';
+import { map } from 'ramda'
+import timestamp from '../../timestamp'
 import {
-	OPERATOR_CHAT_LEAVE,
 	OPERATOR_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_TYPING,
-	SEND_OPERATOR_CHAT_LOG,
-	REASSIGN_CHATS,
-	RECOVER_CHATS,
-	SET_CHAT_OPERATOR,
-	OPERATOR_CHAT_JOIN,
-	CLOSE_CHAT,
-	AUTOCLOSE_CHAT,
-} from '../../action-types';
-import {
-	operatorInboundMessage,
-	closeChat,
-	operatorJoinChat,
-	setChatsRecovered
-} from '../../chatlist/actions';
-import {
-	getChatMemberIdentities,
-	getChat,
-	getOpenChatsForOperator,
-	getOperatorAbandonedChats
- } from '../../chatlist/selectors';
+} from '../../action-types'
+import { operatorInboundMessage, closeChat } from '../../chatlist/actions'
+import { getChat } from '../../chatlist/selectors'
+import { DEFAULT_GROUP_ID, isOperatorMemberOfAnyGroup } from '../../groups/selectors'
+import { addGroupMember } from '../../groups/actions'
 import {
 	operatorChatLeave,
 	removeUserSocket,
@@ -35,276 +19,140 @@ import {
 	operatorChatTransfer,
 	operatorChatTranscriptRequest,
 	customerBlock,
-} from '../../operator/actions';
+} from '../../operator/actions'
+import {
+	selectUser,
+} from '../../operator/selectors';
+import { run } from '../../../middleware-interface'
 
-const log = require( 'debug' )( 'happychat:middleware:operators' );
-const debug = require( 'debug' )( 'happychat-debug:middleware:operators' );
+const log = require( 'debug' )( 'happychat:middleware:operators' )
+const debug = require( 'debug' )( 'happychat-debug:middleware:operators' )
 
 const identityForUser = ( { id, displayName, avatarURL } ) => (
 	{ id, displayName, avatarURL }
-);
+)
 
+export const customerRoom = id => `customer/${ id }`;
 export const operatorRoom = id => `operator/${ id }`;
 
-const join = ( { socket, dispatch, user, io }, messageFilter ) => {
-	const user_room = operatorRoom( user.id );
+const join = ( { socket, store, user, io }, middlewares ) => {
+	const user_room = operatorRoom( user.id )
+
+	const runMiddleware = ( ... args ) => run( middlewares )( ... args )
+
+	const selectIdentity = userId => selectUser( store.getState(), userId );
 
 	socket.on( 'disconnect', () => {
-		dispatch( removeUserSocket( socket.id, user ) );
+		store.dispatch( removeUserSocket( socket, user ) );
 		io.in( user_room ).clients( ( error, clients ) => {
 			if ( error ) {
-				debug( 'failed to query clients', error.message );
+				debug( 'failed to query clients', error.message )
 				return;
 			}
 			if ( clients.length > 0 ) {
 				return;
 			}
-			dispatch( setUserOffline( user ) );
-		} );
-	} );
+			store.dispatch( setUserOffline( user ) )
+		} )
+	} )
 
 	socket.join( user_room, () => {
-		socket.join( 'authorized', () => {
-			dispatch( updateIdentity( socket.id, user ) );
-			dispatch( operatorReady( user, socket.id, user_room ) );
-			socket.emit( 'init', user );
-		} );
-	} );
+		store.dispatch( updateIdentity( socket, user ) )
+		// If the operator is not a member of any groups they should be
+		// assigned to the default group
+		if ( ! isOperatorMemberOfAnyGroup( user.id, store.getState() ) ) {
+			store.dispatch( addGroupMember( DEFAULT_GROUP_ID, user.id ) )
+		}
+		store.dispatch( operatorReady( user, socket, user_room ) )
+		socket.emit( 'init', user )
+	} )
 
 	socket.on( 'message', ( chat_id, { id, text } ) => {
-		const meta = {};
-		const userIdentity = identityForUser( user );
-		const message = {
-			id: id,
-			session_id: chat_id,
-			text,
-			timestamp: timestamp(),
-			user: userIdentity,
-			meta
-		};
+		const meta = {}
+		const userIdentity = identityForUser( user )
+		const message = { id: id, session_id: chat_id, text, timestamp: timestamp(), user: userIdentity, meta }
 		// all customer connections for this user receive the message
-		dispatch( operatorInboundMessage( chat_id, user, message ) );
-	} );
+		store.dispatch( operatorInboundMessage( chat_id, user, message ) )
+	} )
 
 	socket.on( 'chat.typing', ( chat_id, text ) => {
-		const identity = identityForUser( user );
-		dispatch( operatorTyping( chat_id, identity, text ) );
-	} );
+		const identity = identityForUser( user )
+		store.dispatch( operatorTyping( chat_id, identity, text ) );
+	} )
 
 	socket.on( 'chat.join', ( chat_id ) => {
-		dispatch( operatorChatJoin( chat_id, user ) );
-	} );
+		store.dispatch( operatorChatJoin( chat_id, user ) )
+	} )
 
 	socket.on( 'chat.leave', ( chat_id ) => {
-		dispatch( operatorChatLeave( chat_id, user ) );
-	} );
+		store.dispatch( operatorChatLeave( chat_id, user ) )
+	} )
 
 	socket.on( 'chat.block', ( chat_id, operator_id, user_id ) => {
-		dispatch( customerBlock( chat_id, operator_id, user_id ) );
+		store.dispatch( customerBlock( chat_id, operator_id, user_id ) );
 	} );
 
 	socket.on( 'chat.close', ( chat_id ) => {
-		dispatch( closeChat( chat_id, user ) );
-	} );
+		store.dispatch( closeChat( chat_id, user ) );
+	} )
 
 	socket.on( 'chat.transfer', ( chat_id, user_id ) => {
-		dispatch( operatorChatTransfer( chat_id, user, user_id ) );
-	} );
+		const toUser = selectIdentity( user_id )
+		store.dispatch( operatorChatTransfer( chat_id, user, toUser ) );
+	} )
 
 	socket.on( 'chat.transcript', ( chat_id, message_timestamp, callback ) => {
-		debug( 'operator is requesting chat backlog', chat_id, 'before', message_timestamp );
+		debug( 'operator is requesting chat backlog', chat_id, 'before', message_timestamp )
+		const chat = getChat( chat_id, store.getState() )
 
 		new Promise( ( resolve, reject ) => {
-			dispatch(
-				operatorChatTranscriptRequest( chat_id, message_timestamp )
-			).then( resolve, reject );
+			store.dispatch(
+				operatorChatTranscriptRequest( user, chat, message_timestamp )
+			).then( resolve, reject )
 		} )
 		.then( result => new Promise( ( resolve, reject ) => {
-			debug( 'chat.transcript', chat_id, result.timestamp, result.messages.length );
+			debug( 'chat.transcript', chat_id, result.timestamp, result.messages.length )
 			// debug time to run each message through middleware
-			Promise.all( map( message => messageFilter( {
+			Promise.all( map( message => runMiddleware( {
 				origin: message.source,
 				destination: 'operator',
 				user: message.user,
 				message,
 				chat: { id: chat_id }
 			} ), result.messages ) )
-			.then( filter( message => !! message ) )
 			.then(
 				messages => resolve( { timestamp: result.timestamp, messages } ),
 				reject
-			);
+			)
 		} ) )
 		.then(
-			result => setImmediate( () => callback( null, result ) ),
-			e => setImmediate( () => callback( e.message, null ) )
-		);
-	} );
-};
+			result => callback( null, result ),
+			e => callback( e.message, null )
+		)
+	} )
+}
 
-export default ( io, operatorAuth, messageFilter ) => ( store ) => {
+export default ( io, operatorAuth, middlewares ) => ( store ) => {
 	io.on( 'connection', ( socket ) => {
 		operatorAuth( socket ).then(
-			user => join( { socket, dispatch: store.dispatch, user, io }, messageFilter ),
+			user => join( { socket, store, user, io }, middlewares ),
 			e => {
 				socket.emit( 'unauthorized' );
-				log( 'operator auth failed: ', e.message );
+				log( 'operator auth failed: ', e.message )
 			}
-		);
+		)
 	} );
-
-	const emitChatOpenToOperator = ( chat, operator ) => {
-		const operator_room_name = operatorRoom( operator.id );
-		debug( 'opening chat', chat.id, operator.id );
-		store.dispatch( operatorJoinChat( chat, operator ) );
-		io.to( operator_room_name ).emit( 'chat.open', chat );
-		return Promise.resolve( { chat, operator } );
-	};
-
-	const toOperatorsInChat = ( chat_id ) => {
-		const members = getChatMemberIdentities( chat_id, store.getState() );
-		const rooms = map( member => operatorRoom( member.id ), members );
-		for ( const room of rooms ) {
-			io.in( room );
-		}
-		return io;
-	};
-
-	const handleOperatorReceiveMessage = action => {
-		// select all operator indentities and brodcast to their rooms
-		toOperatorsInChat( action.id )
-			.emit( 'chat.message', { id: action.id }, action.message );
-	};
-
-	const handleOperatorReceiveTyping = action => {
-		const chat = { id: action.id };
-		toOperatorsInChat( chat.id )
-			.emit( 'chat.typing', chat, action.user, action.text );
-	};
-
-	const handleSendOperatorChatLog = action => {
-		io
-		.in( operatorRoom( action.operatorId ) )
-		.emit( 'log', { id: action.chatId }, action.log );
-	};
-
-	const removeOperatorFromChat = ( operator, chat ) => {
-		const room = operatorRoom( operator.id );
-		io.in( room ).emit( 'chat.leave', chat );
-		return Promise.resolve( { chat, operator } );
-	};
-
-	const whenChatExists = ( success, failure = () => {} ) => ( chat_id, operator ) => ifElse(
-		chat => !! chat,
-		chat => success( chat, operator ),
-		() => failure( chat_id, operator )
-	)( getChat( chat_id, store.getState() ) );
-
-	const handleOperatorChatLeave = action => whenChatExists( ( chat, operator ) => {
-		// remove all operator clients from the room
-		removeOperatorFromChat( operator, chat )
-		.catch( e => debug( 'failed to remove operator from chat', e.message ) );
-	}, chat_id => debug( 'chat.leave without existing chat', chat_id ) )( action.chat_id, action.user );
-
-	const handleOperatorChatJoin = action => whenChatExists( ( chat, operator ) => {
-		emitChatOpenToOperator( chat, operator );
-	}, chat_id => debug( 'chat.join without existing chat', chat_id ) )( action.chat_id, action.user );
-
-	const handleSetChatOperator = ( action ) => {
-		const { operator, chat_id } = action;
-		const chat = getChat( chat_id, store.getState() );
-		emitChatOpenToOperator( chat, operator );
-	};
-
-	const handleReassignChats = ( action ) => {
-		const { operator } = action;
-		const chats = getOpenChatsForOperator( operator.id, store.getState() );
-		Promise.all( map(
-			chat => emitChatOpenToOperator( chat, operator ),
-			chats
-		) )
-		.then(
-			// NOTE: this may cause existing clients to get notifications of chat.open
-			( result ) => debug( 'Reassigned', result.length, 'to operator client', operator.id ),
-			e => debug( 'failed to reassign chats to operator', operator.id, e.message )
-		);
-	};
-
-	const handleRecoverChats = ( action ) => {
-		const { operator } = action;
-		const chats = getOperatorAbandonedChats( operator.id, store.getState() );
-		// TODO: should this time out?, not anymore
-		debug( 'Recovering chats for operator', chats.length );
-		Promise.all( map(
-			chat => emitChatOpenToOperator( chat, operator ),
-			chats
-		) )
-		.then(
-			result => {
-				if ( result.length > 0 ) {
-					debug( 'recovered', result.length, 'chats', operator );
-					store.dispatch( setChatsRecovered(
-						map( view( lensPath( [ 'chat', 'id' ] ) ), result ),
-						operator
-					) );
-				} else {
-					debug( 'no chats to recover' );
-				}
-			},
-			e => debug( 'Failed to recover chats for operator', operator.id, e.message )
-		);
-	};
-
-	const handleAutocloseChat = action => {
-		let chat = getChat( action.id, store.getState() );
-		if ( ! chat ) {
-			chat = { id: action.id };
-		}
-		toOperatorsInChat( chat.id ).emit( 'chat.close', chat, {} );
-	};
-
-	const handleCloseChat = ( action ) => {
-		const { chat_id, operator } = action;
-		let chat = getChat( chat_id, store.getState() );
-		if ( ! chat ) {
-			chat = { id: chat_id };
-		}
-		toOperatorsInChat( chat.id ).emit( 'chat.close', chat, operator );
-	};
 
 	return ( next ) => ( action ) => {
 		switch ( action.type ) {
 			case OPERATOR_RECEIVE_MESSAGE:
-				handleOperatorReceiveMessage( action );
+				io.in( customerRoom( action.id ) ).emit( 'chat.message', { id: action.id }, action.message )
 				break;
 			case OPERATOR_RECEIVE_TYPING:
-				handleOperatorReceiveTyping( action );
-				break;
-			case SEND_OPERATOR_CHAT_LOG:
-				handleSendOperatorChatLog( action );
-				break;
-			case OPERATOR_CHAT_LEAVE:
-				handleOperatorChatLeave( action );
-				return next( action );
-			case RECOVER_CHATS:
-				handleRecoverChats( action );
-				return next( action );
-			case REASSIGN_CHATS:
-				handleReassignChats( action );
-				return next( action );
-			case OPERATOR_CHAT_JOIN:
-				handleOperatorChatJoin( action );
-				return next( action );
-			case SET_CHAT_OPERATOR:
-				handleSetChatOperator( action );
-				return next( action );
-			case CLOSE_CHAT:
-				handleCloseChat( action );
-				break;
-			case AUTOCLOSE_CHAT:
-				handleAutocloseChat( action );
+				const chat = { id: action.id }
+				io.in( customerRoom( action.id ) ).emit( 'chat.typing', chat, action.user, action.text )
 				break;
 		}
 		return next( action );
-	};
-};
+	}
+}
