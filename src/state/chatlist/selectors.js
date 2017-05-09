@@ -42,7 +42,8 @@ import {
 	STATUS_PENDING,
 	STATUS_ASSIGNING,
 	STATUS_CLOSED,
-	STATUS_ASSIGNED
+	STATUS_ASSIGNED,
+	STATUS_CUSTOMER_DISCONNECT
 } from './reducer';
 import {
 	getDefaultLocale,
@@ -344,6 +345,15 @@ export const isChatStatusClosed = ( chatID, state ) => equals(
 export const isChatStatusAssigned = ( chatID, state ) => equals(
 	STATUS_ASSIGNED, getChatStatus( chatID, state )
 );
+
+/**
+ * @param { String } chatID - id of chat to check
+ * @param { Object } state redux state
+ * @returns { Boolean } true if chat has status of STATUS_ASSIGNED
+ */
+
+export const isChatStatusCustomerDisconnect = ( chatID, state ) =>
+	STATUS_CUSTOMER_DISCONNECT === getChatStatus( chatID, state );
 
 /**
  * Checks if there are any chats  with the given status.

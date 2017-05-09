@@ -35,7 +35,8 @@ import {
 	getChatOperator,
 	isChatStatusNew,
 	isChatStatusClosed,
-	isChatStatusAssigned
+	isChatStatusAssigned,
+	isChatStatusCustomerDisconnect
 } from '../../chatlist/selectors';
 import {
 	haveAvailableCapacity,
@@ -115,8 +116,9 @@ export default store => {
 		const isNew = isChatStatusNew( chat.id, state );
 		const isClosed = isChatStatusClosed( chat.id, state );
 		const isAssigned = isChatStatusAssigned( chat.id, state );
+		const isCustomerDisconnect = isChatStatusCustomerDisconnect( chat.id, state );
 
-		if ( operator && isOperatorAcceptingChats( operator.id, state ) && isClosed ) {
+		if ( operator && isOperatorAcceptingChats( operator.id, state ) && ( isClosed || isCustomerDisconnect ) ) {
 			store.dispatch( setChatOperator( chat.id, operator ) );
 			return;
 		}
@@ -126,7 +128,7 @@ export default store => {
 			return;
 		}
 
-		if ( isNew || isClosed ) {
+		if ( isNew || isClosed || isCustomerDisconnect ) {
 			store.dispatch( insertPendingChat( chat ) );
 			return;
 		}
