@@ -143,7 +143,8 @@ describe( 'ChatList component', () => {
 
 		socket.join( 'customer/session-id' );
 		client.once( 'accept', ( accepted ) => {
-			deepEqual( accepted, false );
+			// if a chat is assigned, accept is true
+			equal( accepted, true );
 			done();
 		} );
 
