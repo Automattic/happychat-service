@@ -164,6 +164,12 @@ export default ( io, operatorAuth, messageFilter ) => ( store ) => {
 	const toOperatorsInChat = ( chat_id ) => {
 		const members = getChatMemberIdentities( chat_id, store.getState() );
 		const rooms = map( member => operatorRoom( member.id ), members );
+
+		if ( rooms.length === 0 ) {
+			// if for some reason there are no operators, don't emit
+			// otherwise it will broadcast to everyone
+			return { emit: () => io };
+		}
 		for ( const room of rooms ) {
 			io.in( room );
 		}
