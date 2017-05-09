@@ -57,8 +57,11 @@ const haveOtherConnections = ( io, room ) => new Promise( ( resolve, reject ) =>
 } );
 
 const init = ( { user, socket, io, dispatch, chat }, messageFilter ) => () => {
-	socket.on( 'message', ( { text, id, meta } ) => {
+	socket.on( 'message', ( { text, id, type, meta } ) => {
 		const message = { session_id: chat.id, id: id, text, timestamp: timestamp(), user: identityForUser( user ), meta };
+		if ( type ) {
+			message.type = type;
+		}
 		// all customer connections for this user receive the message
 		dispatch( customerInboundMessage( chat, message, user ) );
 	} );
