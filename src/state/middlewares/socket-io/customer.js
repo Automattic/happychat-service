@@ -32,7 +32,8 @@ import {
 } from '../../chatlist/selectors';
 import {
 	STATUS_CLOSED,
-	STATUS_NEW
+	STATUS_NEW,
+	STATUS_CUSTOMER_DISCONNECT
 } from '../../chatlist/reducer';
 import {
 	canAcceptChat
@@ -148,7 +149,11 @@ export default ( { io, timeout = 1000 }, customerAuth, messageFilter ) => store 
 	const handleCustomerJoin = action => {
 		const { chat } = action;
 		const accept = canAcceptChat( chat.id, store.getState() );
-		io.to( customerRoom( chat.id ) ).emit( 'accept', accept );
+		const status = getChatStatus( chat.id, store.getState() );
+
+		io.to( customerRoom( chat.id ) ).emit( 'accept', ( accept || ( status !== STATUS_NEW && status !== STATUS_CLOSED ) ) );
+		io.to( customerRoom( chat.id ) ).emit( 'status', status );
+
 	};
 
 	const handleNotifiSystemStatusChange = () => {
@@ -159,7 +164,7 @@ export default ( { io, timeout = 1000 }, customerAuth, messageFilter ) => store 
 					.to( customerRoom( chat.id ) )
 					.emit( 'accept', canAcceptChat( chat.id, store.getState() ) );
 			} ) ),
-			state => getChatsWithStatuses( [ STATUS_CLOSED, STATUS_NEW ], state ),
+			state => getChatsWithStatuses( [ STATUS_CLOSED, STATUS_NEW, STATUS_CUSTOMER_DISCONNECT ], state ),
 		)( store.getState() );
 	};
 
