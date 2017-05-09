@@ -151,20 +151,32 @@ export default ( messageFilter, chatLogFactory = defaultChatLog ) => store => {
 		messageFilter( { origin, destination: 'customer', chat, message: customerMessage } )
 		.then( m => cache.customer.append( chat.id, m ).then( () => m ) )
 		.then( m => {
+			// message was prevented by filters
+			if ( ! m ) {
+				return
+			}
 			store.dispatch( customerReceiveMessage( chat.id, m ) );
-			return m;
 		}, e => debug( 'middleware failed ', e.message ) );
 
 		messageFilter( { origin, destination: 'agent', chat, message: customerMessage } )
-		.then( m => store.dispatch(
-			agentReceiveMessage( formatAgentMessage( 'customer', chat.id, chat.id, m ) )
-		), e => debug( 'middleware failed', e.message ) );
+		.then( m => {
+			// message was prevented by filters
+			if ( ! m ) {
+				return
+			}
+			store.dispatch(
+				agentReceiveMessage( formatAgentMessage( 'customer', chat.id, chat.id, m ) )
+			);
+		}, e => debug( 'middleware failed', e.message ) );
 
 		messageFilter( { origin, destination: 'operator', chat, message: customerMessage } )
 		.then( m => cache.operator.append( chat.id, m ).then( () => m ) )
 		.then( m => {
+			// message was prevented by filters
+			if ( ! m ) {
+				return
+			}
 			store.dispatch( operatorReceiveMessage( chat.id, m ) );
-			return m;
 		}, e => debug( 'middleware failed', e.message ) );
 	};
 
@@ -178,22 +190,34 @@ export default ( messageFilter, chatLogFactory = defaultChatLog ) => store => {
 		store.dispatch( receiveMessage( 'operator', chat, operatorMessage, operator ) );
 
 		messageFilter( { origin, destination: 'agent', chat, message: operatorMessage, user: operator } )
-		.then( m => store.dispatch(
-			agentReceiveMessage( formatAgentMessage( 'operator', operator.id, chat.id, m ) )
-		) );
+		.then( m => {
+			// message was prevented by filters
+			if ( ! m ) {
+				return
+			}
+			store.dispatch(
+				agentReceiveMessage( formatAgentMessage( 'operator', operator.id, chat.id, m ) )
+			)
+		} );
 
 		messageFilter( { origin, destination: 'operator', chat, message: operatorMessage, user: operator } )
 		.then( m => cache.operator.append( chat.id, m ).then( () => m ) )
 		.then( m => {
+			// message was prevented by filters
+			if ( ! m ) {
+				return
+			}
 			store.dispatch( operatorReceiveMessage( chat.id, m ) );
-			return m;
 		} );
 
 		messageFilter( { origin, destination: 'customer', chat, message: operatorMessage, user: operator } )
 		.then( m => cache.customer.append( chat.id, m ).then( () => m ) )
 		.then( m => {
+			// message was prevented by filters
+			if ( ! m ) {
+				return
+			}
 			store.dispatch( customerReceiveMessage( chat.id, m ) );
-			return m;
 		} );
 	};
 
@@ -207,24 +231,36 @@ export default ( messageFilter, chatLogFactory = defaultChatLog ) => store => {
 		store.dispatch( receiveMessage( 'agent', chat, agentMessage, agent ) );
 
 		messageFilter( { origin, destination: 'agent', chat, message: agentMessage } )
-		.then( m => store.dispatch(
-			agentReceiveMessage( merge( { author_type: 'agent' }, m ) )
-		) );
+		.then( m => {
+			// message was prevented by filters
+			if ( ! m ) {
+				return
+			}
+			store.dispatch(
+				agentReceiveMessage( merge( { author_type: 'agent' }, m ) )
+			)
+		} );
 
 		messageFilter( { origin, destination: 'operator', chat, message: agentMessage } )
 		.then( m => cache.operator.append( chat.id, m ).then( () => m ) )
 		.then( m => {
+			// message was prevented by filters
+			if ( ! m ) {
+				return
+			}
 			store.dispatch( operatorReceiveMessage( chat.id, format( m ) ) );
-			return m;
 		} );
 
 		messageFilter( { origin, destination: 'customer', chat, message: agentMessage } )
 		.then( m => cache.customer.append( chat.id, message ).then( () => m ) )
 		.then( m => {
+			// message was prevented by filters
+			if ( ! m ) {
+				return
+			}
 			store.dispatch(
 				customerReceiveMessage( chat.id, format( m ) )
 			);
-			return m;
 		} );
 	};
 
