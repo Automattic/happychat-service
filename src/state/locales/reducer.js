@@ -91,7 +91,7 @@ const memberships = ( state = {}, action ) => {
 			const userPath = localeUserPath( action );
 			return assocPath( userPath, membership( path( userPath, state ), action ), state );
 		case ADD_USER_LOCALE:
-			const keyPath = [ action.locale, action.operator_id ];
+			const keyPath = [ action.locale, asString( action.operator_id ) ];
 			return assocPath( keyPath, membership( path( keyPath, state ), action ), state );
 		case SET_USER_LOADS:
 			// every user that has a load set in the action will
@@ -103,7 +103,7 @@ const memberships = ( state = {}, action ) => {
 				mapObjIndexed( ( memberData, userID ) =>
 					assoc(
 						'load',
-						defaultTo( 0, path( [ 'loads', locale, userID ], action ) ),
+						defaultTo( 0, path( [ 'loads', locale, asString( userID ) ], action ) ),
 						memberData
 					)
 				)( members )
