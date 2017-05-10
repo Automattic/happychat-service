@@ -12,7 +12,7 @@ import { v4 as uuid } from 'uuid';
 import { debounce } from 'lodash';
 import { REMOTE_ACTION_TYPE } from './state/action-types';
 import {
-	isEmpty, assoc, evolve, filter, compose, not, equals, keys, contains, anyPass, identity
+	isEmpty, assoc, evolve, filter, compose, not, equals, keys, contains, anyPass, identity, pick
 } from 'ramda';
 import { REMOTE_USER_KEY } from './state/constants';
 
@@ -46,7 +46,14 @@ const broadcastVersion = ( io, version, nextVersion, patch ) => {
 	} );
 };
 
-const selector = evolve( { chatlist: filterClosed } );
+// Only includes relevant data for operators in broadcast state
+// keys not included here will not be modificed (locales, groups )
+const selector = evolve( {
+	// removes chats that aren't needed in the hud
+	chatlist: filterClosed,
+	// only includes identities and system state from operators
+	operators: pick( [ 'identities', 'system' ] )
+} );
 
 export default ( store, io, measure = identity ) => {
 	const { getState, dispatch } = store;
