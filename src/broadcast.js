@@ -48,7 +48,7 @@ const broadcastVersion = ( io, version, nextVersion, patch ) => {
 
 // Only includes relevant data for operators in broadcast state
 // keys not included here will not be modificed (locales, groups )
-const selector = evolve( {
+export const selector = evolve( {
 	// removes chats that aren't needed in the hud
 	chatlist: filterClosed,
 	// only includes identities and system state from operators

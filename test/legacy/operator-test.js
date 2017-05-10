@@ -6,7 +6,7 @@ import map from 'lodash/map';
 import reduce from 'lodash/reduce';
 import enhancer from 'state';
 import { reducer } from 'service';
-import broadcast from 'broadcast';
+import broadcast, { selector } from 'broadcast';
 import WatchingMiddleware from '../mock-middleware';
 import {
 	SET_USER_OFFLINE,
@@ -77,7 +77,7 @@ describe( 'Operators', () => {
 			process.nextTick( () => {
 				connection.client.once( 'broadcast.state', ( version, state ) => {
 					equal( version, nextVersion );
-					deepEqual( state, store.getState() );
+					deepEqual( state, selector( store.getState() ) );
 					done();
 				} );
 				connection.client.emit( 'broadcast.state' );
