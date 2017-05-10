@@ -29,7 +29,7 @@ export { reducer }
 
 const keyMissing = key => r_compose( isNil, prop( key ) )
 
-const REQUIRED_OPERATOR_KEYS = [ 'id', 'username', 'displayName', 'picture' ]
+const REQUIRED_OPERATOR_KEYS = [ 'id', 'username', 'picture' ]
 const REQUIRED_CUSTOMER_KEYS = append( 'session_id', REQUIRED_OPERATOR_KEYS )
 const validateKeys = fields => when(
 	anyPass( map( keyMissing, fields ) ),
