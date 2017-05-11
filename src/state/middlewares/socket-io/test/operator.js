@@ -1,12 +1,12 @@
 import { ok, equal, deepEqual } from 'assert'
 import { createStore, compose, applyMiddleware } from 'redux'
 import { values } from 'ramda'
-import mockio from '../mock-io'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
 import enhancer from 'state'
 import { reducer } from 'service'
-import WatchingMiddleware from '../mock-middleware'
+import mockio from '../../../../../test/mocks/mock-io'
+import WatchingMiddleware from '../../../../../test/mocks/mock-middleware'
 import {
 	SET_USER_OFFLINE,
 	OPERATOR_RECEIVE_TYPING,

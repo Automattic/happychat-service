@@ -2,11 +2,11 @@ import { ok, equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
 import { merge } from 'ramda'
 import { createStore, compose, applyMiddleware } from 'redux'
-import mockio from '../mock-io'
+import mockio from '../mocks/mock-io'
 import enhancer from 'state'
 import { reducer } from 'service'
 import { setClientCapacity } from '../integration/helpers'
-import WatchingMiddleware from '../mock-middleware'
+import WatchingMiddleware from '../mocks/mock-middleware'
 import {
 	AUTOCLOSE_CHAT,
 	ASSIGN_CHAT,

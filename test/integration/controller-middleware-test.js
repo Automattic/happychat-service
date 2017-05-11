@@ -4,8 +4,8 @@ import { EventEmitter } from 'events'
 import assign from 'lodash/assign'
 import enhancer from 'state'
 import { reducer } from 'service'
-import mockio from '../mock-io'
-import WatchingMiddleware from '../mock-middleware'
+import mockio from '../mocks/mock-io'
+import WatchingMiddleware from '../mocks/mock-middleware'
 import {
 	AGENT_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_MESSAGE,

@@ -11,7 +11,7 @@ import {
 	setDefaultGroupName
 } from 'state/groups/actions'
 import { DEFAULT_GROUP_NAME, DEFAULT_GROUP_ID } from 'state/groups/reducer'
-import { remoteAction } from '../helpers'
+import { remoteAction } from '../../../../test/helpers'
 
 describe( 'group reducer', () => {
 	it( 'should have default state', () => {

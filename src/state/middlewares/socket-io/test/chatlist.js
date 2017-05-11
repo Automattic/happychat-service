@@ -1,7 +1,7 @@
 import { equal, deepEqual } from 'assert'
 
 import chatlistMiddleware from 'state/middlewares/socket-io/chatlist'
-import mockio from '../mock-io'
+import mockio from '../../../../../test/mocks/mock-io'
 
 import {
 	assignChat,

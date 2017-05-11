@@ -3,8 +3,9 @@ import { EventEmitter } from 'events'
 import { createStore, compose, applyMiddleware } from 'redux'
 import enhancer from 'state'
 import { reducer } from 'service'
-import mockio from '../mock-io'
-import WatchingMiddleware from '../mock-middleware'
+import mockIO from '../../../../../test/mocks/mock-io'
+import WatchingMiddleware from '../../../../../test/mocks/mock-middleware'
+
 import {
 	OPERATOR_RECEIVE_TYPING,
 	AGENT_RECEIVE_MESSAGE,
@@ -33,7 +34,7 @@ describe( 'Controller', () => {
 	const watchForType = ( ... args ) => watchingMiddleware.watchForType( ... args )
 
 	beforeEach( () => {
-		io = mockio().server
+		io = mockIO().server
 		watchingMiddleware = new WatchingMiddleware()
 		store = createStore( reducer, compose(
 			enhancer( {

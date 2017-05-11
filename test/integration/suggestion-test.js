@@ -1,6 +1,6 @@
 import { deepEqual, ok } from 'assert'
 import makeService, { authenticators } from './helpers'
-import { tick } from '../tick'
+import { tick } from '../helpers'
 import find from 'lodash/find'
 import set from 'lodash/set'
 import every from 'lodash/every'

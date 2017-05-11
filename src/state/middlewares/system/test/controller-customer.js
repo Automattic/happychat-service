@@ -1,9 +1,9 @@
 import { createStore, compose, applyMiddleware } from 'redux'
-import mockIO from '../mock-io'
-import { contains, ok, equal, deepEqual } from '../assert'
 import enhancer from 'state'
 import { reducer } from 'service'
-import WatchingMiddleware from '../mock-middleware'
+import { contains, ok, equal, deepEqual } from '../../../../../test/assert'
+import mockIO from '../../../../../test/mocks/mock-io'
+import WatchingMiddleware from '../../../../../test/mocks/mock-middleware'
 import {
 	CUSTOMER_TYPING,
 	CUSTOMER_INBOUND_MESSAGE,
