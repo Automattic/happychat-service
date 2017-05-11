@@ -39,7 +39,7 @@ if ( ! global.before ) {
 	const config = require( './runner.json' );
 	const mocha = new Mocha( {
 		ui: program.ui,
-		reporter: program.reporter
+		reporter: program.reporter,
 	} );
 	const collector = new istanbul.Collector();
 	const reporter = new istanbul.Reporter();

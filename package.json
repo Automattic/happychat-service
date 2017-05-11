@@ -7,7 +7,8 @@
     "postinstall": "sh ./bin/install",
     "test": "NODE_PATH=./src babel-node ./test/runner.js",
     "test:coverage": "NODE_PATH=./src babel-node ./test/runner.js --coverage",
-    "test:watch": "NODE_PATH=./src babel-node ./test/runner.js --reporter min",
+    "test:min": "NODE_PATH=./src babel-node ./test/runner.js --reporter min",
+    "test:watch": "nodemon -e js,jsx --exec npm run test:min",
     "build": "rm -rf lib; `npm bin`/babel -d lib ./src/",
     "prepublish": "npm run build"
   },
@@ -40,6 +41,7 @@
     "istanbul": "^0.4.5",
     "mocha": "^2.4.5",
     "mocha-junit-reporter": "^1.12.0",
+    "nodemon": "^1.11.0",
     "socket.io": "^1.7.2",
     "socket.io-client": "^1.4.8"
   },
