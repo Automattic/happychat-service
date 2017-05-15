@@ -25,11 +25,11 @@ const selector = evolve( { chatlist: filterClosed } )
 export const serializeAction = () => ( { type: SERIALIZE } )
 export const deserializeAction = () => ( { type: DESERIALIZE } )
 
-export default ( { io, customerAuth, operatorAuth, agentAuth, messageFilters = [], timeout = undefined }, measure = ( key, fn ) => fn ) => {
+export default ( { io, customerAuth, operatorAuth, agentAuth, messageFilters = [], timeout = undefined }, chatLogFactory, measure = ( key, fn ) => fn ) => {
 	const messageFilter = ( ... args ) => run( messageFilters )( ... args );
 	return applyMiddleware(
 			delayedDispatch,
-			controllerMiddleware( messageFilter ),
+			controllerMiddleware( messageFilter, chatLogFactory ),
 			operatorMiddleware( io.of( '/operator' ), operatorAuth, messageFilters ),
 			agentMiddleware( io.of( '/agent' ), agentAuth ),
 			chatlistMiddleware( {
