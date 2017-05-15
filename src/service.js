@@ -72,7 +72,7 @@ export const service = ( io, { customerAuthenticator, agentAuthenticator, operat
 		operatorAuth: auth( operatorAuthenticator, validateKeys( REQUIRED_OPERATOR_KEYS ) ),
 		customerAuth: auth( customerAuthenticator, validateKeys( REQUIRED_CUSTOMER_KEYS ) ),
 		agentAuth: auth( agentAuthenticator ),
-		messageMiddlewares: filters
+		messageFilters: filters
 	}, measure ), ... enhancers ) )
 
 	const removeStaleChats = buildRemoveStaleChats( store )

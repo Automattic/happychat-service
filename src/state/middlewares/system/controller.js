@@ -1,5 +1,5 @@
 import { assoc, dissoc, compose, slice, append, defaultTo, prop, merge, pipe, when, path, not, isNil } from 'ramda'
-import { run } from '../../../middleware-interface'
+import { run } from '../../../message-filter'
 
 import {
 	OPERATOR_TYPING,

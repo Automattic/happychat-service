@@ -23,7 +23,7 @@ import {
 import {
 	selectUser,
 } from '../../operator/selectors';
-import { run } from '../../../middleware-interface'
+import { run } from '../../../message-filter'
 
 const log = require( 'debug' )( 'happychat:middleware:operators' )
 const debug = require( 'debug' )( 'happychat-debug:middleware:operators' )

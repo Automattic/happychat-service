@@ -89,7 +89,7 @@ import {
 	haveAvailableCapacity,
 	canAcceptChat
 } from '../../operator/selectors'
-import { run } from '../../../middleware-interface'
+import { run } from '../../../message-filter'
 import timestamp from '../../timestamp'
 import { customerRoom, operatorRoom } from './operator'
 
