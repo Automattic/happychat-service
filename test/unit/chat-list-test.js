@@ -168,11 +168,11 @@ describe( 'ChatList component', () => {
 		} )
 
 		it( 'should send message from customer', done => {
-			client.once( 'chat.message', ( _chat, message ) => {
+			client.once( 'chat.message', ( _chat, message ) => setImmediate( () => {
 				deepEqual( _chat, chat )
 				deepEqual( message, { text: 'hola mundo', source: 'customer' } )
 				done()
-			} )
+			} ) )
 			emitCustomerMessage( 'hola mundo', 'the-id' )
 		} )
 

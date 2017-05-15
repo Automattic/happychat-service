@@ -36,7 +36,8 @@ import {
 	OPERATOR_CHAT_LEAVE,
 	OPERATOR_READY,
 	OPERATOR_CHAT_JOIN,
-	OPERATOR_CHAT_TRANSFER
+	OPERATOR_CHAT_TRANSFER,
+	SEND_CUSTOMER_CHAT_LOG
 } from '../../action-types'
 import {
 	assignChat,
@@ -89,7 +90,7 @@ import {
 	haveAvailableCapacity,
 	canAcceptChat
 } from '../../operator/selectors'
-import { run } from '../../../middleware-interface'
+import { run } from '../../../message-filter'
 import timestamp from '../../timestamp'
 import { customerRoom, operatorRoom } from './operator'
 
@@ -565,6 +566,10 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 		)( store.getState() )
 	}
 
+	const handleSendCustomerChatLog = action => {
+		customer_io.to( customerRoom( action.id ) ).emit( 'log', action.log );
+	};
+
 	return next => action => {
 		switch ( action.type ) {
 			case NOTIFY_SYSTEM_STATUS_CHANGE:
@@ -626,6 +631,9 @@ export default ( { io, timeout = 1000, customerDisconnectTimeout = 90000, custom
 			case AUTOCLOSE_CHAT:
 				handleAutocloseChat( action )
 				break
+			case SEND_CUSTOMER_CHAT_LOG:
+				handleSendCustomerChatLog( action );
+				break;
 		}
 		const result = next( action )
 		switch ( action.type ) {

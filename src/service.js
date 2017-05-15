@@ -54,7 +54,7 @@ const buildRemoveStaleChats = ( { getState, dispatch }, maxAgeIsSeconds = FOUR_H
 	)
 }
 
-export const service = ( io, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, initialState, enhancers = [], filters, measure ) => {
+export const service = ( io, { customerAuthenticator, agentAuthenticator, operatorAuthenticator }, initialState, enhancers = [], chatLogFactory, filters, measure ) => {
 	log( 'configuring socket.io server' )
 
 	const auth = ( authenticator, validator = user => user ) => socket => new Promise( ( resolve, reject ) => {
@@ -72,8 +72,8 @@ export const service = ( io, { customerAuthenticator, agentAuthenticator, operat
 		operatorAuth: auth( operatorAuthenticator, validateKeys( REQUIRED_OPERATOR_KEYS ) ),
 		customerAuth: auth( customerAuthenticator, validateKeys( REQUIRED_CUSTOMER_KEYS ) ),
 		agentAuth: auth( agentAuthenticator ),
-		messageMiddlewares: filters
-	}, measure ), ... enhancers ) )
+		messageFilters: filters
+	}, chatLogFactory, measure ), ... enhancers ) )
 
 	const removeStaleChats = buildRemoveStaleChats( store )
 	setInterval( removeStaleChats, 1000 * 60 ) // every minute
