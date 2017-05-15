@@ -32,7 +32,8 @@ import {
 	RECEIVE_CHAT_MESSAGE,
 	CUSTOMER_CHAT_TRANSCRIPT_REQUEST,
 	REMOVE_CHAT,
-	INSERT_NEW_CHAT
+	INSERT_NEW_CHAT,
+	SEND_CUSTOMER_CHAT_LOG
 } from '../action-types'
 
 export const reassignChats = ( operator, socket ) => ( {
@@ -168,3 +169,14 @@ export const customerChatTranscriptRequest = ( chat, timestamp ) => ( {
 export const removeChat = id => ( {
 	type: REMOVE_CHAT, id
 } )
+
+/**
+ * Sends the cached customer chat log to the customer connection
+ *
+ * @param { string } chat_id - id of the chat to receive the log
+ * @param { Object[] } log - list of messages to send to che customer
+ * @returns { Object } redux action
+ */
+export const sendCustomerChatLog = ( chat_id, log ) => ( {
+	type: SEND_CUSTOMER_CHAT_LOG, id: chat_id, log
+} );
