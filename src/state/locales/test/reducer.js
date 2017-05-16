@@ -1,9 +1,15 @@
+/**
+ * External dependencies
+ */
 import { deepEqual } from 'assert'
 import { createStore } from 'redux'
-import reducer from 'state/locales/reducer'
 
-import { configureLocales } from 'state/locales/actions'
-import { setUserLoads } from 'state/operator/actions'
+/**
+ * Internal dependencies
+ */
+import { configureLocales } from 'src/state/locales/actions'
+import { setUserLoads } from 'src/state/operator/actions'
+import reducer from 'src/state/locales/reducer'
 
 describe( 'Locale reducer', () => {
 	it( 'should have default state', () => {

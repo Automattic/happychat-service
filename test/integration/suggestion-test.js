@@ -1,11 +1,17 @@
+/**
+ * External dependencies
+ */
 import { deepEqual, ok } from 'assert'
-import makeService, { authenticators } from './helpers'
-import { tick } from '../tick'
 import find from 'lodash/find'
 import set from 'lodash/set'
 import every from 'lodash/every'
 
-import { setOperatorStatus, setOperatorCapacity } from 'state/operator/actions'
+/**
+ * Internal dependencies
+ */
+import makeService, { authenticators } from './helpers'
+import { tick } from 'test/helpers'
+import { setOperatorStatus, setOperatorCapacity } from 'src/state/operator/actions'
 
 const debug = require( 'debug' )( 'happychat:test:suggestion-test' )
 

@@ -1,14 +1,21 @@
+/**
+ * External dependencies
+ */
 import { deepEqual, equal } from 'assert'
+import { createStore } from 'redux';
+import { assoc } from 'ramda'
+
+/**
+ * Internal dependencies
+ */
 import {
 	setOperatorCapacity,
 	setOperatorStatus,
 	setUserOffline,
-} from 'state/operator/actions'
-import reducer from 'state/operator/reducer';
-import { createStore } from 'redux';
-import { REMOTE_USER_KEY } from 'state/middlewares/socket-io/broadcast'
-import { assoc } from 'ramda'
-import { serializeAction } from 'state'
+} from 'src/state/operator/actions'
+import reducer from 'src/state/operator/reducer';
+import { REMOTE_USER_KEY } from 'src/state/middlewares/socket-io/broadcast'
+import { serializeAction } from 'src/state'
 
 describe( 'Operator reducer', () => {
 	it( 'should set operator status', () => {

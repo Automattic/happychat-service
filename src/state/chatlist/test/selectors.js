@@ -1,15 +1,21 @@
+/**
+ * External dependencies
+ */
 import { deepEqual } from 'assert'
 import { merge } from 'ramda'
 
-import groups from 'state/groups/reducer'
+/**
+ * Internal dependencies
+ */
+import groups from 'src/state/groups/reducer'
 import {
 	getChatMembers,
 	getOpenChatMembers,
 	getChatGroups
-} from 'state/chatlist/selectors'
+} from 'src/state/chatlist/selectors'
 import {
 	STATUS_CLOSED,
-} from 'state/chatlist/reducer';
+} from 'src/state/chatlist/reducer';
 
 describe( 'Chat List selectors', () => {
 	const state = {

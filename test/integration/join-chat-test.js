@@ -1,7 +1,14 @@
+/**
+ * External dependencies
+ */
 import { ok, deepEqual, equal } from 'assert'
+
+/**
+ * Internal dependencies
+ */
 import makeService, { authenticators } from './helpers'
-import { STATUS_CLOSED, STATUS_PENDING } from 'state/chatlist/reducer'
-import { getChatStatus } from 'state/chatlist/selectors'
+import { STATUS_CLOSED, STATUS_PENDING } from 'src/state/chatlist/reducer'
+import { getChatStatus } from 'src/state/chatlist/selectors'
 
 const debug = require( 'debug' )( 'happychat:test:join-chat' )
 

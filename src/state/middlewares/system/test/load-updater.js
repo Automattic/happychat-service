@@ -1,9 +1,15 @@
+/**
+ * External dependencies
+ */
 import { deepEqual, equal } from 'assert'
 
-import { SET_USER_LOADS } from 'state/action-types'
-import middleware from 'state/middlewares/system/load-updater'
-import { operatorChatJoin } from 'state/operator/actions'
-import { STATUS_ASSIGNED } from 'state/chatlist/reducer'
+/**
+ * Internal dependencies
+ */
+import { SET_USER_LOADS } from 'src/state/action-types'
+import middleware from 'src/state/middlewares/system/load-updater'
+import { operatorChatJoin } from 'src/state/operator/actions'
+import { STATUS_ASSIGNED } from 'src/state/chatlist/reducer'
 
 describe( 'Operator loads', () => {
 	const next = v => v

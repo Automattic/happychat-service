@@ -1,12 +1,19 @@
+/**
+ * External dependencies
+ */
 import { ok, equal, deepEqual } from 'assert'
 import { createStore, compose, applyMiddleware } from 'redux'
 import { values } from 'ramda'
-import mockio from '../mock-io'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
-import enhancer from 'state'
-import { reducer } from 'service'
-import WatchingMiddleware from '../mock-middleware'
+
+/**
+ * Internal dependencies
+ */
+import enhancer from 'src/state'
+import { reducer } from 'src/service'
+import mockio from 'test/mocks/mock-io'
+import WatchingMiddleware from 'test/mocks/mock-middleware'
 import {
 	SET_USER_OFFLINE,
 	OPERATOR_RECEIVE_TYPING,
@@ -18,15 +25,15 @@ import {
 	OPERATOR_READY,
 	SET_OPERATOR_STATUS,
 	SET_OPERATOR_CAPACITY
-} from 'state/action-types'
+} from 'src/state/action-types'
 import {
 	setAcceptsCustomers,
 	operatorChatJoin,
 	operatorChatClose,
-} from 'state/operator/actions'
-import { selectTotalCapacity } from 'state/operator/selectors'
-import { insertPendingChat } from 'state/chatlist/actions'
-import { getGroups } from 'state/groups/selectors'
+} from 'src/state/operator/actions'
+import { selectTotalCapacity } from 'src/state/operator/selectors'
+import { insertPendingChat } from 'src/state/chatlist/actions'
+import { getGroups } from 'src/state/groups/selectors'
 
 const debug = require( 'debug' )( 'happychat:operator-test' )
 

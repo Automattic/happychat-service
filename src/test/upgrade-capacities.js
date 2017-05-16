@@ -1,9 +1,15 @@
+/**
+ * External dependencies
+ */
 import { equal, deepEqual } from 'assert'
 import { merge } from 'ramda'
 
-import upgradeCapacities from 'upgrade-capacities'
-import { setOperatorCapacity } from 'state/operator/actions'
-import { REMOTE_USER_KEY } from 'state/middlewares/socket-io/broadcast'
+/**
+ * Internal dependencies
+ */
+import upgradeCapacities from 'src/upgrade-capacities'
+import { setOperatorCapacity } from 'src/state/operator/actions'
+import { REMOTE_USER_KEY } from 'src/state/middlewares/socket-io/broadcast'
 
 describe( 'Upgrade capacities to locales', () => {
 	it( 'should update default locale capacities', () => {

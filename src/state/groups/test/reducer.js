@@ -1,7 +1,13 @@
+/**
+ * External dependencies
+ */
 import { deepEqual, equal, ok } from 'assert'
 import { createStore } from 'redux'
 
-import groups from 'state/groups/reducer'
+/**
+ * Internal dependencies
+ */
+import groups from 'src/state/groups/reducer'
 import {
 	addGroup,
 	removeGroup,
@@ -9,9 +15,9 @@ import {
 	removeGroupMember,
 	updateOperatorMembership,
 	setDefaultGroupName
-} from 'state/groups/actions'
-import { DEFAULT_GROUP_NAME, DEFAULT_GROUP_ID } from 'state/groups/reducer'
-import { remoteAction } from '../helpers'
+} from 'src/state/groups/actions'
+import { DEFAULT_GROUP_NAME, DEFAULT_GROUP_ID } from 'src/state/groups/reducer'
+import { remoteAction } from 'test/helpers'
 
 describe( 'group reducer', () => {
 	it( 'should have default state', () => {

@@ -1,12 +1,19 @@
+/**
+ * External dependencies
+ */
 import { ok, equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
 import { merge } from 'ramda'
 import { createStore, compose, applyMiddleware } from 'redux'
-import mockio from '../mock-io'
-import enhancer from 'state'
-import { reducer } from 'service'
-import { setClientCapacity } from '../integration/helpers'
-import WatchingMiddleware from '../mock-middleware'
+
+/**
+ * Internal dependencies
+ */
+import mockio from 'test/mocks/mock-io'
+import enhancer from 'src/state'
+import { reducer } from 'src/service'
+import { setClientCapacity } from './helpers'
+import WatchingMiddleware from 'test/mocks/mock-middleware'
 import {
 	AUTOCLOSE_CHAT,
 	ASSIGN_CHAT,
@@ -19,14 +26,14 @@ import {
 	NOTIFY_CHAT_STATUS_CHANGED,
 	SET_CHAT_OPERATOR,
 	OPERATOR_CHAT_TRANSFER
-} from 'state/action-types'
+} from 'src/state/action-types'
 import {
 	customerInboundMessage,
 	customerJoin,
 	customerDisconnect
-} from 'state/chatlist/actions';
-import { STATUS_CLOSED } from 'state/chatlist/reducer'
-import { getChatStatus, getChatOperator } from 'state/chatlist/selectors'
+} from 'src/state/chatlist/actions';
+import { STATUS_CLOSED } from 'src/state/chatlist/reducer'
+import { getChatStatus, getChatOperator } from 'src/state/chatlist/selectors'
 
 const debug = require( 'debug' )( 'happychat:chatlist:test' )
 

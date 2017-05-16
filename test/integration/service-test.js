@@ -1,4 +1,11 @@
+/**
+ * External dependencies
+ */
 import { equal, deepEqual } from 'assert'
+
+/**
+ * Internal dependencies
+ */
 import makeService, { authenticators } from './helpers'
 
 const debug = require( 'debug' )( 'happychat:test:service' )

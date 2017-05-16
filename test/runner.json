@@ -1,0 +1,7 @@
+{
+	"circleTimeout": 10000,
+	"testFiles": [
+		"./test/integration/*.js",
+		"./src/**/test/*.js"
+	]
+}

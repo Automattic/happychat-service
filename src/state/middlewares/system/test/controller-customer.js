@@ -1,20 +1,27 @@
+/**
+ * External dependencies
+ */
 import { createStore, compose, applyMiddleware } from 'redux'
-import mockIO from '../mock-io'
-import { contains, ok, equal, deepEqual } from '../assert'
-import enhancer from 'state'
-import { reducer } from 'service'
-import WatchingMiddleware from '../mock-middleware'
+
+/**
+ * Internal dependencies
+ */
+import enhancer from 'src/state'
+import { reducer } from 'src/service'
+import { contains, ok, equal, deepEqual } from 'test/assert'
+import mockIO from 'test/mocks/mock-io'
+import WatchingMiddleware from 'test/mocks/mock-middleware'
 import {
 	CUSTOMER_TYPING,
 	CUSTOMER_INBOUND_MESSAGE,
 	CUSTOMER_JOIN,
 	CUSTOMER_SOCKET_DISCONNECT,
 	CUSTOMER_DISCONNECT,
-} from 'state/action-types'
+} from 'src/state/action-types'
 import {
 	customerReceiveTyping,
 	customerReceiveMessage
-} from 'state/chatlist/actions'
+} from 'src/state/chatlist/actions'
 
 const debug = require( 'debug' )( 'happychat:test:customer' )
 
