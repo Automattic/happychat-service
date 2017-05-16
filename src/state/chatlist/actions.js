@@ -28,6 +28,7 @@ import {
 	AUTOCLOSE_CHAT,
 	CUSTOMER_LEFT,
 	UPDATE_CHAT,
+	UPDATE_PREFERENCES,
 	RECEIVE_CHAT_MESSAGE,
 	CUSTOMER_CHAT_TRANSCRIPT_REQUEST,
 	REMOVE_CHAT,
@@ -255,6 +256,10 @@ export const customerInboundMessage = ( chat, message ) => ( {
 	type: CUSTOMER_INBOUND_MESSAGE, chat, message
 } );
 
+export const updatePreferences = ( chat, user, preferences ) => ( {
+	type: UPDATE_PREFERENCES, chat, user, preferences
+} );
+
 /**
  * Customer is receiving a message from the system.
  *
@@ -402,4 +407,3 @@ export const removeChat = chat_id => ( {
 export const sendCustomerChatLog = ( chat_id, log ) => ( {
 	type: SEND_CUSTOMER_CHAT_LOG, id: chat_id, log
 } );
-

@@ -5,7 +5,7 @@ import {
 	tap,
 	filter
 } from 'ramda';
-import { throttle } from 'lodash';
+import { assign, throttle } from 'lodash';
 import {
 	CUSTOMER_RECEIVE_TYPING,
 	CUSTOMER_RECEIVE_MESSAGE,
@@ -15,7 +15,8 @@ import {
 	NOTIFY_SYSTEM_STATUS_CHANGE,
 	NOTIFY_CHAT_STATUS_CHANGED,
 	SEND_CUSTOMER_CHAT_LOG,
-	CUSTOMER_BLOCK
+	CUSTOMER_BLOCK,
+	UPDATE_PREFERENCES
 } from '../../action-types';
 import {
 	assignNextChat,
@@ -25,6 +26,8 @@ import {
 	customerSocketDisconnect,
 	customerDisconnect,
 	customerChatTranscriptRequest,
+	updatePreferences,
+	updateChat
 } from '../../chatlist/actions';
 import {
 	getChatStatus,
@@ -108,6 +111,10 @@ const init = ( { user, socket, io, dispatch, chat }, messageFilter ) => () => {
 		);
 	} );
 
+	socket.on( 'preferences', ( preferences ) => {
+		dispatch( updatePreferences( chat, user, preferences ) );
+	} );
+
 	socket.emit( 'init', user );
 	dispatch( customerJoin( chat, user ) );
 };
@@ -172,6 +179,17 @@ export default ( { io, timeout = 1000 }, customerAuth, messageFilter ) => store 
 		io.to( customerRoom( action.id ) ).emit( 'log', action.log );
 	};
 
+	const handleUpdatePreferences = action => {
+		const { chat, preferences } = action;
+		const updatedChat = assign( {}, chat, preferences );
+
+		store.dispatch( updateChat( updatedChat ) );
+
+		const accept = canAcceptChat( chat.id, store.getState() );
+		io.to( customerRoom( chat.id ) ).emit( 'accept', accept )
+	};
+
+
 	const handleCustomerBlock = action => {
 		// notify status to customer
 		io.to( customerRoom( action.chat_id ) ).emit( 'accept', false );
@@ -194,6 +212,9 @@ export default ( { io, timeout = 1000 }, customerAuth, messageFilter ) => store 
 				return next( action );
 			case CUSTOMER_JOIN:
 				handleCustomerJoin( action );
+				return next( action );
+			case UPDATE_PREFERENCES:
+				handleUpdatePreferences( action );
 				return next( action );
 			case CUSTOMER_BLOCK:
 				handleCustomerBlock( action );
