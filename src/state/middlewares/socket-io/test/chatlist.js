@@ -1,28 +1,34 @@
+/**
+ * External dependencies
+ */
 import { equal, deepEqual } from 'assert'
 
-import chatlistMiddleware from 'state/middlewares/socket-io/chatlist'
-import mockio from '../../../../../test/mocks/mock-io'
+/**
+ * Internal dependencies
+ */
+import chatlistMiddleware from 'src/state/middlewares/socket-io/chatlist'
+import mockio from 'test/mocks/mock-io'
 
 import {
 	assignChat,
 	assignNextChat
-} from 'state/chatlist/actions'
+} from 'src/state/chatlist/actions'
 import {
 	ASSIGN_CHAT,
 	SET_CHAT_OPERATOR,
 	SET_CHAT_MISSED
-} from 'state/action-types'
+} from 'src/state/action-types'
 import {
 	STATUS_PENDING,
 	STATUS_ASSIGNED
-}	from 'state/chatlist/reducer'
+}	from 'src/state/chatlist/reducer'
 import {
 	STATUS_AVAILABLE,
 	STATUS_RESERVE
-} from 'state/operator/constants'
+} from 'src/state/operator/constants'
 import {
 	DEFAULT_GROUP_ID
-} from 'state/groups/reducer'
+} from 'src/state/groups/reducer'
 
 const noop = () => {}
 

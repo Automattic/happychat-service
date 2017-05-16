@@ -1,8 +1,14 @@
+/**
+ * External dependencies
+ */
 import { deepEqual } from 'assert'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
 import assign from 'lodash/assign'
 
+/**
+ * Internal dependencies
+ */
 import makeService, { authenticators, setClientCapacity, setSystemAvailable } from './helpers'
 
 const debug = require( 'debug' )( 'happychat:test:chat-logs' )

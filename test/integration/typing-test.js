@@ -1,4 +1,11 @@
+/**
+ * External dependencies
+ */
 import { equal } from 'assert'
+
+/**
+ * Internal dependencies
+ */
 import makeService, { authenticators } from './helpers'
 
 const debug = require( 'debug' )( 'happychat:test:integration:typing' )

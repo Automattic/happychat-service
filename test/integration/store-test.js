@@ -1,6 +1,13 @@
+/**
+ * External dependencies
+ */
 import assert from 'assert'
-import mockService, { authenticators } from './helpers'
 import { applyMiddleware } from 'redux'
+
+/**
+ * Internal dependencies
+ */
+import mockService, { authenticators } from './helpers'
 
 describe( 'Store', () => {
 	let mockUser = {

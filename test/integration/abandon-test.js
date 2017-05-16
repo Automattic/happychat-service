@@ -1,6 +1,13 @@
+/**
+ * External dependencies
+ */
 import { equal } from 'assert'
+
+/**
+ * Internal dependencies
+ */
 import helpers, { authenticators, setClientCapacity } from './helpers'
-import { STATUS_AVAILABLE } from 'state/operator/constants'
+import { STATUS_AVAILABLE } from 'src/state/operator/constants'
 
 const debug = require( 'debug' )( 'happychat:test:integration' )
 

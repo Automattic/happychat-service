@@ -1,5 +1,12 @@
+/**
+ * External dependencies
+ */
 import { ok, equal } from 'assert'
-import { isOperatorMemberOfAnyGroup, getDefaultLocaleGroup } from 'state/groups/selectors'
+
+/**
+ * Internal dependencies
+ */
+import { isOperatorMemberOfAnyGroup, getDefaultLocaleGroup } from 'src/state/groups/selectors'
 
 describe( 'Group selectors', () => {
 	it( 'isOperatorMemberOfAnyGroup', () => {

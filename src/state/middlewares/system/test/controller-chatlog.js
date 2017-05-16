@@ -1,6 +1,13 @@
+/**
+ * External dependencies
+ */
 import { equal, deepEqual } from 'assert'
-import { ChatLog } from 'state/middlewares/system/controller'
 import { forEach, range } from 'ramda'
+
+/**
+ * Internal dependencies
+ */
+import { ChatLog } from 'src/state/middlewares/system/controller'
 
 describe( 'ChatLog', () => {
 	const maxMessages = 10

@@ -1,21 +1,28 @@
+/**
+ * External dependencies
+ */
 import { createStore, applyMiddleware, compose } from 'redux'
 import { equal } from 'assert'
 import { EventEmitter } from 'events'
 import assign from 'lodash/assign'
-import enhancer from 'state'
-import { reducer } from 'service'
-import mockio from '../mocks/mock-io'
-import WatchingMiddleware from '../mocks/mock-middleware'
+
+/**
+ * Internal dependencies
+ */
+import enhancer from 'src/state'
+import { reducer } from 'src/service'
+import mockio from 'test/mocks/mock-io'
+import WatchingMiddleware from 'test/mocks/mock-middleware'
 import {
 	AGENT_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_MESSAGE,
 	CUSTOMER_RECEIVE_MESSAGE
-} from 'state/action-types'
+} from 'src/state/action-types'
 import {
 	agentInboundMessage,
 	customerInboundMessage,
 	operatorInboundMessage,
-} from 'state/chatlist/actions'
+} from 'src/state/chatlist/actions'
 
 describe( 'Controller middleware', () => {
 	let customers, agents, operators, watchingMiddleware, chats

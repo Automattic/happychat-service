@@ -1,8 +1,15 @@
+/**
+ * External dependencies
+ */
 import { ok, equal, deepEqual } from 'assert';
-import agentMiddleware from 'state/middlewares/socket-io/agents';
-import { AGENT_INBOUND_MESSAGE } from 'state/action-types';
-import { agentReceiveMessage } from 'state/chatlist/actions';
-import mockIO from '../../../../../test/mocks/mock-io';
+
+/**
+ * Internal dependencies
+ */
+import agentMiddleware from 'src/state/middlewares/socket-io/agents';
+import { AGENT_INBOUND_MESSAGE } from 'src/state/action-types';
+import { agentReceiveMessage } from 'src/state/chatlist/actions';
+import mockIO from 'test/mocks/mock-io';
 
 const debug = require( 'debug' )( 'happychat:test:agent' );
 

@@ -1,18 +1,24 @@
+/**
+ * External dependencies
+ */
 import { createServer } from 'http'
-import { service } from 'service'
 import { assign } from 'lodash/object'
+import IOServer from 'socket.io'
+import IO from 'socket.io-client'
+
+/**
+ * Internal dependencies
+ */
+import { service } from 'src/service'
 import {
 	setOperatorStatus,
 	setOperatorCapacity,
 	setAcceptsCustomers
-} from 'state/operator/actions'
+} from 'src/state/operator/actions'
 import {
 	STATUS_AVAILABLE
-} from 'state/operator/constants'
-import { addGroup } from 'state/groups/actions'
-
-import IOServer from 'socket.io'
-import IO from 'socket.io-client'
+} from 'src/state/operator/constants'
+import { addGroup } from 'src/state/groups/actions'
 
 const debug = require( 'debug' )( 'happychat:mock:service' )
 

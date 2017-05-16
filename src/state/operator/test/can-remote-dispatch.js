@@ -1,6 +1,13 @@
+/**
+ * External dependencies
+ */
 import { ok } from 'assert'
-import canRemoteDispatch from 'state/operator/can-remote-dispatch'
-import { setOperatorCapacity, setAcceptsCustomers, setOperatorStatus } from 'state/operator/actions'
+
+/**
+ * Internal dependencies
+ */
+import canRemoteDispatch from 'src/state/operator/can-remote-dispatch'
+import { setOperatorCapacity, setAcceptsCustomers, setOperatorStatus } from 'src/state/operator/actions'
 
 describe( 'Remote Dispatch', () => {
 	it( 'can update system accept status', () => {

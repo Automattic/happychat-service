@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "sh ./bin/install",
-    "test": "NODE_PATH=./src babel-node ./test/runner.js",
-    "test:coverage": "NODE_PATH=./src babel-node ./test/runner.js --coverage",
-    "test:min": "NODE_PATH=./src babel-node ./test/runner.js --reporter min",
+    "test": "NODE_PATH=. babel-node ./test/runner.js",
+    "test:coverage": "NODE_PATH=. babel-node ./test/runner.js --coverage",
+    "test:min": "NODE_PATH=. babel-node ./test/runner.js --reporter min",
     "test:watch": "nodemon -e js,jsx --exec npm run test:min",
     "build": "rm -rf lib; `npm bin`/babel -d lib ./src/",
     "prepublish": "npm run build"

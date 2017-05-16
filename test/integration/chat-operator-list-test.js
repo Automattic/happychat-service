@@ -1,9 +1,16 @@
+/**
+ * External dependencies
+ */
 import { equal, deepEqual } from 'assert'
 import { series } from 'async'
 import { map, forEach } from 'lodash/collection'
 import { get } from 'lodash/object'
-import makeService, { setClientCapacity } from './helpers'
 import { keys } from 'ramda'
+
+/**
+ * Internal dependencies
+ */
+import makeService, { setClientCapacity } from './helpers'
 
 const debug = require( 'debug' )( 'happychat:test:integration' )
 

@@ -1,10 +1,17 @@
+/**
+ * External dependencies
+ */
 import { equal, deepEqual } from 'assert'
 import { EventEmitter } from 'events'
 import { createStore, compose, applyMiddleware } from 'redux'
-import enhancer from 'state'
-import { reducer } from 'service'
-import mockIO from '../../../../../test/mocks/mock-io'
-import WatchingMiddleware from '../../../../../test/mocks/mock-middleware'
+
+/**
+ * Internal dependencies
+ */
+import enhancer from 'src/state'
+import { reducer } from 'src/service'
+import mockIO from 'test/mocks/mock-io'
+import WatchingMiddleware from 'test/mocks/mock-middleware'
 
 import {
 	OPERATOR_RECEIVE_TYPING,
@@ -14,7 +21,7 @@ import {
 	CUSTOMER_RECEIVE_MESSAGE,
 	CUSTOMER_JOIN,
 	CUSTOMER_DISCONNECT,
-} from 'state/action-types'
+} from 'src/state/action-types'
 import {
 	agentInboundMessage,
 	customerInboundMessage,
@@ -22,11 +29,11 @@ import {
 	customerTyping,
 	customerJoin,
 	customerDisconnect
-} from 'state/chatlist/actions';
+} from 'src/state/chatlist/actions';
 import {
 	updateIdentity,
 	operatorTyping
-} from 'state/operator/actions';
+} from 'src/state/operator/actions';
 
 describe( 'Controller', () => {
 	let store, watchingMiddleware, io

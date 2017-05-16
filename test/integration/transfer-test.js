@@ -1,9 +1,16 @@
-import makeService, { authenticators, setClientCapacity } from './helpers'
+/**
+ * External dependencies
+ */
 import assign from 'lodash/assign'
 import reduce from 'lodash/reduce'
 import concat from 'lodash/concat'
 import find from 'lodash/find'
 import { ok, deepEqual } from 'assert'
+
+/**
+ * Internal dependencies
+ */
+import makeService, { authenticators, setClientCapacity } from './helpers'
 
 const debug = require( 'debug' )( 'happychat:test:transfer' )
 
