@@ -24,18 +24,19 @@ const selector = evolve( { chatlist: filterClosed } )
 export const serializeAction = () => ( { type: SERIALIZE } )
 export const deserializeAction = () => ( { type: DESERIALIZE } )
 
-export default ( { io, customerAuth, operatorAuth, agentAuth, messageMiddlewares = [], timeout = undefined }, measure = ( key, fn ) => fn ) => {
+export default ( { io, customerAuth, operatorAuth, agentAuth, messageFilters = [], timeout = undefined }, middlewares = [], measure = ( key, fn ) => fn ) => {
 	return applyMiddleware(
 			delayedDispatch,
-			controllerMiddleware( messageMiddlewares ),
-			operatorMiddleware( io.of( '/operator' ), operatorAuth, messageMiddlewares ),
+			... middlewares,
+			controllerMiddleware( messageFilters ),
+			operatorMiddleware( io.of( '/operator' ), operatorAuth, messageFilters ),
 			agentMiddleware( io.of( '/agent' ), agentAuth ),
 			chatlistMiddleware( {
 				io,
 				timeout,
 				customerDisconnectTimeout: timeout,
 				customerDisconnectMessageTimeout: timeout
-			}, customerAuth, messageMiddlewares ),
+			}, customerAuth, messageFilters ),
 			broadcastMiddleware( io.of( '/operator' ), { canRemoteDispatch, shouldBroadcastStateChange, selector }, measure( 'broadcast' ) ),
 			...systemMiddleware
 	)

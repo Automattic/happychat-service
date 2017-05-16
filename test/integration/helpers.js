@@ -58,7 +58,7 @@ const main = ( authenticators, enhancers = [], filters, port = 65115 ) => {
 	const server = createServer()
 	const io = new IOServer( server )
 	const result = {
-		service: service( io, authenticators, undefined, enhancers, filters ),
+		service: service( io, authenticators, undefined, { enhancers }, filters ),
 		start: () => startServer( server, port ),
 		stop: () => stopServer( server ),
 		startClients: () => startClients( port ),

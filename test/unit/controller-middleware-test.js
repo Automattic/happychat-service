@@ -39,7 +39,7 @@ describe( 'Controller middleware', () => {
 				operators,
 				agents,
 				chatlist: chats,
-				messageMiddlewares: middlewares,
+				messageFilters: middlewares,
 			} ),
 			applyMiddleware( watchingMiddleware.middleware() )
 		) )

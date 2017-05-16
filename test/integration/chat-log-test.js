@@ -72,7 +72,7 @@ describe( 'Chat logs', () => {
 		), undefined, [ filter ] )
 		return service.start()
 	} )
-	afterEach( () => service.stop() )
+	afterEach( () => service ? service.stop() : null )
 
 	it( 'should deliver logs when customer joins chat', () =>
 		service.startClients()
