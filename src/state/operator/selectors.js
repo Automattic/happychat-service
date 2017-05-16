@@ -2,14 +2,14 @@ import get from 'lodash/get'
 import {
 	filter,
 	compose,
+	contains,
+	groupBy,
 	sort,
 	defaultTo,
 	values,
 	equals,
 	ifElse,
-	whereEq,
 	not,
-	or,
 	always,
 	path,
 	reduce,
@@ -21,8 +21,8 @@ import {
 	flatten,
 	mergeAll,
 	toPairs
-} from 'ramda'
-import asString from '../as-string'
+} from 'ramda';
+import asString from '../as-string';
 import {
 	getChatLocale,
 	getChatGroups
@@ -117,15 +117,15 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 			totalAvailable: totalAvailable( user )
 		} ) ),
 		filter( ( { status, online, load, capacity, active, id } ) => {
-			const isAvailable = status === STATUS_AVAILABLE || status === STATUS_RESERVE;
+			const isAvailable = contains( status, [ STATUS_AVAILABLE, STATUS_RESERVE ] );
 			if ( ! online || ! isAvailable ) {
-				return false
+				return false;
 			}
 			if ( active !== true ) {
-				return false
+				return false;
 			}
 			if ( ! isMemberOfGroup( id, group ) ) {
-				return false
+				return false;
 			}
 			return capacity - defaultTo( 0, load ) > 0
 		} )
@@ -134,7 +134,15 @@ export const getAvailableOperators = ( locale, groups, state ) => compose(
 	values,
 	defaultTo( {} ),
 	path( [ 'operators', 'identities' ] )
-)( state )
+)( state );
+
+/**
+ * Takes a list of operators and groups them by their status
+ */
+export const groupOperatorsByStatus = ( operators ) => {
+	const status = operator => operator.status;
+	return groupBy( status, operators );
+};
 
 export const selectIdentities = path( [ 'operators', 'identities' ] )
 export const getOperators = compose( values, selectIdentities )
@@ -143,23 +151,54 @@ export const selectSocketIdentity = ( { operators: { sockets, identities } }, so
 	get( sockets, socket.id )
 )
 export const selectUser = ( { operators: { identities } }, userId ) => get( identities, userId )
-export const selectTotalCapacity = ( locale, groups, state ) =>
-	reduce(
-		( { load: totalLoad, capacity: totalCapacity }, { id, status, online } ) => {
-			const { load, capacity, active } = getLocaleMembership( locale, id, state );
-			return {
-				load: totalLoad + parseInt( load, 10 ),
-				capacity: totalCapacity + parseInt( capacity, 10 )
-			};
-		},
-		{ load: 0, capacity: 0 },
+
+/**
+ * Sums up the load and capacity for a locale for a given list of operators
+ * @param {Array<Operator>} operators The list of operators to sum
+ * @param {Array<Operator>} operators The locale to check
+ * @param {State} state The global Redux state
+ */
+const sumOperatorLoads = ( operators, locale, state ) => {
+	const reducer = ( accum, operator ) => {
+		const { load, capacity } = getLocaleMembership( locale, operator.id, state );
+		return {
+			load: accum.load + parseInt( load, 10 ),
+			capacity: accum.capacity + parseInt( capacity, 10 ),
+		};
+	};
+	return reduce( reducer, { load: 0, capacity: 0 }, operators );
+};
+
+export const selectTotalCapacity = ( locale, groups, state ) => {
+	const operators = getAvailableOperators( locale, groups, state );
+
+	// Sum up the load and capacity for each status
+	return sumOperatorLoads( operators, locale, state );
+};
+
+/**
+ * Returns the current total capacity and load for each operator status. eg:
+ *   {
+ *     'available': { capacity: 20, load: 18 },
+ * 	   'reserve': { capacity: 5, load: 0 }
+ *   }
+ */
+export const selectCapacityByStatus = ( locale, groups, state ) => {
+	const statuses = groupOperatorsByStatus(
 		getAvailableOperators( locale, groups, state )
 	);
 
+	// Sum up the load and capacity for each status
+	return map(
+		operatorList => sumOperatorLoads( operatorList, locale, state ),
+		statuses
+	);
+};
+
 export const getAvailableCapacity = ( locale, groups, state ) => {
-	const { load, capacity } = selectTotalCapacity( locale, groups, state )
-	return capacity - load
-}
+	const { load, capacity } = selectTotalCapacity( locale, groups, state );
+	return capacity - load;
+};
 
 export const haveAvailableCapacity = ( locale, groups, state ) => getAvailableCapacity( locale, groups, state ) > 0
 
@@ -170,20 +209,32 @@ export const getOperatorOnline = ( id, state ) => path(
 	state
 )
 
-export const getLocaleCapacities = state => compose(
-	flatten,
-	map( locale => compose(
-		map( ( [ group, memberships ] ) => {
-			const { load, capacity } = selectTotalCapacity( locale, [ memberships ], state )
-			return { load, capacity, group, locale, operators: reduce( ( total, userId ) => {
-				return getOperatorOnline( userId, state ) ? total + 1 : total
-			}, 0, keys( memberships.members ) ) }
-		} ),
-		toPairs,
-		getGroups
-	)( state ) ),
-	getSupportedLocales
-)( state )
+const countOnlineOperators = ( userIds, state ) => {
+	return reduce(
+		( total, userId ) => total + getOperatorOnline( userId, state ) ? 1 : 0,
+		0,
+		userIds
+	);
+};
+
+export const getLocaleCapacities = state => {
+	const mapLocale = map( locale => {
+		const mapGroup = map( ( [ group, memberships ] ) => {
+			const statuses = selectCapacityByStatus( locale, [ memberships ], state );
+
+			return {
+				statuses,
+				group,
+				locale,
+				operators: countOnlineOperators( keys( memberships.members ), state )
+			};
+		} );
+
+		return mapGroup( toPairs( getGroups( locale ) ) );
+	} );
+
+	return flatten( mapLocale( getSupportedLocales( state ) ) );
+};
 
 export const getAvailableLocales = state => ifElse(
 	compose( not, getSystemAcceptsCustomers ),
@@ -191,10 +242,10 @@ export const getAvailableLocales = state => ifElse(
 	compose(
 		flatten,
 		map( locale => compose(
-				map( group => makeLocaleGroupToken( locale, group ) ),
-				keys,
-				pickBy( group => haveAvailableCapacity( locale, [ group ], state ) ),
-				getGroups
+		map( group => makeLocaleGroupToken( locale, group ) ),
+		keys,
+		pickBy( group => haveAvailableCapacity( locale, [ group ], state ) ),
+		getGroups
 		)( state ) ),
 		getSupportedLocales
 	)
