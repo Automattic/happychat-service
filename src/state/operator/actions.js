@@ -17,7 +17,8 @@ import {
 	SET_USER_OFFLINE,
 	CUSTOMER_BLOCK,
 	JOIN_LOCALE,
-	LEAVE_LOCALE
+	LEAVE_LOCALE,
+	SEND_OPERATOR_CHAT_LOG
 } from '../action-types'
 import { allowRemote } from './can-remote-dispatch'
 
@@ -94,3 +95,13 @@ export const joinLocale = allowRemote( JOIN_LOCALE, ( locale ) => ( {
 export const leaveLocale = allowRemote( LEAVE_LOCALE, ( locale ) => ( {
 	locale
 } ) )
+
+/**
+ * @param { String } chatId - id of chat the log is for
+ * @param { String } operatorId - the operator receiving the chat
+ * @param { Object[] } log - list of messages for the chat
+ * @returns { Object } redux action
+ */
+export const sendOperatorChatLog = ( chatId, operatorId, log ) => ( {
+	type: SEND_OPERATOR_CHAT_LOG, chatId, operatorId, log
+} );

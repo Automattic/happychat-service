@@ -3,6 +3,7 @@ import timestamp from '../../timestamp'
 import {
 	OPERATOR_RECEIVE_MESSAGE,
 	OPERATOR_RECEIVE_TYPING,
+	SEND_OPERATOR_CHAT_LOG
 } from '../../action-types'
 import { operatorInboundMessage, closeChat } from '../../chatlist/actions'
 import { getChat } from '../../chatlist/selectors'
@@ -23,7 +24,7 @@ import {
 import {
 	selectUser,
 } from '../../operator/selectors';
-import { run } from '../../../middleware-interface'
+import { run } from '../../../message-filter'
 
 const log = require( 'debug' )( 'happychat:middleware:operators' )
 const debug = require( 'debug' )( 'happychat-debug:middleware:operators' )
@@ -143,6 +144,12 @@ export default ( io, operatorAuth, middlewares ) => ( store ) => {
 		)
 	} );
 
+	const handleSendOperatorChatLog = action => {
+		io
+		.in( operatorRoom( action.operatorId ) )
+		.emit( 'log', { id: action.chatId }, action.log );
+	};
+
 	return ( next ) => ( action ) => {
 		switch ( action.type ) {
 			case OPERATOR_RECEIVE_MESSAGE:
@@ -151,6 +158,9 @@ export default ( io, operatorAuth, middlewares ) => ( store ) => {
 			case OPERATOR_RECEIVE_TYPING:
 				const chat = { id: action.id }
 				io.in( customerRoom( action.id ) ).emit( 'chat.typing', chat, action.user, action.text )
+				break;
+			case SEND_OPERATOR_CHAT_LOG:
+				handleSendOperatorChatLog( action );
 				break;
 		}
 		return next( action );
