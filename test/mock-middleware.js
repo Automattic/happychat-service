@@ -1,10 +1,10 @@
-import foreach from 'lodash/forEach'
-import isMatch from 'lodash/isMatch'
-import reject from 'lodash/reject'
+import foreach from 'lodash/forEach';
+import isMatch from 'lodash/isMatch';
+import reject from 'lodash/reject';
 
 export default class WatchingMiddleware {
 	constructor() {
-		this.actionWatchers = { before: [], after: [] }
+		this.actionWatchers = { before: [], after: [] };
 	}
 
 	middleware() {
@@ -14,11 +14,11 @@ export default class WatchingMiddleware {
 
 		const middlewareFunc = ( ) => ( next ) => ( action ) => {
 			this.lastAction = Object.assign( {}, action );
-			foreach( this.actionWatchers.before, ( watcher ) => watcher( action ) )
+			foreach( this.actionWatchers.before, ( watcher ) => watcher( action ) );
 			const result = next( action );
-			foreach( this.actionWatchers.after, ( watcher ) => watcher( action ) )
+			foreach( this.actionWatchers.after, ( watcher ) => watcher( action ) );
 			return result;
-		}
+		};
 		this.middlewareFunc = middlewareFunc.bind( this );
 		return this.middlewareFunc;
 	}
@@ -32,7 +32,7 @@ export default class WatchingMiddleware {
 			if ( isMatch( action, actionTemplate ) ) {
 				watcher( action );
 			}
-		} )
+		} );
 	}
 
 	watchForType( type, watcher, after = false ) {
@@ -44,18 +44,18 @@ export default class WatchingMiddleware {
 	}
 
 	watchForTypeOnce( type, watcher, after = false ) {
-		const which = after ? 'after' : 'before'
+		const which = after ? 'after' : 'before';
 		const callback = action => {
 			if ( type === action.type ) {
-				this.actionWatchers[which] = reject(
-					this.actionWatchers[which],
+				this.actionWatchers[ which ] = reject(
+					this.actionWatchers[ which ],
 					it => it === callback
-				)
+				);
 
-				watcher( action )
+				watcher( action );
 			}
-		}
-		this.actionWatchers[which].push( callback )
+		};
+		this.actionWatchers[ which ].push( callback );
 	}
 
 }

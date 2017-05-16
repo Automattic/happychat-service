@@ -14,18 +14,19 @@ import {
 	both,
 	mapObjIndexed,
 	assoc
-} from 'ramda'
-import { combineReducers } from 'redux'
+} from 'ramda';
+import { combineReducers } from 'redux';
 
-import asString from '../as-string'
-import { REMOTE_USER_KEY } from '../middlewares/socket-io/broadcast'
+import asString from '../as-string';
+import { REMOTE_USER_KEY } from '../constants';
 import {
 	SET_OPERATOR_CAPACITY,
 	JOIN_LOCALE,
 	LEAVE_LOCALE,
 	CONFIGURE_LOCALES,
-	SET_USER_LOADS
-} from '../action-types'
+	SET_USER_LOADS,
+	ADD_USER_LOCALE
+} from '../action-types';
 
 // List of locales that operators can choose to support
 // to allow support for additional locales they need to
@@ -43,10 +44,10 @@ const supported = ( state = [ 'en-US' ], action ) => {
 				),
 				defaultTo( [] ),
 				prop( 'supported' )
-			)( action )
+			)( action );
 	}
-	return state
-}
+	return state;
+};
 
 // The default locale assigned to chats that have none specified
 // and by default operators will be assigned to this locale unless
@@ -54,29 +55,31 @@ const supported = ( state = [ 'en-US' ], action ) => {
 const defaultLocale = ( state = 'en-US', action ) => {
 	switch ( action.type ) {
 		case CONFIGURE_LOCALES:
-			return when( isEmpty, always( state ), action.defaultLocale )
+			return when( isEmpty, always( state ), action.defaultLocale );
 	}
-	return state
-}
+	return state;
+};
 
 const localeUserPath = action => [
 	action.locale,
-	asString( action[REMOTE_USER_KEY].id )
-]
+	asString( action[ REMOTE_USER_KEY ].id )
+];
 
 const DEFAULT_CAPACITY = 3;
 
 const membership = ( state = { capacity: DEFAULT_CAPACITY, load: 0, active: true }, action ) => {
 	switch ( action.type ) {
 		case JOIN_LOCALE:
-			return merge( state, { active: true } )
+			return merge( state, { active: true } );
 		case LEAVE_LOCALE:
-			return merge( state, { active: false } )
+			return merge( state, { active: false } );
+		case ADD_USER_LOCALE:
+			return merge( state, { active: true } );
 		case SET_OPERATOR_CAPACITY:
-			return merge( state, { capacity: parseInt( action.capacity ) } )
+			return merge( state, { capacity: parseInt( action.capacity ) } );
 	}
-	return state
-}
+	return state;
+};
 
 // a mapping of locale codes to operator ids
 // e.g. { "en-US": { "123456": { capacity, load, active }, "54321": true } }
@@ -85,8 +88,11 @@ const memberships = ( state = {}, action ) => {
 		case SET_OPERATOR_CAPACITY:
 		case JOIN_LOCALE:
 		case LEAVE_LOCALE:
-			const userPath = localeUserPath( action )
-			return assocPath( userPath, membership( path( userPath, state ), action ), state )
+			const userPath = localeUserPath( action );
+			return assocPath( userPath, membership( path( userPath, state ), action ), state );
+		case ADD_USER_LOCALE:
+			const keyPath = [ action.locale, asString( action.operator_id ) ];
+			return assocPath( keyPath, membership( path( keyPath, state ), action ), state );
 		case SET_USER_LOADS:
 			// every user that has a load set in the action will
 			// have a membership record, so iterating through the current
@@ -97,13 +103,13 @@ const memberships = ( state = {}, action ) => {
 				mapObjIndexed( ( memberData, userID ) =>
 					assoc(
 						'load',
-						defaultTo( 0, path( [ 'loads', locale, userID ], action ) ),
+						defaultTo( 0, path( [ 'loads', locale, asString( userID ) ], action ) ),
 						memberData
 					)
 				)( members )
-			)( state )
+			)( state );
 	}
-	return state
-}
+	return state;
+};
 
-export default combineReducers( { supported, defaultLocale, memberships } )
+export default combineReducers( { supported, defaultLocale, memberships } );

@@ -19,5 +19,6 @@
 	},
   "rules": {
     "wpcalypso/import-docblock": 0,
+    "camelcase": 1
   }
 }
