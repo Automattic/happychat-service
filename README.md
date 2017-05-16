@@ -1,5 +1,9 @@
 # Happychat Chat Server
 
+**This project is now closed.**
+
+---
+
 Socket.IO based chat server for happychat.
 
 In progress implementation of [Happychat Service][].
